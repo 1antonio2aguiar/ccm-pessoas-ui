@@ -24,19 +24,7 @@ export abstract class BaseResourceService<T extends BaseResourceModel> {
       catchError(this.handleError)
     );
   }
-/*
-  pesquisar(): Observable<T> {
-    const headers = new Headers();
 
-    return this.http.get(this.apiPath)
-    .pipe(
-      map(this.jsonDataToResources.bind(this)),
-      catchError(this.handleError)
-    );
-  }
-
-
-*/
   getById(id: number): Observable<T> {
     const url = `${this.apiPath}/${id}`;
 

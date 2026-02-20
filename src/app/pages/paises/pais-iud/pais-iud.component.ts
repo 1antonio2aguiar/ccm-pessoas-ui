@@ -1,0 +1,253 @@
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpParams, HttpClient } from '@angular/common/http';
+
+import { Filters } from '../../../shared/filters/filters';
+import { PaisService } from '../pais.service';
+
+import { ConfirmationDialogComponent } from '../../components/base-resource-confirmation-delete/confirmation-dialog/confirmation-dialog.component';
+
+//import { ConfirmDeleteComponent } from '../../components/base-resource-confirmation-delete/confirm-delete-modal.component';
+
+
+@Component({
+  selector: 'ngx-pais-iud',
+  templateUrl: './pais-iud.component.html',
+  styleUrls: ['./pais-iud.component.scss']
+})
+
+export class PaisIudComponent implements OnInit {
+  source: LocalDataSource = new LocalDataSource();
+  filtro: Filters = new Filters();
+
+  public settings = {
+    pager: {
+      perPage: this.filtro.itensPorPagina, // Define o número de linhas por página
+      display: true, // Exibe o paginador
+    },
+
+    add: {
+      addButtonContent: '<i class="nb-plus"></i>',
+      createButtonContent: '<i class="nb-checkmark"></i>',
+      cancelButtonContent: '<i class="nb-close"></i>',
+      confirmCreate: true,
+      width: '40px',
+      addMode: 'edit',
+    },
+
+    edit: {
+      editButtonContent: '<i class="nb-edit"></i>',
+      saveButtonContent: '<i class="nb-checkmark"></i>',
+      cancelButtonContent: '<i class="nb-close"></i>',
+      confirmSave: true,
+      addMode: 'edit',
+      mode: 'edit'
+    },
+    delete: {
+      deleteButtonContent: '<i class="nb-trash"></i>',
+      confirmDelete: true,
+    },
+    columns: {
+      id: {
+        title: 'ID',
+        type: 'number',
+        editable: false,
+        addable: false,
+        filter: true,
+        width: '30px',
+      },
+      
+      nome: {
+        title: 'Nome',
+        type: 'string',
+        width: '700px',
+        filter: true,
+      },
+
+      sigla: {
+        title: 'Sigla',
+        type: 'string',
+        filter: false,
+        width: '100px',
+      },
+
+      nacionalidade: {
+        title: 'Nacionalidade',
+        type: 'string',
+        filter: false,
+        width: '100px',
+      },
+
+    },
+  };
+
+  ngOnInit(): void {
+    this.listar();
+
+    this.source.onChanged().subscribe((change) => {
+      if (change.action === 'filter') {
+        this.onTableFilter(change.filter);
+      }
+    });
+  }
+
+  constructor(
+    private service: PaisService, 
+    private toastrService: NbToastrService,
+    private dialogService: NbDialogService,
+    ) {
+  }
+
+  listar() {
+    this.service.pesquisar(this.filtro)
+      .then(response => {
+        const paises = response.paises;
+        this.source.load(paises);
+      })
+      .catch(error => {
+        console.error("Erro ao listar paises:", error);
+      });
+  }
+
+  onSaveConfirm(event) {
+    this.service.update(event.newData)
+    .subscribe(
+        () => {
+          this.listar();
+          event.confirm.resolve();
+
+          // <<< TOAST DE SUCESSO PARA ATUALIZAÇÃO >>>
+          this.toastrService.show(
+            `Pais "${event.newData.nome}" foi atualizada com sucesso!`,
+            'Atualização Realizada',
+            { status: 'success', icon: 'edit-outline' }
+          );
+        },
+        error => console.error('Erro ao editar pais:', error)
+    );
+  }
+
+  onCreateConfirm(event) {
+    this.service.create(event.newData)
+      .subscribe(
+        () => {
+          this.listar();
+          event.confirm.resolve();
+
+          this.toastrService.show(
+            'Novo pais cadastrado com sucesso!',
+            'Cadastro Realizado',
+          { status: 'success', icon: 'checkmark-circle-outline' }
+        );
+      },
+      error => console.error('Erro ao criar Pais:', error)
+    );
+  } 
+
+  onDeleteConfirm(event): void {
+      const paisParaExcluir = event.data;
+      
+      // Abre o componente de diálogo reutilizável
+      this.dialogService.open(ConfirmationDialogComponent, {
+        context: {
+          title: 'Confirmar Exclusão',
+          // Mensagem dinâmica para melhorar a experiência do usuário
+          message: `Você tem certeza que deseja excluir a pais <strong>"${paisParaExcluir.nome}"</strong>?`,
+          confirmButtonText: 'Sim, Excluir',
+          cancelButtonText: 'Cancelar',
+          status: 'danger',
+          icon: 'trash-2-outline'
+        },
+        closeOnBackdropClick: false // Impede que o diálogo feche ao clicar fora
+      }).onClose.subscribe(confirmado => {
+        // 'confirmado' será true se o usuário clicar em "Sim, Excluir"
+        if (confirmado) {
+          // Se confirmado, executa a lógica de exclusão
+          this.service.delete(paisParaExcluir.id)
+            .subscribe({
+              next: () => {
+                // Atualiza a tabela com os dados mais recentes
+                this.listar();
+                event.confirm.resolve(); // Notifica a ng2-smart-table que a operação foi bem-sucedida
+  
+                // Dispara o toast de sucesso
+                this.toastrService.show(
+                  `Pais "${paisParaExcluir.classificacao}" foi excluída com sucesso.`,
+                  'Exclusão Realizada',
+                  { status: 'success', icon: 'trash-2-outline' }
+                );
+              },
+              error: (error) => {
+                console.error('Erro ao deletar pais:', error);
+                event.confirm.reject(); // Notifica a ng2-smart-table que a operação falhou
+  
+                // Dispara o toast de erro
+                this.toastrService.show(
+                  'Não foi possível excluir o pais. Verifique se ele não está sendo usado em outras partes do sistema.',
+                  'Erro na Exclusão',
+                  { status: 'danger', icon: 'alert-circle-outline' }
+                );
+              }
+            });
+        } else {
+          // Se o usuário clicou em "Cancelar" ou fechou o diálogo
+          console.log('Usuário cancelou a exclusão.');
+          event.confirm.reject(); // Notifica a ng2-smart-table que a operação foi cancelada
+        }
+    }); 
+  }
+
+  // Aqui filtra pelo campo de busca do ng2 smart teble
+  // Nova função para lidar com os filtros da tabela
+  onTableFilter(filters: any) {
+    let params = new HttpParams();
+
+    // Garante que filters seja um array
+    let filtersArray = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
+    let idFilter = filtersArray.find(f => f.field === 'id');
+    let classificacaoFilter = filtersArray.find(f => f.field === 'nome');
+
+    if (idFilter && idFilter.search) {
+      params = params.set('id', idFilter.search);
+    }
+    if (classificacaoFilter && classificacaoFilter.search) {
+      params = params.set('nome', classificacaoFilter.search);
+    }
+
+    this.filtro.params = params;
+
+    this.service.pesquisar({...this.filtro, params: params})
+      .then(response => {
+        const paises = response.paises;
+        this.source.load(paises); // Carrega os dados na tabela
+      });
+  }
+
+  // Aqui filtra pelo input.
+  onSearch(query: string = '') {
+      let params = new HttpParams();
+
+      let isId = !isNaN(Number(query)); // Verifica se a query é um número (ID)
+      //let isString = /[a-zA-Z]/.test(query);
+    
+    if (isId) {
+      params = this.filtro.params.append('id', query)
+      console.log('onSearch ', query, ' ', params)
+    }
+
+    let isString = isNaN(Number(query)) && query.length > 0;
+    if(isString){
+      params = this.filtro.params.append('classificacao', query)
+    }
+      
+      this.service.pesquisar({...this.filtro, params: params})
+      .then(response => {
+          const paises = response.paises
+          //console.log('RETRONOU DO FILTRO ', paises)
+          this.source.load(paises); // Carrega os dados na tabela
+          
+    });
+  }
+}

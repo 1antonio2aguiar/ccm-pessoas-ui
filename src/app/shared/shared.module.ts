@@ -22,19 +22,27 @@ import { ToastModule } from "primeng/toast";
 import { LOCALE_ID } from '@angular/core';
 
 
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+
+import { ThemeModule } from '../@theme/theme.module';
+import { FormsModule as ngFormsModule } from '@angular/forms';
+
+
+
 @NgModule({
   declarations: [
   BreadCrumbComponent,
   PageHeaderComponent,
   FormFieldErrorComponent,
   ServerErrorMessagesComponent,
-  BaseResourceConfirmationComponent,
   TelefonePipe,
   CpfPipe,
   CnpjPipe,
   SexoPipe,
   SimNaoPipe,
   CepPipe,
+  
   ],
   imports: [
     CommonModule,
@@ -46,7 +54,15 @@ import { LOCALE_ID } from '@angular/core';
     ConfirmDialogModule,
     MessageModule,
     ToastModule,
-  ],
+
+    ThemeModule,
+    Ng2SmartTableModule,
+    ReactiveFormsModule,
+    ngFormsModule,
+    OwlDateTimeModule,
+    OwlNativeDateTimeModule,
+   
+  ], 
   exports: [
     CommonModule,
     ReactiveFormsModule,
@@ -57,13 +73,14 @@ import { LOCALE_ID } from '@angular/core';
     PageHeaderComponent,
     FormFieldErrorComponent,
     ServerErrorMessagesComponent,
-    BaseResourceConfirmationComponent,
     TelefonePipe,
     CpfPipe,
     CnpjPipe,
     SexoPipe,
     SimNaoPipe,
     CepPipe,
+
+    
 
   ]/*,
   providers:[

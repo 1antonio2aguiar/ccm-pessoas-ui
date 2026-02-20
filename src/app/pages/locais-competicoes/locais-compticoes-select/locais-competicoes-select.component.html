@@ -1,0 +1,7 @@
+<nb-select 
+  [(ngModel)]="selectedLocalCompeticaoId" 
+  (ngModelChange)="onlocaisCompeticoesServiceChange($event)">
+  <nb-option *ngFor="let LocalCompeticao of LocaisCompeticoes" [value]="LocalCompeticao.id">
+    {{ LocalCompeticao.nome }}
+  </nb-option>
+</nb-select>

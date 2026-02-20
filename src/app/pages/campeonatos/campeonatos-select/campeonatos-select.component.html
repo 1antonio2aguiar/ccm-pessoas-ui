@@ -1,7 +1,0 @@
-<nb-select 
-  [(ngModel)]="selectedCampeonatoId" 
-  (ngModelChange)="onCampeonatoChange($event)">
-  <nb-option *ngFor="let campeonato of campeonatos" [value]="campeonato.id">
-    {{ campeonato.nome }}
-  </nb-option>
-</nb-select>

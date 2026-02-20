@@ -1,7 +1,0 @@
-<nb-select 
-  [(ngModel)]="selectedModalidadeId" 
-  (ngModelChange)="onModalidadeChange($event)">
-  <nb-option *ngFor="let modalidade of modalidades" [value]="modalidade.id">
-    {{ modalidade.nome }}
-  </nb-option>
-</nb-select>

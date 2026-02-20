@@ -1,0 +1,14 @@
+.card-centralizado {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-estilizado {
+    transition: box-shadow 0.3s ease;
+}
+
+.input-estilizado:focus {
+    box-shadow: 0 0 5px 2px #7ab6f3;
+    outline: none;
+}

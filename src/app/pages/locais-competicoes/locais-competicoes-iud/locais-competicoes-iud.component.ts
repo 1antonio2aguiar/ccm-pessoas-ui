@@ -11,8 +11,15 @@ import { Filters } from '../../../shared/filters/filters';
 })
 
 export class LocaisCompeticoesIudComponent {
+  source: LocalDataSource = new LocalDataSource();
+  filtro: Filters = new Filters();
 
   settings = {
+    pager: {
+      perPage: this.filtro.itensPorPagina, // Define o número de linhas por página
+      display: true, // Exibe o paginador
+    },
+
     add: {
       addButtonContent: '<i class="nb-plus"></i>',
       createButtonContent: '<i class="nb-checkmark"></i>',
@@ -57,12 +64,15 @@ export class LocaisCompeticoesIudComponent {
     }
   }
 
-  source: LocalDataSource = new LocalDataSource();
-  filtro: Filters = new Filters();
-
   ngOnInit(): void {
     this.listar();
-  }
+
+    this.source.onChanged().subscribe((change) => {
+      if (change.action === 'page') {
+        this.aoMudarPagina(change.paging.page);
+      }
+    });
+  };
 
   constructor(private service: LocaisCompeticoesService,
     private router: Router,
@@ -75,10 +85,10 @@ export class LocaisCompeticoesIudComponent {
   listar() {
     this.service.pesquisar(this.filtro)
       .then(response => {
-        const modalidades = response.modalidades;
-        this.source.load(modalidades);
+        const locaisCompeticoes = response.locaisCompeticoes;
+        this.source.load(locaisCompeticoes);
       });
-  }
+  };
 
   onCreateConfirm(event) {
     event.newData.empresa = 1;
@@ -92,7 +102,7 @@ export class LocaisCompeticoesIudComponent {
       },
       error => console.error('Erro ao criar local competicao:', error)
     );
-  }
+  };
 
   onSaveConfirm(event) {
     this.service.update(event.newData)
@@ -105,7 +115,7 @@ export class LocaisCompeticoesIudComponent {
       },
       error => console.error('Erro ao editar local competicao:', error)
     );
-  }
+  };
 
   onDeleteConfirm(event): void {
     if (window.confirm('Voce deseja deletar este item?')) {
@@ -123,5 +133,26 @@ export class LocaisCompeticoesIudComponent {
     } else {
       event.confirm.reject();
     }
-  }
+  };
+
+  aoMudarPagina(pageIndex) {
+    const loadedRecordCount = this.filtro.totalRegistros
+    const lastRequestedRecordIndex = pageIndex * this.filtro.itensPorPagina;
+
+    if (loadedRecordCount <= lastRequestedRecordIndex) {
+      let myFilter; 
+      myFilter.startIndex = loadedRecordCount + 1;
+
+      this.service.pesquisar(myFilter) //.toPromise()
+        .then(data => {
+          if (this.source.count() > 0) {
+            data.forEach(d => this.source.add(d));
+            this.source.getAll()
+              .then(d => this.source.load(d))
+          }
+          else
+            this.source.load(data);
+      })
+    }
+  };
 }
