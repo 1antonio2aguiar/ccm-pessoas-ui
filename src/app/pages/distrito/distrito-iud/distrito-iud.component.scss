@@ -1,0 +1,25 @@
+:host ::ng-deep ng2-smart-table-pager {
+  justify-content: center;
+}
+
+/* Bloqueia ID em qualquer circunstância */
+:host ::ng-deep ng2-smart-table td input[ng-reflect-name="id"],
+:host ::ng-deep ng2-smart-table td input[name="id"] {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* Bloqueia a coluna Cidade no modo edit (is-new=false) */
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  ngx-cidade-nome-editor
+  .cidade-nome-input {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}

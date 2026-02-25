@@ -5,24 +5,24 @@ import { map } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 import { BaseResourceService } from '../../shared/services/base-resource.service';
-import { Pais } from '../../shared/models/pais';
-import { Filters } from '../../shared/filters/filters';
+import { TipoLogradouro } from '../../shared/models/tipoLogradouro';
+import { FiltroPaginado } from '../../shared/filters/filtro-paginado';
 
 @Injectable({
   providedIn: 'root'
 })
-
-export class PaisService extends BaseResourceService<Pais> {
+export class TipoLogradouroService extends BaseResourceService<TipoLogradouro> {
 
   // Mantido por compatibilidade com o padrão do projeto (se você usar eventos no componente)
-  private paisEventHendlerId: EventEmitter<Pais>;
+  private tipoLogradouroEventHendlerId: EventEmitter<TipoLogradouro>;
 
   constructor(protected injector: Injector) {
-    super(environment.apiUrl + 'paises', injector, Pais.fromJson);
-    this.paisEventHendlerId = new EventEmitter<Pais>();
+    // Ajuste o endpoint se o seu backend for diferente (ex: 'tipos-logradouros')
+    super(environment.apiUrl + 'tipoLogradouro', injector, TipoLogradouro.fromJson);
+    this.tipoLogradouroEventHendlerId = new EventEmitter<TipoLogradouro>();
   }
 
-  pesquisar(filtro: Filters): Promise<any> {
+  pesquisar(filtro: FiltroPaginado): Promise<any> {
     let params = filtro.params;
 
     if (filtro.params) {
@@ -35,22 +35,22 @@ export class PaisService extends BaseResourceService<Pais> {
       .get<any>(this.apiPath + '/filter', { params })
       .toPromise()
       .then((response) => {
-        const paises = response.content;
-        const resultado = { paises };
+        const tiposLogradouro = response.content;
+        const resultado = { tiposLogradouro };
         return resultado;
       });
   }
 
-  create(pais: Pais): Observable<Pais> {
+  create(tipoLogradouro: TipoLogradouro): Observable<TipoLogradouro> {
     return from(this.http
-      .post<Pais>(this.apiPath, pais)
+      .post<TipoLogradouro>(this.apiPath, tipoLogradouro)
       .toPromise()
       .then(response => response));
   }
 
-  update(pais: Pais): Observable<Pais> {
+  update(tipoLogradouro: TipoLogradouro): Observable<TipoLogradouro> {
     return from(this.http
-      .put<Pais>(`${this.apiPath}/${pais.id}`, pais)
+      .put<TipoLogradouro>(`${this.apiPath}/${tipoLogradouro.id}`, tipoLogradouro)
       .toPromise()
       .then(response => response));
   }
@@ -62,18 +62,21 @@ export class PaisService extends BaseResourceService<Pais> {
       .then(response => response));
   }
 
-  filtrarPorNome(nome: string, page = 0, size = 10): Observable<Pais[]> {
-
+  filtrarPorDEscricao(descricao: string, page = 0, size = 10): Observable<TipoLogradouro[]> {
     const params = new HttpParams()
-      .set('nome', nome ?? '')
+      .set('descricao', descricao ?? '')
       .set('page', String(page))
       .set('size', String(size));
 
     return this.http
       .get<any>(`${this.apiPath}/filter`, { params })
       .pipe(
-        map(resp => (resp?.content ?? []).map((x: any) => Pais.fromJson(x)))
+        map((resp) => {
+          const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
+          return (lista ?? [])
+            .filter((x: any) => x && typeof x === 'object')
+            .map((x: any) => TipoLogradouro.fromJson(x));
+        }),
       );
   }
-
 }
