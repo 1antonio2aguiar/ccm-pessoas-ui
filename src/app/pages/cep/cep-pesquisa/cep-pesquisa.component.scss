@@ -1,0 +1,32 @@
+.model-full {
+    width: 80% !important; 
+}
+
+:host ::ng-deep ng2-smart-table-pager {
+    justify-content: center;
+}
+
+/* Bloqueia a coluna CEP no modo EDIT (is-new=false) */
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  ngx-cep-editor
+  .cep-input {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+
+/* Bloqueia a coluna Cidade no modo EDIT (is-new=false) */
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  ngx-distrito-nome-editor
+  .distrito-nome-input {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}

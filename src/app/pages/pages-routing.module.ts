@@ -19,6 +19,11 @@ const routes: Routes = [{
     },
 
     {
+      path: 'cep',
+      loadChildren: () => import('./cep/cep.module').then(m => m.CepModule),
+    },
+
+    {
       path: 'distrito',
       loadChildren: () => import('./distrito/distrito.module').then(m => m.DistritoModule),
     },

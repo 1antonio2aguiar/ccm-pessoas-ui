@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbThemeModule } from '@nebular/theme';
 
-
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -12,18 +11,19 @@ import { FormsModule as ngFormsModule } from '@angular/forms';
 import { FormsRoutingModule } from '../forms/forms-routing.module';
 
 
-import { 
+import {
   NbActionsModule,
   NbButtonModule,
   NbCardModule,
   NbCheckboxModule,
-  NbDatepickerModule, 
+  NbDatepickerModule,
   NbTreeGridModule,
   NbIconModule,
   NbInputModule,
   NbRadioModule,
   NbSelectModule,
   NbUserModule,
+  NbToastrModule,
   NbButtonGroupModule,
 } from '@nebular/theme';
 
@@ -38,17 +38,12 @@ import { ConfirmationDialogComponent } from './base-resource-confirmation-delete
   ],
   imports: [
     CommonModule,
-
     NbCardModule,
     NbTreeGridModule,
     NbIconModule,
     NbInputModule,
     ThemeModule,
     Ng2SmartTableModule,
-    ReactiveFormsModule,
-    FormsModule,
-    OwlDateTimeModule,
-    OwlNativeDateTimeModule,
     NbButtonModule,
     NbButtonGroupModule,
     NbActionsModule,
@@ -57,9 +52,12 @@ import { ConfirmationDialogComponent } from './base-resource-confirmation-delete
     NbRadioModule,
     NbDatepickerModule,
     NbSelectModule,
+    ngFormsModule,
+    NbToastrModule.forRoot(),
+
+    ReactiveFormsModule,
 
     FormsRoutingModule,
-    ngFormsModule
   ]
 })
 

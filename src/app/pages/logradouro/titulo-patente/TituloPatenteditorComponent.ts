@@ -86,9 +86,6 @@ export class TituloPatenteEditorComponent extends DefaultEditor {
   // valor que aparece na coluna (usa o nome certo da coluna!)
   data[field] = descricao;
 
-  // id que o backend precisa
-  data.tipoLogradouroId = t?.id;
-
   if (typeof (row as any).setData === 'function') {
     (row as any).setData(data);
   }

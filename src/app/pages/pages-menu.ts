@@ -13,9 +13,13 @@ export const MENU_ITEMS: NbMenuItem[] = [
         title: 'Estados',
         link: '/pages/estado/estado-iud',
       },
+       {
+        title: 'Ceps',
+        link: '/pages/cep/cep-pesquisa',
+      },
       {
         title: 'Cidades',
-        link: '/pages/cidade/cidade-iud',
+        link: '/pages/cidades/cidade-iud',
       },
       {
         title: 'Distritos',

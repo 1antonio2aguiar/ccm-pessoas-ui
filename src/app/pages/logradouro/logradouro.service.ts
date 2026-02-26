@@ -1,10 +1,13 @@
 import { Injectable, Injector, EventEmitter } from '@angular/core';
 import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
 import { BaseResourceService } from '../../shared/services/base-resource.service';
 import { FiltroPaginado } from '../../shared/filters/filtro-paginado';
 import { Logradouro } from '../../shared/models/logradouro';
+import { LogradouroSimple } from '../../shared/models/logradouroSimple';
 
 @Injectable({ providedIn: 'root' })
 export class LogradouroService extends BaseResourceService<Logradouro> {
@@ -52,4 +55,24 @@ export class LogradouroService extends BaseResourceService<Logradouro> {
       .toPromise()
       .then(response => response));
   }
+
+  filtrarPorCidadeIdENome(cidadeId: number, nome: string, page = 0, size = 20): Observable<LogradouroSimple[]> {
+    const params = new HttpParams()
+      .set('cidadeId', String(cidadeId))
+      .set('nome', nome ?? '')
+      .set('page', String(page))
+      .set('size', String(size));
+
+    return this.http
+      .get<any>(`${environment.apiUrl}logradouros/filter`, { params })   // 👈 AQUI
+      .pipe(
+        map((resp) => {
+          const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
+          return (lista ?? [])
+            .filter((x: any) => x && typeof x === 'object')
+            .map((x: any) => LogradouroSimple.fromJson(x));             // 👈 AQUI
+        }),
+      );
+  }
+
 }

@@ -1,0 +1,36 @@
+
+<nb-card>
+    <nb-card-header>
+        Ceps
+    </nb-card-header>
+
+    <nb-card-body>
+        <div class="search-container">
+            <!--<select style="margin-bottom: 4px;" 
+                #searchCampeonato name="campeonatoSel" id="campeonatoSel" class="form-control" 
+                (change)="onCampeonatoChange(searchCampeonato.value)">
+                <option value="">Selecione um Campeonato</option>
+                <option *ngFor="let campeonato of campeonatos" [value]="campeonato.id">
+                    {{ campeonato.id +' - ' +campeonato.nome }}
+                </option>
+            </select>
+
+            <select style="margin-bottom: 4px;"
+                #searchEtapa name="etapaSel" id="etapaSel" class="form-control" 
+                (change)="onEtapaChange(searchEtapa.value)">
+                <option value="">Selecione uma Etapa</option>
+                <option *ngFor="let etapa of etapas" [value]="etapa.id">
+                    {{ etapa.id +' - ' + etapa.nome }}
+                </option>
+            </select> -->
+
+            <ng2-smart-table
+                [settings]="settings"
+                [source]="source"
+                (createConfirm)="onCreateConfirm($event)"
+                (editConfirm)="onSaveConfirm($event)"
+                (deleteConfirm)="onDeleteConfirm($event)">
+            </ng2-smart-table>
+        </div>
+    </nb-card-body>
+</nb-card>

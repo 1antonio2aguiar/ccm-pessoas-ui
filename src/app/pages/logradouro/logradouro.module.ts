@@ -58,4 +58,5 @@ import { TituloPatenteEditorComponent } from './titulo-patente/TituloPatentedito
     LogradouroRoutingModule,
   ],
 })
+
 export class LogradouroModule {}

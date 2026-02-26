@@ -63,6 +63,7 @@ export class LogradouroIudComponent {
         editable: false,
         filter: true,
         width: '90px',
+        hide:true,
       },
 
       nomeCidade: {
@@ -98,7 +99,7 @@ export class LogradouroIudComponent {
 
       tituloPatente: {
         title: 'Título/Patente',
-        type: 'number',
+        type: 'string',
         filter: false,
         width: '200px',
 
@@ -119,7 +120,7 @@ export class LogradouroIudComponent {
         title: 'Nome Reduzido',
         type: 'string',
         filter: false,
-        width: '220px',
+        width: '300px',
       },
 
       /*complemento: {
