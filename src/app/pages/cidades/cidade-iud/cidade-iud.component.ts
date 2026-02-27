@@ -65,7 +65,6 @@ export class CidadeIudComponent {
       estadoNome: {
         title: 'Estado',
         type: 'string',
-        filter: false,
         width: '200px',
 
         editor: {

@@ -73,8 +73,9 @@ export class EstadoIudComponent implements OnInit {
         filter: true,
         width: '520px',
       },
-      sigla: {
-        title: 'Sigla',
+
+      uf: {
+        title: 'UF',
         type: 'string',
         filter: false,
         width: '80px',

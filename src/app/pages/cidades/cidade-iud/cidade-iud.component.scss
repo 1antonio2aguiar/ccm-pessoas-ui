@@ -3,6 +3,14 @@
   justify-content: center;
 }
 
+// Protege para clicar no filtro de estado
+:host ::ng-deep .ng2-smart-filters input[placeholder="Estado"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
 :host ::ng-deep ng2-smart-table td input[ng-reflect-name="id"],
 :host ::ng-deep ng2-smart-table td input[name="id"] {
   pointer-events: none;

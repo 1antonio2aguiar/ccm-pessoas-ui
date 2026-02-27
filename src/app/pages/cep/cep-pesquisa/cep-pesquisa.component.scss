@@ -6,6 +6,47 @@
     justify-content: center;
 }
 
+// Protege para clicar no filtro de tipo logradouro
+:host ::ng-deep .ng2-smart-filters input[placeholder="Tipo"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
+// Protege para clicar no filtro de tipo bairro
+:host ::ng-deep .ng2-smart-filters input[placeholder="Bairro"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
+// Protege para clicar no filtro de tipo numero inicial
+:host ::ng-deep .ng2-smart-filters input[placeholder="Inicio"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
+// Protege para clicar no filtro de tipo numero final
+:host ::ng-deep .ng2-smart-filters input[placeholder="Fim"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
+// Protege para clicar no filtro de tipo numero IDENTIFICAÇÃO
+:host ::ng-deep .ng2-smart-filters input[placeholder="Identificação"] {
+    pointer-events: none; /* Impede cliques e interações */
+    background-color: #f2f2f2; /* Cor de fundo cinza para indicar desabilitado */
+    color: #999; /* Cor do texto cinza */
+    cursor: not-allowed; /* Muda o cursor para "não permitido" */
+}
+
+
 /* Bloqueia a coluna CEP no modo EDIT (is-new=false) */
 :host ::ng-deep ng2-smart-table
   ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
@@ -29,4 +70,52 @@
   background: #f7f9fc;
   opacity: 0.85;
   cursor: not-allowed;
+}
+
+.cidade-filter { position: relative; margin-bottom: 12px; }
+
+.cidade-dropdown {
+  position: absolute;
+  z-index: 9999;
+  width: 100%;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #e4e9f2;
+  border-radius: 6px;
+  background: #fff;
+  margin-top: 4px;
+}
+
+.cidade-item { padding: 8px 10px; cursor: pointer; }
+
+.cidade-actions { margin-top: 8px; display: flex; gap: 8px; }
+
+.cidade-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Cidade ocupa TODO o espaço disponível */
+.cidade-col {
+  flex: 1 1 auto;
+  min-width: 0;        // 🔥 ESSENCIAL pra flex não quebrar
+  position: relative;
+}
+
+/* UF fixo no final */
+.uf-input {
+  width: 80px;
+  text-align: center;
+  background: #f7f9fc;
+  cursor: not-allowed;
+}
+
+/* Botão no estilo “input” */
+.limpar-btn {
+  height: 40px;          // igual nbInput
+  padding: 0 16px;
+  border-radius: 0.25rem;
+  text-transform: none;  // tira caixa alta feia
 }

@@ -7,7 +7,7 @@ export class Estado extends BaseResourceModel {
     constructor(
       public override id?: number,
       public nome?: string,
-      public sigla?: string,
+      public uf?: string,
 
       public paisId?: number,
       public pais?: Pais,

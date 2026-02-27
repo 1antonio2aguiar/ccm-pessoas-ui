@@ -34,7 +34,6 @@ export class CidadeService extends BaseResourceService<Cidade> {
         // Se vier paginado (Page): usa response.content
         // Se vier lista pura (array): usa o próprio response
         const cidades = Array.isArray(response) ? response : response?.content;
-        //console.log('Resultado ', cidades)
         const resultado = { cidades };
         return resultado;
       });
