@@ -1,6 +1,7 @@
 export class LogradouroSimple {
   constructor(
     public id: number,
+    public tipoLogradouro : string,
     public nome: string,
   ) {}
 
@@ -8,6 +9,7 @@ export class LogradouroSimple {
   static fromJson(json: any): LogradouroSimple {
     return new LogradouroSimple(
       Number(json?.id),
+      String(json?.tipoLogradouro ?? ''),
       String(json?.nome ?? ''),
     );
   }
@@ -16,6 +18,7 @@ export class LogradouroSimple {
   static fromCepJson(json: any): LogradouroSimple {
     return new LogradouroSimple(
       Number(json?.logradouroId),
+      String(json?.tipoLogradouro ?? ''),
       String(json?.logradouroNome ?? ''),
     );
   }

@@ -1,0 +1,160 @@
+<div class="full-screen" appFullScreenStyle [style.width.px]="width">
+  <form [formGroup]="cepForm">
+    <nb-card>
+      <nb-card-body>
+
+        <!-- ID (hidden) -->
+        <div class="row">
+          <div class="form-group">
+            <input type="number" nbInput fullWidth hidden="true" disabled="true" style="max-width: 100px;"
+              id="id" formControlName="id">
+          </div>
+        </div>
+
+        <!-- CEP -->
+        <label for="cep">CEP</label>
+        <ngx-cep-input
+          formControlName="cep"
+          [editMode]="mode === 'edit'"
+        ></ngx-cep-input>
+
+        <!-- Cidade (autocomplete) -->
+        <div class="row">
+          <div class="form-group col-md-10">
+            <label>Cidade</label>
+
+            <div class="autocomplete">
+              <input
+                nbInput
+                fullWidth
+                class="cidade-input"
+                [formControl]="cidadeCtrl"
+                placeholder="Digite o nome da cidade..."
+                (focus)="showCidadeDropdown = true"
+                (blur)="onCidadeBlur()"
+              />
+
+              <div *ngIf="showCidadeDropdown && sugestoesCidades.length > 0" class="dropdown">
+                <div
+                  *ngFor="let c of sugestoesCidades"
+                  class="dropdown-item"
+                  (mousedown)="selecionarCidade(c)"
+                >
+                  <strong>{{ c.cidadeNome }}</strong>
+                  <span *ngIf="c.estadoUf"> ({{ c.estadoUf }})</span>
+                  <span *ngIf="c.nome"> - {{ c.nome }}</span>
+                </div>
+              </div>
+            </div>
+
+            <small class="hint" *ngIf="mode === 'edit'">Cidade/UF ficam bloqueados no modo editar.</small>
+            
+          </div>
+            
+          <div class="form-group col-md-2">
+            <label for="estadoUf">UF</label>
+            <input id="estadoUf" type="string" nbInput fullWidth formControlName="estadoUf"/>
+          </div>
+           
+        </div>
+
+        <!-- Logradouro -->
+        <div class="row">
+          <div class="form-group col-md-10">
+            <label>Logradouro</label>
+
+            <div class="autocomplete">
+              <input
+                nbInput
+                fullWidth
+                class="logradouro-input"
+                [formControl]="logradouroCtrl"
+                placeholder="Digite o logradouro..."
+                (focus)="onLogradouroFocus()"
+                (blur)="onLogradouroBlur()"
+              />
+
+              <div *ngIf="showLogradouroDropdown && sugestoesLogradouros.length > 0" class="dropdown">
+                <div
+                  *ngFor="let l of sugestoesLogradouros"
+                  class="dropdown-item"
+                  (mousedown)="selecionarLogradouro(l)"
+                >
+                  <strong>{{ l.tipoLogradouro }}</strong>
+                  <strong>{{ ' - ' }}</strong>
+                  <strong>{{ l.nome }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <small class="hint" *ngIf="!cidadeId">Selecione uma cidade válida antes de buscar logradouros.</small>
+          </div>
+
+          <div class="form-group col-md-2">
+            <label for="tipoLogadouro">Tipo</label>
+            <input id="tipoLogradouro" type="string" nbInput fullWidth formControlName="tipoLogradouro"/>
+          </div>
+
+        </div>
+
+        <!-- Bairro -->
+        <div class="row">
+          <div class="form-group col-md-12">
+            <label>Bairro</label>
+
+            <div class="autocomplete">
+              <input
+                nbInput
+                fullWidth
+                class="bairro-input"
+                [formControl]="bairroCtrl"
+                placeholder="Digite o bairro..."
+                (focus)="onBairroFocus()"
+                (blur)="onBairroBlur()"
+              />
+
+              <div *ngIf="showBairroDropdown && sugestoesBairros.length > 0" class="dropdown">
+                <div
+                  *ngFor="let b of sugestoesBairros"
+                  class="dropdown-item"
+                  (mousedown)="selecionarBairro(b)"
+                >
+                  <strong>{{ b.nome }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <small class="hint" *ngIf="!cidadeId">Selecione uma cidade válida antes de buscar bairros.</small>
+          </div>
+        </div>
+
+        <!-- Números -->
+        <div class="row">
+          <div class="form-group col-md-3">
+            <label for="numeroIni">Número Início</label>
+            <input id="numeroIni" type="number" nbInput fullWidth formControlName="numeroIni" placeholder="Ex: 1" />
+          </div>
+
+          <div class="form-group col-md-3">
+            <label for="numeroFim">Número Fim</label>
+            <input id="numeroFim" type="number" nbInput fullWidth formControlName="numeroFim" placeholder="Ex: 99999999" />
+          </div>
+
+          <div class="form-group col-md-6">
+            <label for="identificacao">Identificação</label>
+            <nb-select formControlName="identificacao" placeholder="Selecione..." appSelectStyle>
+              <nb-option *ngFor="let opt of identificacaoOptions" [value]="opt.value">{{ opt.label }}</nb-option>
+            </nb-select>
+          </div>
+        </div>
+
+      </nb-card-body>
+
+      <nb-card-footer>
+        <button nbButton hero status="danger" class="mr-1" (click)="fecharJanelaModal('cancel')">Cancelar</button>
+        <button nbButton hero status="primary" (click)="salvar()" [disabled]="!cepForm.valid || saving">Salvar</button>
+      </nb-card-footer>
+
+    </nb-card>
+  </form>
+</div>

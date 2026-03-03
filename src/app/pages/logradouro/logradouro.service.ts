@@ -68,6 +68,7 @@ export class LogradouroService extends BaseResourceService<Logradouro> {
       .pipe(
         map((resp) => {
           const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
+          console.log('LISTA REST ', lista);
           return (lista ?? [])
             .filter((x: any) => x && typeof x === 'object')
             .map((x: any) => LogradouroSimple.fromJson(x));             // 👈 AQUI

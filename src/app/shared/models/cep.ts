@@ -9,12 +9,14 @@ export class Cep extends BaseResourceModel {
     public numeroIni?: number,
     public numeroFim?: number,
     public identificacao?: string,
+    public estadoUf?: string,
 
     public bairroId?: number,
     public bairroNome?: string,
     public bairro?: Bairro,
 
     public logradouroId?: number,
+    public tipoLogradouro?: string,
     public logradouroNome?: string,
     public logradouro?: Logradouro,
 

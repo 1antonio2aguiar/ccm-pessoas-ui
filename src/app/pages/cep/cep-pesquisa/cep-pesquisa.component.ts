@@ -19,6 +19,7 @@ import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CidadeService } from '../../cidades/cidade.service'; 
 import { Cidade } from '../../../shared/models/cidade';
+import { CepIudComponent } from '../cep-iud/cep-iud.component';
  
 @Component({
   selector: 'ngx-cep-pesquisa',
@@ -45,17 +46,11 @@ export class CepPesquisaComponent implements OnInit{
   selectedEtapaId: number;
 
   settings = {
-    //mode: 'external',
+    mode: 'external',
 
     pager: {
       perPage: this.filtro.itensPorPagina, // Define o número de linhas por página
       display: true, // Exibe o paginador
-    },
-
-     actions: {
-      add: true,
-      edit: true,
-      delete: true,
     },
 
     add: {
@@ -81,6 +76,12 @@ export class CepPesquisaComponent implements OnInit{
     columns: {
       id: {
         title: 'ID',
+        type: 'number',
+        hide: true,
+      },
+
+      estadoUf: {
+        title: 'UF',
         type: 'number',
         hide: true,
       },
@@ -235,6 +236,7 @@ export class CepPesquisaComponent implements OnInit{
           },
           error: (err) => console.error('Erro ao buscar cidades:', err),
         });
+        
       });
 
     // seus filtros do grid podem continuar, mas AGORA você vai ignorar cidadeNome porque tirou a coluna.
@@ -258,60 +260,57 @@ export class CepPesquisaComponent implements OnInit{
     });
   }
 
-  onCreateConfirm(event) {
-    if (!event.newData.distritoId) {
-      this.toastrService.show(
-        'Selecione uma cidade para preencher corretamente.',
-        'Atenção',
-        { status: 'warning' },
-      );
-      event.confirm.reject();
-      return;
-    }
+  onCreateConfirm() {
+    this.abrirModalAddCep();
+  }
 
-    this.cepService.create(event.newData).subscribe({
-      next: () => {
-        this.listar();
-        event.confirm.resolve();
-        this.toastrService.show(
-          'Novo cep cadastrado com sucesso!',
-          'Cadastro Realizado',
-          { status: 'success', icon: 'checkmark-circle-outline' },
-        );
-      },
-      error: (error) => {
-        console.error('Erro ao criar cep:', error);
-        event.confirm.reject();
-      },
+  async abrirModalAddCep() {
+      const buttonsConfig: NbWindowControlButtonsConfig = {
+        minimize: false,
+        maximize: false,
+        fullScreen: true,
+        close: true
+      };
+  
+      this.windowService.open(CepIudComponent, {
+        title: `Cadastrar Cep`,
+        buttons: buttonsConfig,
+        context: { mode: 'add' }
+      }).onClose.subscribe((reason: string | undefined) => {
+        if (reason === 'atualizado' || reason === 'save') {
+          this.listar();
+          this.showToast('Atleta cadastrado com sucesso!', 'success');
+      }
     });
   }
 
-  onSaveConfirm(event) {
-    // mantém ids que não podem mudar
-    event.newData.distritoId = event.data.distritoId;
-    event.newData.distritoNome = event.data.distritoNome;
+  onSaveConfirm(event: any) {
+    const item = event?.data;
+    if (!item?.id) return;
 
-    // garante que o ID continue (muito importante pro grid)
-    event.newData.id = event.data.id;
+    this.abrirModalEditCep(item);
+  }
 
-    this.cepService.update(event.newData).subscribe({
-      next: () => {
-        // ✅ 1) resolve primeiro (atualiza a linha no grid)
-        event.confirm.resolve(event.newData);
-        
-        // ✅ 2) depois recarrega (próximo tick)
-        //setTimeout(() => this.listar(), 0);
+  async abrirModalEditCep(cep: any) {
+    const buttonsConfig: NbWindowControlButtonsConfig = {
+      minimize: false,
+      maximize: false,
+      fullScreen: true,
+      close: true
+    };
 
-        this.toastrService.show(
-          `Cep "${event.newData.cep}" foi atualizado com sucesso!`,
-          'Atualização Realizada',
-          { status: 'success', icon: 'edit-outline' },
-        );
+    this.windowService.open(CepIudComponent, {
+      title: `Editar Cep`,
+      buttons: buttonsConfig,
+      context: {
+        mode: 'edit',
+        cep: cep, // 👈 manda o registro pra popular o form
       },
-      error: (error) => {
-        console.error('Erro ao editar cep:', error);
-        event.confirm.reject();
-      },
+    }).onClose.subscribe((reason: string | undefined) => {
+      if (reason === 'save' || reason === 'atualizado') {
+        this.listar();
+        this.showToast('Cep atualizado com sucesso!', 'success');
+      }
     });
   }
   
@@ -444,6 +443,15 @@ export class CepPesquisaComponent implements OnInit{
         const ceps = response.ceps ?? [];
         this.source.load(ceps);
       });
+  }
+
+  showToast(message: string, status: string) {
+    const config: Partial<NbToastrConfig> = {
+      status: status,
+      duration: 3000,
+      preventDuplicates: true,
+    };
+    this.toastrService.show(message, '', config);
   }
 }
 

@@ -1,0 +1,64 @@
+nb-select[appselectstyle] {
+  display: block !important;
+}
+
+.readonly-input {
+  background-color: #f7f9fc;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  opacity: 0.75;
+}
+
+.autocomplete {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 9999;
+  width: 100%;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #e4e9f2;
+  border-radius: 6px;
+  background: #fff;
+  margin-top: 4px;
+}
+
+.dropdown-item {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #f7f9fc;
+}
+
+/* Bloqueia CEP e Cidade no modo EDIT */
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  .cep-input,
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  .cidade-input {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* (IUD) bloquear campos pelo formControl disabled */
+.cidade-input:disabled,
+.cep-input:disabled {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}

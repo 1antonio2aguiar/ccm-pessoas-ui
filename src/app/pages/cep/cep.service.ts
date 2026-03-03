@@ -37,6 +37,7 @@ export class CepService extends BaseResourceService<Cep> {
           ceps,
           total: response.totalElements,
         };
+        //console.log('LISTA ', resultado)
         return resultado;
       });
   }
@@ -59,7 +60,7 @@ export class CepService extends BaseResourceService<Cep> {
       .toPromise()
       .then(response => {
         // Lidar com a resposta da API
-        console.log('Cep criado com sucesso:', response); // Log para verificar a resposta
+        //console.log('Cep criado com sucesso:', response); // Log para verificar a resposta
         return response; // Retorna a resposta para o Observable
       }));
   }
