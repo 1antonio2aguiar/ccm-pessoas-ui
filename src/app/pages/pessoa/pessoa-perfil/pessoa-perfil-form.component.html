@@ -1,0 +1,182 @@
+<nb-card size="large" class="perfil-card">
+
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>{{ cardHeaderTitle }}</span>
+    <div class="form-header-buttons">
+      <button nbButton status="basic" type="button" (click)="onCancelar()" [disabled]="isLoading" size="small" ghost>
+        <nb-icon icon="close-outline" pack="eva"></nb-icon> CANCELAR
+      </button>
+
+      <button nbButton status="primary" type="submit" size="small" (click)="$event.preventDefault(); onSubmit()"
+        style="margin-left: 10px;" [disabled]="pessoaForm.invalid || isLoading"> <!-- << LINHA MODIFICADA -->
+
+        <nb-icon icon="save-outline" pack="eva" *ngIf="!isLoading"></nb-icon>
+        {{ modoEdicao ? 'SALVAR ALTERAÇÕES' : 'SALVAR PERFIL' }}
+      </button>
+
+    </div>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div class="perfil-form-wrapper">
+      <form [formGroup]="pessoaForm" (ngSubmit)="onSubmit()">
+        <!-- TODO: Cole aqui todo o conteúdo do seu formulário de perfil -->
+        <!-- Linha 1: Nome -->
+        <div class="row">
+          <div class="col-md-12 form-group">
+            <label for="nome" class="label">Nome Completo / Razão Social</label>
+            <input nbInput fullWidth id="nome" placeholder="Nome Completo ou Razão Social" formControlName="nome">
+            <!-- Adicionar mensagens de erro de validação aqui -->
+          </div>
+        </div>
+
+        <!-- Linha 2: Tipo Pessoa, Situação, Tipo Pessoa (ID) -->
+        <div class="row">
+          <div class="col-md-4 form-group">
+            <label class="label">Fisíca/Jurídica:</label>
+            <nb-radio-group formControlName="fisicaJuridica" id="fisicaJuridica" name="fisicaJuridica"
+              class="radio-group-inline d-flex align-items-center">
+              <nb-radio value="F" class="mr-3">Física</nb-radio>
+              <nb-radio value="J">Jurídica</nb-radio>
+            </nb-radio-group>
+          </div>
+
+          <div class="col-md-4 form-group">
+            <label for="tipoPessoaId" class="label">Tipo Pessoa</label>
+            <nb-select fullWidth id="tipoPessoaId" placeholder="Selecione..." formControlName="tipoPessoaId">
+              <nb-option *ngFor="let tp of tiposPessoas" [value]="tp.id">{{ tp.descricao }}</nb-option>
+            </nb-select>
+          </div>
+
+          <div class="col-md-4 form-group">
+            <label for="situacao" class="label">Situação</label>
+            <nb-select fullWidth placeholder="Selecione" formControlName="situacao">
+              <nb-option value="1">ATIVO</nb-option>
+              <nb-option value="2">INATIVO</nb-option>
+              <nb-option value="3">BLOQUEADO</nb-option>
+              <nb-option value="4">OUTRO</nb-option>
+            </nb-select>
+          </div>
+        </div>
+
+        <div class="dados-pessoa-wrapper">
+
+          <!-- PESSOA FÍSICA -->
+          <div *ngIf="isPessoaFisica()" class="tipo-pessoa-bloco">
+            <h6>Dados Pessoa Física</h6>
+
+            <div class="row">
+              <div class="col-md-3 form-group">
+                <label for="cpf" class="label">CPF</label>
+                <input nbInput #cpfInput fullWidth id="cpf" placeholder="000.000.000-00" 
+                  formControlName="cpf"
+                  ngxMaskFormatter="cpf" >
+              </div>
+
+              <div class="col-md-3 form-group">
+                <label for="dataNascimento" class="label">Data de Nascimento</label>
+                <input #dataNascimentoInput nbInput fullWidth id="dataNascimento" placeholder="dd/MM/yyyy"
+                  [nbDatepicker]="pickerFisica">
+                <nb-datepicker #pickerFisica format="dd/MM/yyyy"></nb-datepicker>
+              </div>
+
+              <div class="col-md-3 form-group">
+                <label class="label">Sexo</label>
+                <nb-select fullWidth placeholder="Selecione" formControlName="sexo">
+                  <nb-option value="M">Masculino</nb-option>
+                  <nb-option value="F">Feminino</nb-option>
+                  <nb-option value="O">Outro</nb-option>
+                </nb-select>
+              </div>
+
+              <div class="col-md-3 form-group">
+                <label for="estadoCivil" class="label">Estado Civil</label>
+                <nb-select fullWidth placeholder="Selecione" formControlName="estadoCivil">
+                  <nb-option value="A">Amaziado(a)</nb-option>
+                  <nb-option value="C">Casado(a)</nb-option>
+                  <nb-option value="S">Solteiro(a)</nb-option>
+                  <nb-option value="U">União estável</nb-option>
+                  <nb-option value="V">Viúvo(a)</nb-option>
+                  <nb-option value="O">Outro</nb-option>
+                </nb-select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label for="nomeMae" class="label">Nome da Mãe</label>
+                <input nbInput fullWidth id="nomeMae" placeholder="Nome completo da mãe" formControlName="nomeMae">
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="nomePai" class="label">Nome do Pai</label>
+                <input nbInput fullWidth id="nomePai" placeholder="Nome completo do pai" formControlName="nomePai">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <label for="observacaoFisica" class="label">Observação</label>
+                <textarea rows="1" nbInput fullWidth placeholder="Observação" formControlName="observacao"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- PESSOA JURÍDICA -->
+          <div *ngIf="isPessoaJuridica()" class="tipo-pessoa-bloco">
+            <h6>Dados Pessoa Jurídica</h6>
+
+            <div class="row">
+              <div class="col-md-4 form-group">
+                <label for="cnpj" class="label">CNPJ</label>
+                <input nbInput #cnpjInput fullWidth id="cnpj" placeholder="00.000.000/0000-00" formControlName="cnpj"
+                  ngxMaskFormatter="cnpj">
+              </div>
+
+              <div class="col-md-4 form-group">
+                <label for="tipoEmpresa" class="label">Tipo de Empresa</label>
+                <nb-select fullWidth placeholder="Selecione o Tipo" formControlName="tipoEmpresa">
+                  <nb-option value="0">LTDA</nb-option>
+                  <nb-option value="1">S.A.</nb-option>
+                  <nb-option value="2">MEI</nb-option>
+                  <nb-option value="3">EIRELI</nb-option>
+                  <nb-option value="4">Outro</nb-option>
+                </nb-select>
+              </div>
+
+              <div class="col-md-4 form-group">
+                <label class="label">Micro Empresa?</label>
+                <nb-radio-group formControlName="microEmpresa" id="microEmpresa" name="microEmpresa"
+                  class="radio-group-inline d-flex align-items-center">
+                  <nb-radio value="S" class="mr-3">Sim</nb-radio>
+                  <nb-radio value="N">Não</nb-radio>
+                </nb-radio-group>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <label for="nomeFantasia" class="label">Nome Fantasia</label>
+                <input nbInput fullWidth id="nomeFantasia" placeholder="Nome Fantasia" formControlName="nomeFantasia">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <label for="objetoSocial" class="label">Objeto Social</label>
+                <input nbInput fullWidth id="objetoSocial" placeholder="Objeto Social" formControlName="objetoSocial">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <label for="observacaoJuridica" class="label">Observação</label>
+                <textarea rows="1" nbInput fullWidth placeholder="Observação" formControlName="observacao"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </nb-card-body>
+</nb-card>

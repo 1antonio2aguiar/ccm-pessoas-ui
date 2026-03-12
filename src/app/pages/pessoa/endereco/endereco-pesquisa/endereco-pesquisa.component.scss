@@ -1,0 +1,130 @@
+// No seu endereco-pesquisa.component.scss (ou global)
+
+.endereco-item {
+  border: 1px solid #e0e0e0; // Borda suave como no exemplo
+  border-radius: 8px;      // Cantos arredondados
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #fff; // Fundo branco
+
+  .endereco-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .nome-contato {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+    }
+    .telefone-contato {
+      font-size: 0.9rem;
+      color: #757575;
+      margin-left: 10px;
+    }
+  }
+
+  .detalhes-endereco {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 12px; // Espaço antes dos botões/tags
+
+    p {
+      margin-bottom: 2px; // Menor espaço entre as linhas do endereço
+    }
+  }
+
+  .tag-padrao {
+    display: inline-block;
+    border: 1px solid #ff4747; // Vermelho da Shopee para padrão
+    color: #ff4747;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 10px; // Espaço se houver outros botões ao lado
+  }
+
+  .acoes-endereco {
+    display: flex;
+    justify-content: flex-end; // Alinha ações à direita
+    align-items: center;
+    gap: 8px; // Espaço entre os botões/links de ação
+
+    .link-acao {
+      color: #007bff; // Azul padrão para links
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      background: none;
+      border: none;
+      padding: 0;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    button[nbButton] { // Estilo para o botão "Definir como padrão"
+        &.outline-button { // Para um botão mais sutil como o "Definir como padrão"
+            // Você pode usar nbButton outline status="basic" ou control
+            // ou adicionar estilos customizados se necessário
+        }
+    }
+  }
+
+  // Layout combinado para detalhes e ações
+  .endereco-conteudo-inferior {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; // Alinha a tag padrão e as ações na base
+  }
+}
+
+// Ajuste para o botão "Inserir novo endereço" no header do card
+nb-card-header button[nbButton] {
+  &.status-danger, &.status-warning { // Para simular o laranja/vermelho da Shopee
+    // Nebular já deve aplicar cores, mas você pode ajustar se precisar
+    // Ex: background-color: #ff6f00 !important;
+    //     border-color: #ff6f00 !important;
+  }
+}
+
+// No seu arquivo SCSS global (ex: theme.scss ou styles.scss)
+// ou no SCSS do seu componente (se o ViewEncapsulation permitir ou você usar ::ng-deep)
+
+// Classe para nosso botão de exibição de tipo de endereço
+.tipo-endereco-display {
+  &[disabled] { // Aplica-se apenas quando o botão com esta classe está desabilitado
+    cursor: default !important; // Garante que o cursor não indique "não permitido"
+    opacity: 1 !important; // Força a opacidade total, removendo o esmaecimento do disabled
+
+    // Estilos específicos para o status 'info' (CASA) quando disabled
+    &.status-info {
+      //border-color: nb-theme(color-info-500) !important; // Cor da borda info
+     // color: nb-theme(color-info-default) !important;       // Cor do texto info
+     // background-color: transparent !important; // Garante que não haja fundo
+    }
+
+    // Estilos específicos para o status 'warning' (TRABALHO) quando disabled
+    &.status-warning {
+      //border-color: nb-theme(color-warning-500) !important; // Cor da borda warning
+      //color: nb-theme(color-warning-default) !important;       // Cor do texto warning
+      //background-color: transparent !important;
+    }
+
+    // Estilos para o status 'basic' (caso caia nele) quando disabled
+    &.status-basic {
+      //border-color: nb-theme(button-outline-basic-border-color) !important; // Ou uma cor básica que você prefira
+      //color: nb-theme(button-outline-basic-text-color) !important;             // Ou uma cor básica que você prefira
+      //background-color: transparent !important;
+    }
+
+    // Remover qualquer sombra de foco que possa aparecer em botões disabled
+    &:focus {
+      box-shadow: none !important;
+    }
+  }
+}

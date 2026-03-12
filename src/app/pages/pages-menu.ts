@@ -1,10 +1,10 @@
 import { NbMenuItem } from '@nebular/theme';
 
 export const MENU_ITEMS: NbMenuItem[] = [
-  {
+ /* {
     title: 'AÇÕES',
     group: true,
-  },
+  },*/
   {
     title: 'Cadastros',
     icon: 'layout-outline',
@@ -36,6 +36,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
       {
         title: 'Países',
         link: '/pages/paises/pais-iud',
+      },
+      {
+        title: 'Pessoas',
+        icon: 'people-outline',
+        link: '/pages/pessoa/pessoa-pesquisa',
       },
       {
         title: 'Tipos Logradouros',

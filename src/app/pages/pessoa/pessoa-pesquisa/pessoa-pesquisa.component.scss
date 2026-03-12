@@ -1,0 +1,18 @@
+
+.model-full {
+    width: 80% !important; 
+}
+
+:host ::ng-deep ng2-smart-table-pager {
+    justify-content: center;
+}
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 1rem;
+}
+.loading{
+  padding: .5rem 0;
+}

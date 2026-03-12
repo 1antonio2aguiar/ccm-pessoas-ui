@@ -6,8 +6,6 @@ import { HttpParams } from '@angular/common/http';
 import { NbDialogService, NbToastrService, NbWindowControlButtonsConfig, NbWindowService, NbToastrConfig } from '@nebular/theme';
 
 import { CepService } from '../cep.service';
-import { Cep } from '../../../shared/models/cep';
-import { filter } from 'rxjs/operators';
 import { CepPipe } from '../../../shared/pipes/cep.pipe';
 import { BuscaCidadeDistritoComponent } from '../distrito/BuscaCidadeDistritoComponent';
 import { BuscaLogradouroPorCidadeComponent } from '../logradouro/BuscaLogradouroPorCidadeComponent';

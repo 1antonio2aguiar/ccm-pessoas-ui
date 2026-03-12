@@ -28,12 +28,12 @@ import {
 } from '@nebular/theme';
 
 //import { PessoasComponent } from './pessoas/pessoas-busca/pessoas.component';
-import { ConfirmDeleteComponent } from './base-resource-confirmation-delete/confirm-delete-modal.component';
+//import { ConfirmDeleteComponent } from './base-resource-confirmation-delete/confirm-delete-modal.component';
 import { ConfirmationDialogComponent } from './base-resource-confirmation-delete/confirmation-dialog/confirmation-dialog.component';
 
 @NgModule({
   declarations: [
-    ConfirmDeleteComponent,
+    //ConfirmDeleteComponent,
     ConfirmationDialogComponent,
   ],
   imports: [

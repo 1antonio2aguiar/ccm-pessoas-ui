@@ -1,0 +1,116 @@
+// Garante que o componente host e o page-container ocupem a altura disponível
+// e gerenciem o overflow para evitar rolagem na página principal.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%; // Ocupa a altura do seu contêiner pai (geralmente nb-layout-column)
+  overflow: hidden; // Impede que o próprio host role
+}
+
+.page-container {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch; // Faz com que as colunas filhas tenham a mesma altura
+  gap: 1.5rem; // Espaço entre a coluna do menu e a coluna do formulário
+  width: 100%;
+  flex-grow: 1; // Para ocupar o espaço vertical disponível no :host
+  overflow: hidden; // O page-container também não deve rolar
+  padding: 1rem; // Padding geral para o conteúdo da página. Ajuste conforme o alinhamento com "AÇÕES".
+                 // Se o menu "AÇÕES" não tiver padding no topo, este pode ser 0 ou menor.
+}
+
+// Coluna para o menu "Minha Conta"
+.menu-column-container {
+  flex: 0 0 260px; // Largura fixa para o menu (ajuste se necessário)
+  max-width: 280px; // Uma largura máxima
+  display: flex; // Para o card interno poder usar flex-grow
+
+  .menu-card {
+    width: 100%;
+    flex-grow: 1; // O card cresce para preencher a altura da coluna do menu
+    display: flex;
+    flex-direction: column;
+    margin-top: 0; // Garante que não haja margem superior no card
+
+    nb-card-body {
+      flex-grow: 1; // O corpo do card cresce
+      overflow-y: auto; // Rolagem para o menu se for muito longo
+      padding: 1rem; // Padding interno do corpo do card
+
+      .sidebar-header {
+        padding-bottom: 1rem; // Espaço abaixo do título "Minha Conta"
+        text-align: left; // Alinha o texto do header do menu à esquerda
+        h6 {
+          margin-bottom: 0; // Remove margem inferior do h6 se houver
+          font-weight: bold; // Deixa o título em negrito
+        }
+      }
+    }
+  }
+}
+
+// Coluna para o formulário principal
+.form-column-container {
+  flex: 1; // Ocupa o espaço restante
+  min-width: 0; // Para comportamento correto do flex item em larguras menores
+  display: flex;
+  flex-direction: column;
+
+  nb-card {
+    width: 100%;
+    flex-grow: 1; // O card do formulário cresce para preencher a altura
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // O card em si não rola, o body rolará
+    margin-top: 0; // Garante que não haja margem superior no card
+
+    nb-card-header {
+      flex-shrink: 0; // Impede que o header encolha
+      // d-flex, justify-content-between, align-items-center já estão no HTML
+      padding: 0.75rem 1.25rem; // Padding padrão do header do card, ajuste se necessário
+
+      .form-header-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem; // Espaço entre os botões no header
+      }
+    }
+
+    nb-card-body {
+      flex-grow: 1; // O corpo do card (onde o formulário está) deve crescer
+      overflow-y: auto; // Adiciona rolagem vertical SE o conteúdo do formulário for maior
+      padding: 1.5rem; // Padding interno do corpo do card
+
+      h5 { // Estilo para os títulos das seções "Dados Pessoa Física/Jurídica"
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+        font-weight: 500; // Um pouco mais de peso na fonte
+      }
+
+      hr {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem; // Espaçamento padrão entre os form-groups
+      }
+    }
+  }
+}
+
+// Estilos para o radio-group inline
+.radio-group-inline {
+  // display: flex e align-items-center já estão no HTML via classes Bootstrap
+  nb-radio {
+    margin-right: 20px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// Spinner no botão de submit
+nb-spinner {
+  margin-right: 0.5rem; // Espaço entre o spinner e o texto do botão
+}

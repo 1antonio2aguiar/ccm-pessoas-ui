@@ -1,0 +1,21 @@
+<div class="page-container">
+  <!-- Coluna para o Menu "Minha Conta" -->
+  <div class="menu-column-container">
+    <nb-card class="menu-card">
+      <nb-card-body>
+        <div class="sidebar-header">
+          <!-- Você pode querer que o ID da pessoa apareça aqui se estiver editando -->
+          <h6>{{ pessoaId ? ' ' + pessoaNome + '' : '' }}</h6>
+        </div>
+        <!-- Os links do menu agora navegarão para rotas filhas -->
+        <nb-menu [items]="menuItems"></nb-menu>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- Coluna para o Conteúdo Principal (que virá do router-outlet) -->
+  <div class="content-column-container">
+    <!-- Este router-outlet carregará o PerfilFormComponent, EnderecoPesquisaComponent, etc. -->
+    <router-outlet></router-outlet>
+  </div>
+</div>

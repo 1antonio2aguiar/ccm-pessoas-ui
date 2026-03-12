@@ -7,6 +7,7 @@ import { BaseResourceService } from '../../shared/services/base-resource.service
 import { environment } from '../../../environments/environment';
 import { Filters } from '../../shared/filters/filters';
 import { Cep } from '../../shared/models/cep';
+import { CepOut } from '../../shared/models/cepOut';
 
 
 @Injectable({
@@ -80,13 +81,40 @@ export class CepService extends BaseResourceService<Cep> {
       }));
   }
 
-  filtrarPorCep(cep: string): Observable<Cep[]> {
+  filtrarPorCep(cep: string): Observable<CepOut[]> {
     const params = new HttpParams().set('cep', (cep ?? '').replace(/\D/g, ''));
+
     return this.http.get<any>(`${this.apiPath}/filter`, { params }).pipe(
       map((resp) => {
         const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
-        return (lista ?? []).map((x: any) => Cep.fromJson(x));
+        console.log()
+        return (lista ?? []).map((x: any) => CepOut.fromJson(x));
       }),
     );
   }
+
+  findByCep(numeroCep: string): Observable<CepOut> {
+      const url = `${this.apiPath}/numero/${numeroCep}`;
+      return this.http.get<CepOut>(url); 
+  }
+
+  buscarCepsPorLogradouroBairroNumero(
+    logradouroId: number,
+    bairroId: number,
+    numero: number
+  ): Observable<string[]> {
+    const params = new HttpParams()
+      .set('logradouroId', String(logradouroId))
+      .set('bairroId', String(bairroId))
+      .set('numero', String(numero));
+
+    return this.http.get<string[]>(`${this.apiPath}/buscar-cep`, { params }).pipe(
+      map((lista: string[] | null) =>
+        (lista ?? [])
+          .filter((cep) => !!cep)
+          .map((cep) => String(cep).trim())
+      )
+    );
+  }
+  
 }

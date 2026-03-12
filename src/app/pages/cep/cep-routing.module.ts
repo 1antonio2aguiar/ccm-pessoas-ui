@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { CepComponent } from './cep.component';
 import { CepPesquisaComponent } from './cep-pesquisa/cep-pesquisa.component';
 import { CepIudComponent } from './cep-iud/cep-iud.component';
-import { CepInputComponent } from './cep-pesquisa/CepInputComponent';
+import { CepInputModule } from './cep-input.module';
+//import { CepInputComponent } from './cep-pesquisa/CepInputComponent';
 
 const routes: Routes = [{
   path: '',
@@ -16,7 +17,10 @@ const routes: Routes = [{
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+
+  exports: [RouterModule,
+    CepInputModule,
+  ]
 })
 
 export class CepRoutingModule { }
@@ -25,5 +29,5 @@ export const cepRoutedComponents = [
   CepComponent,
   CepPesquisaComponent,
   CepIudComponent,
-  CepInputComponent
+  //CepInputComponent
 ];

@@ -5,6 +5,7 @@ import { HttpParams } from '@angular/common/http';
 
 import { FiltroPaginado } from '../../../shared/filters/filtro-paginado';
 import { TipoPessoaService } from '../tipo-pessoa.service';
+import { TipoPessoa } from '../../../shared/models/tipoPessoa';
 
 import { ConfirmationDialogComponent } from '../../components/base-resource-confirmation-delete/confirmation-dialog/confirmation-dialog.component';
 
@@ -76,18 +77,20 @@ export class TipoPessoaIudComponent implements OnInit {
     });
   }
 
-  listar() {
+  listar(): void {
+    this.filtro.params = new HttpParams();
+
     this.service.pesquisar(this.filtro)
-      .then(response => {
-        const tiposPessoas = response.tiposPessoas;
-        this.source.load(tiposPessoas);
+      .then((tiposPessoas: TipoPessoa[]) => {
+        this.source.load(tiposPessoas ?? []);
       })
       .catch(error => {
         console.error('Erro ao listar tipos de pessoa:', error);
+        this.source.load([]);
       });
   }
 
-  onSaveConfirm(event) {
+  onSaveConfirm(event: any): void {
     this.service.update(event.newData)
       .subscribe({
         next: () => {
@@ -107,7 +110,7 @@ export class TipoPessoaIudComponent implements OnInit {
       });
   }
 
-  onCreateConfirm(event) {
+  onCreateConfirm(event: any): void {
     this.service.create(event.newData)
       .subscribe({
         next: () => {
@@ -127,7 +130,7 @@ export class TipoPessoaIudComponent implements OnInit {
       });
   }
 
-  onDeleteConfirm(event): void {
+  onDeleteConfirm(event: any): void {
     const item = event.data;
 
     this.dialogService.open(ConfirmationDialogComponent, {
@@ -171,35 +174,34 @@ export class TipoPessoaIudComponent implements OnInit {
     });
   }
 
-  onTableFilter(filters: any) {
+  onTableFilter(filters: any): void {
     let params = new HttpParams();
 
     const filtersArray = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
-    const idFilter = filtersArray.find(f => f.field === 'id');
-    const descricaoFilter = filtersArray.find(f => f.field === 'descricao');
+    const idFilter = filtersArray.find((f: any) => f.field === 'id');
+    const descricaoFilter = filtersArray.find((f: any) => f.field === 'descricao');
 
-    if (idFilter && idFilter.search) {
+    if (idFilter?.search) {
       params = params.set('id', idFilter.search);
     }
-    if (descricaoFilter && descricaoFilter.search) {
+
+    if (descricaoFilter?.search) {
       params = params.set('descricao', descricaoFilter.search);
     }
 
     this.filtro.params = params;
 
-    this.service.pesquisar({
-      ...this.filtro, params,
-      resetParams: function (): void {
-        throw new Error('Function not implemented.');
-      }
-    })
-      .then(response => {
-        const tiposPessoas = response.tiposPessoas;
-        this.source.load(tiposPessoas);
+    this.service.pesquisar(this.filtro)
+      .then((tiposPessoas: TipoPessoa[]) => {
+        this.source.load(tiposPessoas ?? []);
+      })
+      .catch(error => {
+        console.error('Erro ao filtrar tipos de pessoa:', error);
+        this.source.load([]);
       });
   }
 
-  onSearch(query: string = '') {
+  onSearch(query: string = ''): void {
     let params = new HttpParams();
 
     const isId = !isNaN(Number(query));
@@ -214,15 +216,13 @@ export class TipoPessoaIudComponent implements OnInit {
 
     this.filtro.params = params;
 
-    this.service.pesquisar({
-      ...this.filtro, params,
-      resetParams: function (): void {
-        throw new Error('Function not implemented.');
-      }
-    })
-      .then(response => {
-        const tiposPessoas = response.tiposPessoas;
-        this.source.load(tiposPessoas);
+    this.service.pesquisar(this.filtro)
+      .then((tiposPessoas: TipoPessoa[]) => {
+        this.source.load(tiposPessoas ?? []);
+      })
+      .catch(error => {
+        console.error('Erro ao pesquisar tipos de pessoa:', error);
+        this.source.load([]);
       });
   }
 }

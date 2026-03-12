@@ -1,0 +1,84 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>Meus endereços</span>
+    <button nbButton status="primary" size="small" (click)="adicionarNovoEndereco()">
+      <nb-icon icon="plus-outline"></nb-icon> Inserir novo endereço
+    </button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div>
+      <div *ngIf="isLoadingEnderecos" class="text-center my-3">
+        <nb-spinner status="primary"></nb-spinner>
+        <p>Carregando endereços...</p>
+      </div>
+
+      <div *ngIf="!isLoadingEnderecos">
+        <div *ngIf="enderecosParaExibir.length > 0">
+          <div *ngFor="let endereco of enderecosParaExibir" class="endereco-item mb-3 p-3 border rounded">
+            <div class="endereco-header d-flex justify-content-between align-items-start">
+              <div>
+                <span class="nome-contato font-weight-bold d-block">{{ endereco.nomeContato }}</span>
+              </div>
+              <div class="acoes-endereco">
+                  <button nbButton ghost status="info" size="tiny" class="mr-1" (click)="editarEndereco(endereco)">
+                    <nb-icon icon="edit-outline"></nb-icon> Editar
+                  </button>
+                  <button nbButton ghost status="danger" size="tiny" (click)="excluirEnderecoWrapper(endereco)" *ngIf="(!pessoaId && enderecosExemplo.includes(endereco)) || (pessoaId && !endereco.principal)">
+                    <nb-icon icon="trash-2-outline"></nb-icon> Excluir
+                  </button>
+              </div>
+            </div>
+            <hr class="my-2">
+
+            <div class="detalhes-endereco small">
+              <p class="mb-1">
+                <span *ngIf="endereco.tipoLogradouro && endereco.tipoLogradouro !== 'N/I'">
+                {{ endereco.tipoLogradouro }} </span>
+                {{ endereco.logradouroNome }}, Nro: 
+                {{ endereco.numero }}
+                {{ endereco.complemento ? ' ' + endereco.complemento : '' }}
+              </p>
+              <p class="mb-1">{{ endereco.bairroNome }} {{ endereco.cidadeNome }} - {{ endereco.estadoUf }}</p> <!-- Fechei a tag <p> aqui -->
+              <p class="mb-1">CEP: {{ endereco.cep | cep }}</p> 
+            </div>
+
+            
+            <div class="endereco-conteudo-inferior d-flex justify-content-between align-items-center mt-2">
+              <div>
+
+               <button *ngIf="endereco.tipoEnderecoDescricao"
+                        nbButton
+                        size="tiny"
+                        [status]="endereco.tipoEndereco === 0 ? 'info' : (endereco.tipoEndereco === 1 ? 'warning' : 'basic')"
+                        appearance="outline"
+                        disabled
+                        class="tipo-endereco-display"> <!-- Adicionando uma classe para facilitar a estilização -->
+                  {{ endereco.tipoEnderecoDescricao }}
+                </button>
+
+              </div>
+              <div class="acoes-endereco">
+                <button nbButton outline status="basic" size="tiny" *ngIf="!endereco.principal" (click)="definirComoPadraoWrapper(endereco)">
+                  Definir como padrão
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="enderecosParaExibir.length === 0">
+          <div *ngIf="pessoaId" class="text-center my-3 p-4 border rounded bg-light">
+            <nb-icon icon="pin-outline" pack="eva" style="font-size: 3rem; opacity: 0.5;"></nb-icon>
+            <p class="mt-2 mb-1">Nenhum endereço cadastrado para esta pessoa.</p>
+            <p class="text-muted small">Clique em "Inserir novo endereço" para começar.</p>
+          </div>
+          <div *ngIf="!pessoaId" class="alert alert-info text-center" role="alert">
+            <nb-icon icon="alert-circle-outline" pack="eva" class="mr-1"></nb-icon>
+            Para gerenciar os endereços, primeiro salve os dados da pessoa. Os endereços adicionados aqui serão temporários.
+          </div>
+        </div>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

@@ -19,18 +19,14 @@ export class TipoPessoaService extends BaseResourceService<TipoPessoa> {
     this.tipoPessoaEventHendlerId = new EventEmitter<TipoPessoa>();
   }
 
-  pesquisar(filtro: FiltroPaginado): Promise<any> {
-  // seu backend IGNORA params, mas vou manter para não quebrar chamadas
-  return this.http
-    .get<TipoPessoa[]>(this.apiPath, { params: filtro.params })
-    .toPromise()
-    .then((lista) => {
-      // como backend retorna array direto
-      const tiposPessoas = lista ?? [];
-      return { tiposPessoas };
+  pesquisar(filtro: FiltroPaginado): Promise<TipoPessoa[]> {
+    return this.http
+      .get<TipoPessoa[]>(this.apiPath, { params: filtro.params })
+      .toPromise()
+      .then((lista) => {
+        return (lista ?? []).map(item => TipoPessoa.fromJson(item));
     });
   }
-
 
   create(tipoPessoa: TipoPessoa): Observable<TipoPessoa> {
     return from(this.http

@@ -27,22 +27,23 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { FormsModule as ngFormsModule } from '@angular/forms';
-
+import { SmartTableFilterMaskDirective } from './directives/SmartTableFilterMaskDirective';
 
 
 @NgModule({
   declarations: [
-  BreadCrumbComponent,
-  PageHeaderComponent,
-  FormFieldErrorComponent,
-  ServerErrorMessagesComponent,
-  TelefonePipe,
-  CpfPipe,
-  CnpjPipe,
-  SexoPipe,
-  SimNaoPipe,
-  CepPipe,
-  
+    BreadCrumbComponent,
+    PageHeaderComponent,
+    FormFieldErrorComponent,
+    ServerErrorMessagesComponent,
+    TelefonePipe,
+    CpfPipe,
+    CnpjPipe,
+    SexoPipe,
+    SimNaoPipe,
+    //CepPipe,
+    SmartTableFilterMaskDirective,
+    
   ],
   imports: [
     CommonModule,
@@ -78,8 +79,8 @@ import { FormsModule as ngFormsModule } from '@angular/forms';
     CnpjPipe,
     SexoPipe,
     SimNaoPipe,
-    CepPipe,
-
+    //CepPipe,
+    //SmartTableFilterMaskDirective
     
 
   ]/*,

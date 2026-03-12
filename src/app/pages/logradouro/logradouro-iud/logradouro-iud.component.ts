@@ -85,7 +85,7 @@ export class LogradouroIudComponent {
         width: '250px',
       },
 
-      tipoLogradouroIdDescricao: {
+      tipoLogradouro: {
         title: 'Tipo',
         type: 'string',
         filter: false,

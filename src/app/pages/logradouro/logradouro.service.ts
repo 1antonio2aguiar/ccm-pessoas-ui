@@ -1,6 +1,6 @@
 import { Injectable, Injector, EventEmitter } from '@angular/core';
-import { Observable, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
@@ -8,6 +8,18 @@ import { BaseResourceService } from '../../shared/services/base-resource.service
 import { FiltroPaginado } from '../../shared/filters/filtro-paginado';
 import { Logradouro } from '../../shared/models/logradouro';
 import { LogradouroSimple } from '../../shared/models/logradouroSimple';
+import { LogradouroPesquisaOut } from '../../shared/models/logradouroPesquisaOut';
+
+interface BackendLogradouroRcd {
+  id: number;
+  tipoLogradouro: string;
+  logradouroNome: string; // O nome da propriedade no DTO é logradouroNome
+  bairros: { id: number; nome: string }[];
+  cidadeNome: string;
+  uf: string;
+  cepId: number;
+  cep: string; // CEP é string no backend
+}
 
 @Injectable({ providedIn: 'root' })
 export class LogradouroService extends BaseResourceService<Logradouro> {
@@ -34,6 +46,7 @@ export class LogradouroService extends BaseResourceService<Logradouro> {
       .toPromise()
       .then((response) => {
         const logradouros = Array.isArray(response) ? response : response?.content;
+        //console.log('RESULTADO ', logradouros)
         return { logradouros };
       });
   }
@@ -75,5 +88,47 @@ export class LogradouroService extends BaseResourceService<Logradouro> {
         }),
       );
   }
+
+  buscarLogradourosPorTipoNome(nome: string, tipoLogradouroId: number, cidadeNome: string, cidadeId: number,): 
+    Observable<LogradouroPesquisaOut[]> {
+        const logradouroApiPath = environment.apiUrl + 'logradouros';
+        let params = new HttpParams();
+
+        // Adiciona os parâmetros apenas se eles tiverem valor
+        if (nome) {
+            params = params.set('nome', nome);
+        }
+        if (tipoLogradouroId) {
+            params = params.set('tipoLogradouroId', tipoLogradouroId.toString());
+        }
+        if (cidadeNome) {
+            params = params.set('cidadeNome', cidadeNome);
+        }
+        if (cidadeId) {
+            params = params.set('cidadeId', cidadeId);
+        }
+
+        // 2. O 'get' agora espera um array diretamente: BackendLogradouroRcd[]
+        return this.http.get<BackendLogradouroRcd[]>(`${logradouroApiPath}/por-cidade-tipo-nome`, { params }).pipe(
+            tap(responseArray => {
+                //console.log('Resposta CRUA da API de logradouros (Array):', responseArray);
+            }),
+            // 3. O 'map' agora opera diretamente no array da resposta
+            map(responseArray => responseArray.map(log => ({
+                id: log.id,
+                tipoLogradouro: log.tipoLogradouro,
+                logradouroNome: log.logradouroNome,
+                bairros: log.bairros,
+                cidadeNome: log.cidadeNome,
+                uf: log.uf,
+                cepId: log.cepId,
+                cep: log.cep ? log.cep.toString() : '' // Pequena proteção para o caso de cep ser null
+            }))),
+            catchError(err => {
+                console.error('Erro ao buscar logradouros por nome:', err);
+                return of([]); // Retorna um array vazio em caso de erro
+            })
+        );
+    }
 
 }

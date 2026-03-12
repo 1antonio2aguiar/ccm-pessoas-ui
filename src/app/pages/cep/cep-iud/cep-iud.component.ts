@@ -220,17 +220,6 @@ export class CepIudComponent implements OnInit {
     this.syncDisabledDependentes();
   }
 
-  private syncDisabledDependentes() {
-    // Logradouro
-    if (!this.cidadeId) {
-      if (this.logradouroCtrl.enabled) this.logradouroCtrl.disable({ emitEvent: false });
-      if (this.bairroCtrl.enabled) this.bairroCtrl.disable({ emitEvent: false });
-    } else {
-      if (this.logradouroCtrl.disabled) this.logradouroCtrl.enable({ emitEvent: false });
-      if (this.bairroCtrl.disabled) this.bairroCtrl.enable({ emitEvent: false });
-    }
-  }
-
   selecionarCidade(c: any) {
     const cidadeId = c?.cidadeId ?? null;
     const distritoId = c?.id ?? null; // <- aqui!
@@ -373,5 +362,16 @@ export class CepIudComponent implements OnInit {
         this.saving = false;
       }
     });
+  }
+
+  private syncDisabledDependentes() {
+    // Logradouro
+    if (!this.cidadeId) {
+      if (this.logradouroCtrl.enabled) this.logradouroCtrl.disable({ emitEvent: false });
+      if (this.bairroCtrl.enabled) this.bairroCtrl.disable({ emitEvent: false });
+    } else {
+      if (this.logradouroCtrl.disabled) this.logradouroCtrl.enable({ emitEvent: false });
+      if (this.bairroCtrl.disabled) this.bairroCtrl.enable({ emitEvent: false });
+    }
   }
 }

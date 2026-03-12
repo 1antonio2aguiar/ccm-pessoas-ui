@@ -1,0 +1,47 @@
+.perfil-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.perfil-card nb-card-body {
+  width: 100%;
+  max-width: 100%;
+}
+
+.perfil-form-wrapper {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+.perfil-form-wrapper form {
+  width: 100%;
+  max-width: 100%;
+}
+
+.tipo-pessoa-bloco {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+.tipo-pessoa-bloco .row {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.tipo-pessoa-bloco [class*="col-md-"] {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: .25rem;
+  font-weight: 600;
+}

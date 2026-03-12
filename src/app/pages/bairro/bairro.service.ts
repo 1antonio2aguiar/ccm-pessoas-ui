@@ -57,21 +57,21 @@ export class BairroService extends BaseResourceService<Bairro> {
   }
 
   filtrarPorCidadeIdENome(cidadeId: number, nome: string, page = 0, size = 20): Observable<BairroSimple[]> {
-      const params = new HttpParams()
-        .set('cidadeId', String(cidadeId))
-        .set('nome', nome ?? '')
-        .set('page', String(page))
-        .set('size', String(size));
-  
-      return this.http
-        .get<any>(`${environment.apiUrl}bairros/filter`, { params })   // 👈 AQUI
-        .pipe(
-          map((resp) => {
-            const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
-            return (lista ?? [])
-              .filter((x: any) => x && typeof x === 'object')
-              .map((x: any) => BairroSimple.fromJson(x));             // 👈 AQUI
-          }),
-        );
-    }
+    const params = new HttpParams()
+      .set('cidadeId', String(cidadeId))
+      .set('nome', nome ?? '')
+      .set('page', String(page))
+      .set('size', String(size));
+
+    return this.http
+      .get<any>(`${environment.apiUrl}bairros/filter`, { params })   // 👈 AQUI
+      .pipe(
+        map((resp) => {
+          const lista = Array.isArray(resp) ? resp : (resp?.content ?? []);
+          return (lista ?? [])
+            .filter((x: any) => x && typeof x === 'object')
+            .map((x: any) => BairroSimple.fromJson(x));             // 👈 AQUI
+        }),
+      );
+  }
 }

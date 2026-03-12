@@ -9,6 +9,7 @@ export class Distrito extends BaseResourceModel {
     public cidadeId?: number,
     public cidadeNome?: string,   // <<< MUITO útil pro dropdown e grid
     public cidade?: Cidade,       // <<< se algum endpoint vier com objeto
+    public estadoUf?: string,
   ) {
     super();
   }

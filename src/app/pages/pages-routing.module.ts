@@ -45,6 +45,11 @@ const routes: Routes = [{
     },
 
     {
+      path: 'pessoa',
+        loadChildren: () => import('./pessoa/pessoa.module').then(m => m.PessoaModule),
+      },
+
+    {
       path: 'tipo-logradouro',
       loadChildren: () => import('./tipo-logradouro/tipo-logradouro.module').then(m => m.TipoLogradouroModule),
     },

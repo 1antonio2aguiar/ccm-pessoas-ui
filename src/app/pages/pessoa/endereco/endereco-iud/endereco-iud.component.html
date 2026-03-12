@@ -1,0 +1,190 @@
+<!-- endereco-iud.component.html -->
+<nb-card [accent]="modoEdicao ? 'info' : 'success'" class="dialog-card">
+
+  <nb-card-header>
+    {{ modoEdicao ? 'Editar Endereço de: ' : 'Novo Endereço para: ' }} {{nomePessoa}}
+    <button nbButton ghost shape="round" size="small" (click)="cancelar()" class="close-button">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </nb-card-header>
+
+  <div class="loading-overlay" *ngIf="isLoadingCep">
+    <nb-spinner status="primary" size="giant"></nb-spinner>
+    <div class="loading-text">Buscando CEP...</div>
+  </div>
+
+  <nb-card-body> 
+    <form [formGroup]="enderecoForm" (ngSubmit)="salvar()">
+
+      <div class="row">
+        <div class="col-md-12 form-group">
+          <label for="cep" class="label">CEP</label>
+
+          <ngx-cep-input 
+            formControlName="cep" 
+            [editMode]="mode === 'edit'"
+            validationMode="must-exist"
+          ></ngx-cep-input>
+
+          <small class="hint" *ngIf="isBuscandoCepPorEndereco">
+            Tentando localizar o CEP pelo logradouro, bairro e número...
+          </small>
+
+          <div class="mt-2" *ngIf="mostrarSeletorCepEncontrado">
+            <label for="cepEncontrado" class="label">Foram encontrados vários CEPs. Escolha um:</label>
+            <nb-select
+              fullWidth
+              id="cepEncontrado"
+              placeholder="Selecione o CEP"
+              [formControl]="cepEncontradoCtrl"
+              (selectedChange)="selecionarCepEncontrado($event)"
+            >
+              <nb-option *ngFor="let cep of cepsEncontrados" [value]="cep">
+                {{ cep }}
+              </nb-option>
+            </nb-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-10 form-group">
+          <label for="cidade" class="label">Cidade</label>
+      
+          <input nbInput fullWidth id="cidadeIdInput" formControlName="cidadeId" [hidden]="true">
+      
+          <input nbInput fullWidth id="cidadeNomeInput" placeholder="Digite para buscar por Nome" 
+            [readonly]="modoEdicao" formControlName="cidadeNome"
+            [nbAutocomplete]="autoCidade" #cidadeNomeInputRef (focus)="showCidadeDropdown = true" (blur)="onCidadeBlur()">
+      
+          <nb-autocomplete #autoCidade (selectedChange)="selecionarCidade($event)">
+            <nb-option *ngFor="let cidade of sugestoesCidades" [value]="cidade">
+              {{ cidade.cidadeNome }} {{ cidade.estadoUf }} - {{ cidade.nome }}
+            </nb-option>
+      
+            <nb-option *ngIf="isLoadingCidades && sugestoesCidades.length === 0" disabled>
+              Buscando...
+            </nb-option>
+      
+            <nb-option *ngIf="!isLoadingCidades && sugestoesCidades.length === 0 && cidadeNomeInputRef.value?.length >= 3"
+              disabled>
+              Nenhuma cidade encontrada.
+            </nb-option>
+          </nb-autocomplete>
+      
+          <nb-spinner *ngIf="isLoadingCidades" size="tiny" status="info" class="ml-2"></nb-spinner>
+        </div>
+      
+        <div class="col-md-2 form-group">
+          <label for="estadoUf" class="label">UF</label>
+          <input nbInput fullWidth id="estadoUf" placeholder="UF" formControlName="estadoUf" tabindex="-1" readonly="true"
+            (focus)="$any($event.target).blur()" style="cursor: default;">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-10 form-group">
+          <label for="logradouroNomeInput" class="label">Logradouro</label>
+
+          <input
+            nbInput
+            fullWidth
+            id="logradouroNomeInput"
+            placeholder="Digite para buscar por Nome"
+            formControlName="logradouroNome"
+            [readonly]="modoEdicao"
+            [nbAutocomplete]="autoLogradouro"
+            #logradouroNomeInputRef
+          >
+
+          <nb-autocomplete #autoLogradouro (selectedChange)="selecionarLogradouro($event)">
+            <nb-option *ngFor="let logradouro of sugestoesLogradouros" [value]="logradouro">
+              {{ logradouro.tipoLogradouro }} {{ logradouro.nome }}
+            </nb-option>
+
+            <nb-option *ngIf="sugestoesLogradouros.length === 0 && logradouroNomeInputRef.value?.length >= 3" disabled>
+              Nenhum logradouro encontrado.
+            </nb-option>
+          </nb-autocomplete>
+        </div>
+
+        <div class="form-group col-md-2">
+          <label for="tipoLogadouro">Tipo</label>
+          <input id="tipoLogradouro" type="string" [readonly]="modoEdicao" nbInput fullWidth formControlName="tipoLogradouro"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 form-group" formGroupName="bairros">
+          <label class="label">Bairro</label>
+      
+          <!-- MODO 1: CEP informado -> SELECT -->
+          <ng-container *ngIf="usarBairroSelect; else bairroInputMode">
+            <nb-select fullWidth id="bairroId" placeholder="Selecione o bairro" formControlName="id" [readonly]="modoEdicao">
+              <nb-option *ngFor="let bairro of bairros" [value]="bairro.id">
+                {{ bairro.nome }}
+              </nb-option>
+      
+              <nb-option *ngIf="bairros.length === 0 && enderecoForm.get('cep')?.valid && !isLoadingCep" disabled>
+                Nenhum bairro encontrado para este CEP.
+              </nb-option>
+            </nb-select>
+          </ng-container>
+      
+          <!-- MODO 2: sem CEP -> INPUT/AUTOCOMPLETE -->
+          <ng-template #bairroInputMode>
+            <input nbInput fullWidth id="bairroNomeInput" placeholder="Digite para buscar o bairro" [formControl]="bairroCtrl"
+              [nbAutocomplete]="autoBairro" #bairroNomeInputRef [readonly]="modoEdicao">
+      
+            <nb-autocomplete #autoBairro (selectedChange)="selecionarBairro($event)">
+              <nb-option *ngFor="let bairro of sugestoesBairros" [value]="bairro">
+                {{ bairro.nome }}
+              </nb-option>
+      
+              <nb-option *ngIf="!sugestoesBairros.length && bairroNomeInputRef.value?.length >= 3" disabled>
+                Nenhum bairro encontrado.
+              </nb-option>
+            </nb-autocomplete>
+          </ng-template>
+        </div>
+      </div>
+     
+       <div class="row">
+         <div class="col-md-3 form-group">
+          <label for="numero" class="label">Número</label>
+          <input nbInput fullWidth id="numero" placeholder="Nº" formControlName="numero">
+        </div>
+
+        <div class="col-md-9 form-group">
+          <label for="complemento" class="label">Complemento/Referências</label>
+          <input nbInput fullWidth id="complemento" placeholder="Apto, Bloco, Ponto de Referência..."
+            formControlName="complemento">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 form-group">
+          <label class="label">Salvar Como:</label>
+          <nb-radio-group formControlName="tipoEndereco" class="d-flex">
+            <nb-radio value="CASA" class="mr-3">Casa</nb-radio>
+            <nb-radio value="TRABALHO">Trabalho</nb-radio>
+          </nb-radio-group>
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <div class="col-md-12 form-group">
+          <nb-checkbox formControlName="principal">Definir como endereço principal</nb-checkbox>
+        </div>
+      </div>
+
+    </form>
+  </nb-card-body>
+  <nb-card-footer class="text-right">
+    <button nbButton status="basic" (click)="cancelar()" class="mr-2" [disabled]="isLoadingSalvar">Cancelar</button>
+    <button nbButton status="danger" (click)="salvar()" [disabled]="enderecoForm.invalid || isLoadingSalvar">
+      <nb-spinner *ngIf="isLoadingSalvar" size="tiny" class="button-spinner"></nb-spinner>
+      {{ modoEdicao ? 'Salvar Alterações' : 'Enviar' }}
+    </button>
+  </nb-card-footer>
+</nb-card>

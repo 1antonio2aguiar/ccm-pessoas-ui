@@ -1,5 +1,13 @@
-import { Component, ElementRef, forwardRef, ViewChild, Input } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, NG_VALIDATORS, Validator, AbstractControl, ValidationErrors } from '@angular/forms';
+import { Component, ElementRef, forwardRef, ViewChild, Input, OnInit } from '@angular/core';
+import {
+  ControlValueAccessor,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  NG_VALIDATORS,
+  Validator,
+  AbstractControl,
+  ValidationErrors
+} from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { NbToastrService } from '@nebular/theme';
@@ -35,17 +43,25 @@ import { CepService } from '../cep.service';
     },
   ],
 })
-export class CepInputComponent implements ControlValueAccessor, Validator {
+export class CepInputComponent implements ControlValueAccessor, Validator, OnInit {
   @ViewChild('cepInput', { static: true }) cepInput!: ElementRef<HTMLInputElement>;
 
-  /** se estiver editando, não valida duplicidade */
   @Input() editMode = false;
+
+  /**
+   * none = não consulta backend
+   * must-exist = CEP deve existir
+   * must-not-exist = CEP não pode existir
+   */
+  @Input() validationMode: 'none' | 'must-exist' | 'must-not-exist' = 'none';
 
   inputCtrl = new FormControl('');
   private cepPipe = new CepPipe();
   private applyingMask = false;
   private lastChecked = '';
+
   private duplicated = false;
+  private notFound = false;
 
   private onChange: (val: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -60,23 +76,41 @@ export class CepInputComponent implements ControlValueAccessor, Validator {
     this.applyingMask = true;
     this.inputCtrl.setValue(this.cepPipe.transform(digits), { emitEvent: false });
     this.applyingMask = false;
+
     this.duplicated = false;
+    this.notFound = false;
   }
 
-  registerOnChange(fn: any): void { this.onChange = fn; }
-  registerOnTouched(fn: any): void { this.onTouched = fn; }
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
 
   setDisabledState(isDisabled: boolean): void {
-    if (isDisabled) this.inputCtrl.disable({ emitEvent: false });
-    else this.inputCtrl.enable({ emitEvent: false });
+    if (isDisabled) {
+      this.inputCtrl.disable({ emitEvent: false });
+    } else {
+      this.inputCtrl.enable({ emitEvent: false });
+    }
   }
 
   validate(_: AbstractControl): ValidationErrors | null {
-    return this.duplicated ? { cepDuplicado: true } : null;
+    if (this.duplicated) {
+      return { cepDuplicado: true };
+    }
+
+    if (this.notFound) {
+      return { cepNaoEncontrado: true };
+    }
+
+    return null;
   }
 
   ngOnInit(): void {
-    // máscara + limite 8
+    // máscara + model
     this.inputCtrl.valueChanges
       .pipe(debounceTime(0), distinctUntilChanged())
       .subscribe((value: string) => {
@@ -84,19 +118,17 @@ export class CepInputComponent implements ControlValueAccessor, Validator {
 
         const digits = this.onlyDigits(value ?? '').slice(0, 8);
 
-        // atualiza model (SEM máscara)
         this.onChange(digits);
 
-        // aplica máscara na tela
         this.applyingMask = true;
         this.inputCtrl.setValue(this.cepPipe.transform(digits), { emitEvent: false });
         this.applyingMask = false;
 
-        // se mudou, limpa flag duplicado
         this.duplicated = false;
+        this.notFound = false;
       });
 
-    // valida duplicidade (só no create)
+    // validação backend
     this.inputCtrl.valueChanges
       .pipe(
         debounceTime(350),
@@ -105,19 +137,35 @@ export class CepInputComponent implements ControlValueAccessor, Validator {
           const digits = this.onlyDigits(String(this.inputCtrl.value ?? '')).slice(0, 8);
 
           if (this.editMode) return of(null);
-          if (digits.length !== 8) { this.duplicated = false; this.lastChecked = ''; return of(null); }
+          if (this.validationMode === 'none') return of(null);
+
+          if (digits.length !== 8) {
+            this.duplicated = false;
+            this.notFound = false;
+            this.lastChecked = '';
+            return of(null);
+          }
+
           if (digits === this.lastChecked) return of(null);
           this.lastChecked = digits;
 
           return this.cepService.filtrarPorCep(digits).pipe(
-            catchError((err) => { console.error(err); return of(null); }),
+            catchError((err) => {
+              console.error(err);
+              return of(null);
+            }),
           );
         }),
       )
       .subscribe((lista: any[] | null) => {
-        if (!lista) return;
+        if (lista === null) return;
 
-        if (lista.length > 0) {
+        const exists = Array.isArray(lista) && lista.length > 0;
+
+        this.duplicated = false;
+        this.notFound = false;
+
+        if (this.validationMode === 'must-not-exist' && exists) {
           this.duplicated = true;
 
           this.toastr.show(
@@ -126,28 +174,46 @@ export class CepInputComponent implements ControlValueAccessor, Validator {
             { status: 'warning', icon: 'alert-circle-outline' },
           );
 
-          // limpa e devolve foco
-          this.applyingMask = true;
-          this.inputCtrl.setValue('', { emitEvent: false });
-          this.applyingMask = false;
+          this.clearAndFocus();
+          return;
+        }
 
-          this.onChange('');
-          this.lastChecked = '';
+        if (this.validationMode === 'must-exist' && !exists) {
+          this.notFound = true;
 
-          setTimeout(() => this.cepInput?.nativeElement?.focus(), 0);
-        } else {
-          this.duplicated = false;
+          this.toastr.show(
+            'Este CEP não está cadastrado. Informe um CEP existente.',
+            'CEP não encontrado',
+            { status: 'warning', icon: 'alert-circle-outline' },
+          );
+
+          this.clearAndFocus();
+          return;
         }
       });
   }
 
-  onBlur() {
+  onBlur(): void {
     this.onTouched();
+
     const digits = this.onlyDigits(String(this.inputCtrl.value ?? '')).slice(0, 8);
+
     this.applyingMask = true;
     this.inputCtrl.setValue(this.cepPipe.transform(digits), { emitEvent: false });
     this.applyingMask = false;
+
     this.onChange(digits);
+  }
+
+  private clearAndFocus(): void {
+    this.applyingMask = true;
+    this.inputCtrl.setValue('', { emitEvent: false });
+    this.applyingMask = false;
+
+    this.onChange('');
+    this.lastChecked = '';
+
+    setTimeout(() => this.cepInput?.nativeElement?.focus(), 0);
   }
 
   private onlyDigits(v: string): string {
