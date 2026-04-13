@@ -8,13 +8,10 @@ import { PessoaPerfilFormComponent } from './pessoa-perfil/pessoa-perfil-form.co
 import { EnderecoPesquisaComponent } from './endereco/endereco-pesquisa/endereco-pesquisa.component';
 import { EnderecoIudComponent } from './endereco/endereco-iud/endereco-iud.component';
 import { CepInputModule } from '../cep/cep-input.module';
-
-//import { CepInputComponent } from '../cep/cep-pesquisa/CepInputComponent';
-
-//import { PessoaIudComponent } from './pessoa-iud/pessoa-iud.component';
-//import { PessoaPerfilFormComponent } from './pessoa-iud/pessoa-perfil-form.component';
-//import { PessoaContatosComponent } from './pessoa-iud/pessoa-contatos.component';
-//import { PessoaDocumentosComponent } from './pessoa-iud/pessoa-documentos.component';
+import { ContatoPesquisaComponent } from './contato/contato-pesquisa/contato-pesquisa.component';
+import { ContatoIudComponent } from './contato/contato-iud/contato-iud.component';
+import { DocumentoPesquisaComponent } from './documento/documento-pesquisa/documento-pesquisa.component';
+import { DocumentoIudComponent } from './documento/documento-iud/documento-iud.component';
 
 const routes: Routes = [{
   path: '',
@@ -37,6 +34,8 @@ const routes: Routes = [{
         { path: '', redirectTo: 'perfil', pathMatch: 'full' },
         { path: 'perfil', component: PessoaPerfilFormComponent },
         { path: 'enderecos', component: EnderecoPesquisaComponent },
+        { path: 'contatos', component: ContatoPesquisaComponent },
+        { path: 'documentos', component: DocumentoPesquisaComponent },
       ]
     },
 
@@ -47,6 +46,8 @@ const routes: Routes = [{
         { path: '', redirectTo: 'perfil', pathMatch: 'full' },
         { path: 'perfil', component: PessoaPerfilFormComponent },
         { path: 'enderecos', component: EnderecoPesquisaComponent },
+        { path: 'contatos', component: ContatoPesquisaComponent },
+        { path: 'documentos', component: DocumentoPesquisaComponent },
       ]
     },
 
@@ -71,5 +72,8 @@ export const pessoaRoutedComponents = [
   PessoaPerfilFormComponent,
   EnderecoPesquisaComponent,
   EnderecoIudComponent,
-  //CepInputComponent
+  ContatoPesquisaComponent,
+  ContatoIudComponent,
+  DocumentoPesquisaComponent,
+  DocumentoIudComponent
 ];

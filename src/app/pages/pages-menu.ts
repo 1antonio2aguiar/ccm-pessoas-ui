@@ -60,6 +60,20 @@ export const MENU_ITEMS: NbMenuItem[] = [
     title: 'Atividades',
     icon: 'edit-2-outline',
     children: [
+      // =================================================================
+      // <<< NOVO SUB-MENU DE SEGURANÇA ADICIONADO AQUI
+      // =================================================================
+      {
+        title: 'Unifica Pessoas',
+        // icon: 'lock-outline', // Você pode adicionar um ícone se quiser
+        children: [
+          {
+            title: 'CPF ÚNICO',
+            link: '/pages/pes-pessoa',
+          },
+        ],
+      },
+
       {
         title: 'Form Inputs',
         link: '/pages/forms/inputs',

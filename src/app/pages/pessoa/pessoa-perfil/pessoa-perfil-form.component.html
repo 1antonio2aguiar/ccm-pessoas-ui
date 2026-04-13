@@ -92,12 +92,13 @@
               <div class="col-md-3 form-group">
                 <label for="estadoCivil" class="label">Estado Civil</label>
                 <nb-select fullWidth placeholder="Selecione" formControlName="estadoCivil">
-                  <nb-option value="A">Amaziado(a)</nb-option>
-                  <nb-option value="C">Casado(a)</nb-option>
-                  <nb-option value="S">Solteiro(a)</nb-option>
-                  <nb-option value="U">União estável</nb-option>
-                  <nb-option value="V">Viúvo(a)</nb-option>
-                  <nb-option value="O">Outro</nb-option>
+                   <nb-option [value]="0">Amaziado(a)</nb-option>
+                    <nb-option [value]="1">Casado(a)</nb-option>
+                    <nb-option [value]="2">Divorciado(a)</nb-option>
+                    <nb-option [value]="3">Solteiro(a)</nb-option>
+                    <nb-option [value]="4">União estável</nb-option>
+                    <nb-option [value]="5">Viúvo(a)</nb-option>
+                    <nb-option [value]="6">Outro</nb-option>
                 </nb-select>
               </div>
             </div>

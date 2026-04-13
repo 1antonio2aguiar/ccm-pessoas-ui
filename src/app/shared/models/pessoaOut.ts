@@ -15,8 +15,8 @@ export class PessoaOut extends BaseResourceModel {
     // PF (achatado)
     public cpf?: string,
     public sexo?: string,
-    public estadoCivilId?: number,
     public estadoCivil?: string,
+    public estadoCivilDescricao?: string,
     public dataNascimento?: string,
     public nomeMae?: string,
     public nomePai?: string,
@@ -55,8 +55,8 @@ export class PessoaOut extends BaseResourceModel {
       // PF achatado
       cpf: jsonData.cpf ?? pf?.cpf ?? undefined,
       sexo: jsonData.sexo ?? pf?.sexo ?? undefined,
-      estadoCivilId: jsonData.estadoCivilId ?? pf?.estadoCivilId ?? undefined,
       estadoCivil: jsonData.estadoCivil ?? pf?.estadoCivil ?? undefined,
+      estadoCivilDescricao: jsonData.estadoCivilDescricao ?? pf?.estadoCivilDescricao ?? undefined,
       dataNascimento: jsonData.dataNascimento ?? pf?.dataNascimento ?? undefined,
 
       // seu backend usa "mae"/"pai" dentro de dadosPessoaFisica
@@ -97,8 +97,8 @@ export class PessoaOut extends BaseResourceModel {
         ...(model.dadosPessoaFisica ?? {}),
         cpf: model.cpf,
         sexo: model.sexo,
-        estadoCivilId: model.estadoCivilId,
         estadoCivil: model.estadoCivil,
+        estadoCivilDescricao: model.estadoCivilDescricao,
         dataNascimento: model.dataNascimento,
         mae: model.nomeMae,
         pai: model.nomePai,

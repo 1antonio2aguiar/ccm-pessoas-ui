@@ -1,0 +1,70 @@
+<!-- contato-iud.component.html -->
+<nb-card [accent]="modoEdicao ? 'info' : 'success'" class="dialog-card"> 
+
+    <nb-card-header>
+        {{ modoEdicao ? 'Editar Contato' : 'Novo Contato' }}
+        <button nbButton ghost shape="round" size="small" (click)="cancelar()" class="close-button">
+            <nb-icon icon="close-outline"></nb-icon>
+        </button>
+    </nb-card-header>
+
+    <nb-card-body>
+        <form [formGroup]="contatoForm" (ngSubmit)="salvar()">
+
+            <div class="row">
+                <div class="col-md-12 form-group">
+                    <label for="nomeCompleto" class="label">Nome</label>
+                    <input nbInput fullWidth id="nomeCompleto" placeholder="Nome" formControlName="nomePessoa" readonly="true"
+                        tabindex="-1" (focus)="$any($event.target).blur()" style="cursor: default;">
+                </div>
+            </div> 
+
+            <div class="row">
+                <div class="col-md-12 form-group">
+                    <label class="label">Tipo Contato:</label>
+                    <nb-radio-group formControlName="tipoContato" class="d-flex">
+                        <nb-radio value="0" class="mr-3">TELEFONE FIXO</nb-radio>
+                        <nb-radio value="1">TELEFONE CELULAR</nb-radio>
+                        <nb-radio value="2">WHATSUP</nb-radio>
+                        <nb-radio value="3">E_MAIL</nb-radio>
+                        <nb-radio value="4">PAGINA WEB</nb-radio>
+                        <nb-radio value="5">TELEFONE PARA RECADO</nb-radio>
+                    </nb-radio-group>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 form-group">
+                    <label for="complemento" class="label">Contato</label>
+                     <input nbInput fullWidth id="contato" 
+                           placeholder="Contato..." 
+                           formControlName="contato"
+                           (input)="onContatoInput($event)"> <!-- Adicionado evento (input) -->
+                    <!-- Se for usar ngx-mask, seria algo como: [mask]="currentContactMask" -->
+                </div>
+
+                <div class="col-md-12 form-group">
+                    <label for="complemento" class="label">Complemento</label>
+                    <input nbInput fullWidth id="complemento" placeholder="Referência..."
+                        formControlName="complemento">
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-md-12 form-group">
+                    <nb-checkbox formControlName="principal">Definir como contato principal</nb-checkbox>
+                </div>
+            </div>
+
+        </form>
+    </nb-card-body>
+
+    <nb-card-footer class="text-right">
+        <button nbButton status="basic" (click)="cancelar()" class="mr-2" [disabled]="isLoadingSalvar">Cancelar</button>
+        <button nbButton status="danger" (click)="salvar()" [disabled]="contatoForm.invalid || isLoadingSalvar">
+            <nb-spinner *ngIf="isLoadingSalvar" size="tiny" class="button-spinner"></nb-spinner>
+            {{ modoEdicao ? 'Salvar Alterações' : 'Enviar' }}
+        </button>
+    </nb-card-footer>
+
+</nb-card>

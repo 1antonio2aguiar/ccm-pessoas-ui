@@ -1,0 +1,59 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>Meus documentos</span>
+    <button nbButton status="primary" size="small" (click)="adicionarNovoDocumento()">
+      <nb-icon icon="plus-outline"></nb-icon> Inserir novo documento
+    </button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div>
+      <div *ngIf="isLoadingDocumento" class="text-center my-3">
+        <nb-spinner status="primary"></nb-spinner>
+        <p>Carregando documentos...</p>
+      </div> 
+
+      <div *ngIf="!isLoadingDocumento">
+        <div *ngIf="documentosParaExibir.length > 0">
+          <div *ngFor="let documento of documentosParaExibir" class="documento-item mb-3 p-3 border rounded">
+            <div class="documento-header d-flex justify-content-between align-items-start">
+              <div>
+                <span class="nome-documento font-weight-bold d-block">{{''}}</span>
+              </div>
+              <div class="acoes-documento">
+                  <button nbButton ghost status="info" size="tiny" class="mr-1" (click)="editarDocumento(documento)">
+                    <nb-icon icon="edit-outline"></nb-icon> Editar
+                  </button>
+                  <button nbButton ghost status="danger" size="tiny" (click)="excluirDocumentoWrapper(documento)">
+                    <nb-icon icon="trash-2-outline"></nb-icon> Excluir
+                  </button>
+              </div>
+            </div>
+            <hr class="my-2">
+
+            <div class="detalhes-documento small">
+              <p class="mb-1">
+                <span *ngIf="documento.tipoDocumento && documento.numeroDocumento!== 'N/I'"></span>
+                  {{ documento.tipoDocumentoDescricao }} {{ documento.numeroDocumento }}
+                  {{ documento.complemento ? ' - ' + documento.complemento : '' }}
+              </p>
+            </div>
+            
+          </div>
+        </div>
+
+        <div *ngIf="documentosParaExibir.length === 0">
+          <div *ngIf="pessoaId" class="text-center my-3 p-4 border rounded bg-light">
+            <nb-icon icon="pin-outline" pack="eva" style="font-size: 3rem; opacity: 0.5;"></nb-icon>
+            <p class="mt-2 mb-1">Nenhum documento cadastrado para esta pessoa.</p>
+            <p class="text-muted small">Clique em "Inserir novo documento" para começar.</p>
+          </div>
+          <div *ngIf="!pessoaId" class="alert alert-info text-center" role="alert">
+            <nb-icon icon="alert-circle-outline" pack="eva" class="mr-1"></nb-icon>
+            Para gerenciar os documentos, primeiro salve os dados da pessoa.
+          </div>
+        </div>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

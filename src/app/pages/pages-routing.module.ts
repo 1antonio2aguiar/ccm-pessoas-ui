@@ -58,7 +58,12 @@ const routes: Routes = [{
       path: 'tipo-pessoa',
       loadChildren: () => import('./tipo-pessoa/tipo-pessoa.module').then(m => m.TipoPessoaModule),
     },
-    
+
+    {
+      path: 'pes-pessoa',
+      loadChildren: () => import('./unificacao/pessoas/pes-pessoas/pes-pessoa.module').then(m => m.PesPessoaModule),
+    },
+
     {
       path: '',
       redirectTo: 'dashboard',

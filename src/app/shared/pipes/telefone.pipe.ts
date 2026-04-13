@@ -1,75 +1,43 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-    name: 'telefone'
+  name: 'telefone'
 })
+
 export class TelefonePipe implements PipeTransform {
 
-    /**
-     * Mostra o telefone com a máscara
-     *
-     * Parâmetros:
-     * @any value: somente números
-     * @string type: 'F' fixo ou 'C' celular
-     */
-    transform(value: any, type: string): string {
-        let telefone = '';
-        let valueOf = '';
-        let lenghtVal: number;
-
-        if (typeof value !== 'string') {
-            if (typeof value === 'number') {
-                valueOf = value.toString();
-            } else {
-                return null;
-            }
-        } else {
-            valueOf = value;
-        }
-
-        lenghtVal = valueOf.length;
-
-        if (lenghtVal < 10 && type === 'F') {
-            let aux = '';
-            for (let i = 0; i < 10 - valueOf.length; i++) {
-                aux += '0';
-            }
-            valueOf = aux + valueOf;
-            lenghtVal = valueOf.length;
-        }
-
-        if (lenghtVal < 11 && type === 'C') {
-            let aux = '';
-            for (let i = 0; i < 11 - valueOf.length; i++) {
-                aux += '0';
-            }
-            valueOf = aux + valueOf;
-            lenghtVal = valueOf.length;
-        }
-
-        for (let i = lenghtVal - 1; i >= 0; i--) {
-            telefone = valueOf[i] + telefone;
-
-            if (i === lenghtVal - 4) {
-                telefone = '-' + telefone;
-            }
-
-            if (
-                type === 'F' && i === lenghtVal - 8 ||
-                type === 'C' && i === lenghtVal - 9
-            ) {
-                telefone = ') ' + telefone;
-            }
-
-            if (
-                type === 'F' && i === lenghtVal - 10 ||
-                type === 'C' && i === lenghtVal - 11
-            ) {
-                telefone = '(' + telefone;
-            }
-        }
-
-        return telefone;
+  transform(value: any, type: number | string): string {
+    if (value === null || value === undefined || value === '') {
+      return '';
     }
 
+    const numero = String(value).replace(/\D/g, '');
+
+    // tipo 3 = email, não aplica máscara
+    if (Number(type) === 3) {
+      return String(value);
+    }
+
+    // fixo = tipo 0 -> (34) 3315-9656
+    if (Number(type) === 0) {
+      const fixo = numero.padStart(10, '0').substring(0, 10);
+      const ddd = fixo.substring(0, 2);
+      const parte1 = fixo.substring(2, 6);
+      const parte2 = fixo.substring(6, 10);
+
+      return `(${ddd}) ${parte1}-${parte2}`;
+    }
+
+    // móvel = tipos 1, 2, 5 -> (34) 99942-0919
+    if ([1, 2, 5].includes(Number(type))) {
+      const movel = numero.padStart(11, '0').substring(0, 11);
+      const ddd = movel.substring(0, 2);
+      const parte1 = movel.substring(2, 7);
+      const parte2 = movel.substring(7, 11);
+
+      return `(${ddd}) ${parte1}-${parte2}`;
+    }
+
+    return String(value);
+  }
 }

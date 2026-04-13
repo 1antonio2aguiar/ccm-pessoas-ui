@@ -1,0 +1,24 @@
+<nb-card>
+  <nb-card-header>
+    Pessoas com CPF único
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div *ngIf="idControleCarga" class="mb-3">
+      <p><strong>Controle:</strong> {{ idControleCarga }}</p>
+      <p><strong>Status:</strong> {{ statusCarga }}</p>
+      <p><strong>Processados:</strong> {{ totalProcessado }}</p>
+      <p><strong>Erros:</strong> {{ totalErros }}</p>
+      <p *ngIf="mensagemErro"><strong>Mensagem:</strong> {{ mensagemErro }}</p>
+    </div>
+
+   <ng2-smart-table
+    [settings]="settings"
+    [source]="source"
+    (create)="onCreateConfirm($event)"
+    (edit)="onEditarLinha($event)">
+  </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>
