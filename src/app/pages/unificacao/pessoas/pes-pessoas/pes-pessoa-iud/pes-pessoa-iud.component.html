@@ -5,20 +5,27 @@
 
   <nb-card-body>
 
-    <div *ngIf="idControleCarga" class="mb-3">
-      <p><strong>Controle:</strong> {{ idControleCarga }}</p>
-      <p><strong>Status:</strong> {{ statusCarga }}</p>
-      <p><strong>Processados:</strong> {{ totalProcessado }}</p>
-      <p><strong>Erros:</strong> {{ totalErros }}</p>
-      <p *ngIf="mensagemErro"><strong>Mensagem:</strong> {{ mensagemErro }}</p>
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Processando lote...</strong> {{ progressoLote }}%
+      </div>
+
+      <nb-progress-bar
+        [value]="progressoLote"
+        status="primary">
+      </nb-progress-bar>
     </div>
 
-   <ng2-smart-table
-    [settings]="settings"
-    [source]="source"
-    (create)="onCreateConfirm($event)"
-    (edit)="onEditarLinha($event)">
-  </ng2-smart-table>
+    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (create)="onCreateConfirm($event)"
+      (edit)="onEditarLinha($event)">
+    </ng2-smart-table>
 
   </nb-card-body>
 </nb-card>

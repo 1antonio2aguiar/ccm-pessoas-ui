@@ -1,5 +1,6 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -14,6 +15,8 @@ import { TipoPessoa } from '../../../shared/models/tipoPessoa';
 import { Filters } from '../../../shared/filters/filters';
 import { TipoPessoaService } from '../../tipo-pessoa/tipo-pessoa.service';
 import { FiltroPaginado } from '../../../shared/filters/filtro-paginado';
+import { Distrito } from '../../../shared/models/distrito';
+import { DistritoService } from '../../distrito/distrito.service';
 
 // Ajuste estes valores se seu backend usa outro enum/IDs.
 interface SituacaoOpcao { valor: number; descricao: string; }
@@ -29,9 +32,13 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
   @ViewChild('cnpjInput') cnpjInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('dataNascimentoInput') dataNascimentoInputRef!: ElementRef<HTMLInputElement>;
 
+  cidadeCtrl = new FormControl('');
+
   modoEdicao = false;
   pessoaId: number | null = null;
   pessoaNome: string | null = null;
+
+  @Input() mode: 'add' | 'edit' = 'add';
 
   pessoaForm!: FormGroup;
   isLoading = false;
@@ -39,7 +46,14 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   tiposPessoas: TipoPessoa[] = [];
+  sugestoesCidades: Distrito[] = [];
   filtro: Filters = new Filters();
+
+  showCidadeDropdown = false;
+
+  // ids selecionados
+  cidadeId: number | null = null;
+  distritoId: number | null = null;
 
   situacoes: SituacaoOpcao[] = [
     { valor: 1, descricao: 'ATIVO' },
@@ -53,6 +67,7 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private pessoaService: PessoaService,
+    private distritoService: DistritoService,
     private tipoPessoaService: TipoPessoaService,
     private route: ActivatedRoute,
     private router: Router,
@@ -100,6 +115,8 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
         control.setValue(onlyDigits, { emitEvent: false, onlySelf: true });
       }
     });
+
+    this.configurarAutocompletes();
   
   }
 
@@ -130,6 +147,9 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
       dataNascimento: [null], 
       nomeMae: [''],
       nomePai: [''],
+
+      localNascimentoId: [null],
+      ufNascimento: [''],
 
       cnpj: [''],
       nomeFantasia: [''],
@@ -186,6 +206,8 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
         dataParaFormulario.estadoCivil = pf.estadoCivil ?? null;
         dataParaFormulario.nomeMae = pf.mae ?? '';
         dataParaFormulario.nomePai = pf.pai ?? '';
+        dataParaFormulario.localNascimentoId = pf.localNascimentoId ?? null;
+        dataParaFormulario.ufNascimento = pf.ufNascimento ?? '';
       }
 
       if (tipoPessoaApi === 'J' && pj) {
@@ -199,6 +221,10 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
       }
 
       this.pessoaForm.patchValue(dataParaFormulario);
+
+      if (tipoPessoaApi === 'F' && pf?.localNascimentoNome) {
+        this.cidadeCtrl.setValue(pf.localNascimentoNome, { emitEvent: false });
+      }
 
       if (tipoPessoaApi === 'F' && pf?.dataNascimento) {
         const dataApi = String(pf.dataNascimento).substring(0, 10); // yyyy-MM-dd
@@ -289,7 +315,7 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
         cartaoSus: null,
         sexo: dadosFormulario.sexo ?? null,
         estadoCivil: dadosFormulario.estadoCivil ?? null,
-        localNascimentoId: null,
+        localNascimentoId: dadosFormulario.localNascimentoId ?? null,
         mae: dadosFormulario.nomeMae ?? null,
         pai: dadosFormulario.nomePai ?? null,
         observacao: dadosFormulario.observacao ?? null,
@@ -453,4 +479,56 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  private configurarAutocompletes(): void {
+    this.cidadeCtrl.valueChanges
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((value: any) => {
+        const texto = (value ?? '').trim();
+
+        if (texto.length < 2) {
+          this.sugestoesCidades = [];
+          this.showCidadeDropdown = false;
+          return;
+        }
+
+        this.distritoService.filtrarPorCidadeNome(texto, 0, 20).subscribe({
+          next: (lista: Distrito[]) => {
+            this.sugestoesCidades = lista ?? [];
+            this.showCidadeDropdown = this.sugestoesCidades.length > 0;
+          },
+          error: (err: any) => {
+            console.error('Erro ao buscar cidades:', err);
+            this.sugestoesCidades = [];
+            this.showCidadeDropdown = false;
+          },
+        });
+      });
+  }
+
+  selecionarCidade(c: any): void {
+    const localNascimentoId = c?.cidadeId ?? null;
+
+    this.cidadeCtrl.setValue(c?.cidadeNome ?? '', { emitEvent: false });
+
+    this.pessoaForm.patchValue({
+      localNascimentoId,
+      ufNascimento: c?.estadoUf ?? ''
+    });
+
+    this.cidadeId = localNascimentoId;
+    this.distritoId = c?.id ?? null;
+
+    this.showCidadeDropdown = false;
+    this.sugestoesCidades = [];
+  }
+
+  onCidadeBlur() {
+    setTimeout(() => (this.showCidadeDropdown = false), 150);
+  }
+  
 }

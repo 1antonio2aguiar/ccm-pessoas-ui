@@ -20,21 +20,12 @@ export class PessoaFilters {
   params = new HttpParams();
 }
 
-export interface CargaPessoasStatus {
-  id: number;
-  status: string;
-  totalProcessado: number;
-  totalErros: number;
-  mensagemErro: string | null;
-}
-
 @Injectable({ providedIn: 'root' })
 export class PesPessoaService extends BaseResourceService<PesPessoas> {
 
   private pesPessoasEventHendlerId: EventEmitter<PesPessoas>;
-
-  private listaApiPath = environment.apiUrl + 'pes-pessoas/cpf-unico-nao-migradas';
   private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cpf-unico';
+  private listaApiPath = environment.apiUrl + 'pes-pessoas/cpf-unico-nao-migradas';
 
   constructor(protected injector: Injector) {
     super(environment.apiUrl + 'pes-pessoas', injector, PesPessoas.fromJson);
@@ -55,21 +46,9 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       });
   }
 
-  iniciarCargaLote(): Promise<number> {
-    return this.http
-      .post<number>(`${this.cargaApiPath}/iniciar`, {})
-      .toPromise();
-  }
-
   processarPessoaUnica(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
-      .toPromise();
-  }
-
-  buscarStatusCarga(idControle: number): Promise<CargaPessoasStatus> {
-    return this.http
-      .get<CargaPessoasStatus>(`${this.cargaApiPath}/status/${idControle}`)
       .toPromise();
   }
 }

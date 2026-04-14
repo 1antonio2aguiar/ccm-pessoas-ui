@@ -15,20 +15,18 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   source: LocalDataSource = new LocalDataSource();
   isLoading = false;
   processandoLote = false;
+  progressoLote = 0;
 
   filtro: PessoaFilters = new PessoaFilters();
 
-  idControleCarga: number | null = null;
   statusCarga = '';
   totalProcessado = 0;
   totalErros = 0;
   mensagemErro = '';
 
-  private statusInterval: any;
-
   settings = {
     mode: 'external',
-    
+
     pager: {
       perPage: this.filtro.itensPorPagina,
       display: true,
@@ -55,13 +53,6 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       cancelButtonContent: '',
       confirmSave: true,
     },
-
-    /*edit: {
-      editButtonContent: '<i class="nb-checkmark"></i>',
-      saveButtonContent: '',
-      cancelButtonContent: '',
-      confirmSave: true,
-    },*/
 
     columns: {
       pessoa: {
@@ -112,7 +103,6 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.pararPollingStatus();
   }
 
   listar(): void {
@@ -124,7 +114,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   onCreateConfirm(event: any): void {
-    this.iniciarCargaLote();
+    this.processarLoteTela();
   }
 
   onEditarLinha(event: any): void {
@@ -135,12 +125,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('AQUI VEIO!!!!');
     this.processarPessoaLinha(pessoaId);
-  }
-
-  onDeleteConfirm(event: any): void {
-    event.confirm.reject();
   }
 
   private buildBaseParams(): HttpParams {
@@ -223,31 +208,10 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       .finally(() => this.isLoading = false);
   }
 
-  private iniciarCargaLote(): void {
-    if (this.processandoLote) {
-      this.toastrService.warning('Já existe uma carga em andamento.', 'Aviso');
-      return;
-    }
-
-    this.processandoLote = true;
-    this.statusCarga = 'INICIANDO';
-    this.totalProcessado = 0;
-    this.totalErros = 0;
-    this.mensagemErro = '';
-
-    this.service.iniciarCargaLote()
-      .then((idControle) => {
-        this.idControleCarga = idControle;
-        this.toastrService.success(`Carga iniciada. Controle ${idControle}.`, 'Sucesso');
-        this.iniciarPollingStatus();
-      })
-      .catch((e) => {
-        console.error(e);
-        this.processandoLote = false;
-        this.toastrService.danger('Erro ao iniciar a carga.', 'Erro');
-      });
-  }
-
+  /**
+   * Processamento individual.
+   * Mantido do jeito que já estava: com toast e recarregando a lista.
+   */
   private processarPessoaLinha(pessoaId: number): void {
     this.isLoading = true;
 
@@ -263,50 +227,87 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       .finally(() => this.isLoading = false);
   }
 
-  private iniciarPollingStatus(): void {
-    this.pararPollingStatus();
+  /**
+   * Processamento de uma linha no lote.
+   * Sem toast por item e sem recarregar a tela a cada chamada.
+   */
+  private processarPessoaLinhaLote(pessoaId: number): Promise<void> {
+    return this.service.processarPessoaUnica(pessoaId)
+      .then(() => undefined);
+  }
 
-    this.statusInterval = setInterval(() => {
-      if (!this.idControleCarga) {
-        return;
+  /**
+   * Lote baseado no que está carregado na tela.
+   * Faz um loop na source e chama o mesmo endpoint da linha.
+   */
+  private async processarLoteTela(): Promise<void> {
+  if (this.processandoLote) {
+    this.toastrService.warning('Já existe um processamento em andamento.', 'Aviso');
+    return;
+  }
+
+  this.processandoLote = true;
+  this.isLoading = true;
+  this.statusCarga = 'PROCESSANDO';
+  this.totalProcessado = 0;
+  this.totalErros = 0;
+  this.mensagemErro = '';
+  this.progressoLote = 0;
+
+  try {
+    const listaTela = await this.source.getAll();
+
+    if (!listaTela || listaTela.length === 0) {
+      this.toastrService.warning('Não há registros na tela para processar.', 'Aviso');
+      this.statusCarga = 'SEM_REGISTROS';
+      return;
+    }
+
+    const totalItens = listaTela.length;
+    let concluidos = 0;
+
+    for (const item of listaTela) {
+      const pessoaId = item?.pessoa;
+
+      if (!pessoaId) {
+        this.totalErros++;
+        concluidos++;
+        this.progressoLote = Math.round((concluidos / totalItens) * 100);
+        continue;
       }
 
-      this.service.buscarStatusCarga(this.idControleCarga)
-        .then((status) => {
-          this.statusCarga = status.status ?? '';
-          this.totalProcessado = status.totalProcessado ?? 0;
-          this.totalErros = status.totalErros ?? 0;
-          this.mensagemErro = status.mensagemErro ?? '';
-
-          if (status.status === 'FINALIZADO') {
-            this.pararPollingStatus();
-            this.processandoLote = false;
-            this.toastrService.success('Carga finalizada com sucesso.', 'Sucesso');
-            this.listar();
-          }
-
-          if (status.status === 'ERRO') {
-            this.pararPollingStatus();
-            this.processandoLote = false;
-            this.toastrService.danger(this.mensagemErro || 'Carga finalizada com erro.', 'Erro');
-            this.listar();
-          }
-        })
-        .catch((e) => {
-          console.error(e);
-          this.pararPollingStatus();
-          this.processandoLote = false;
-          this.toastrService.danger('Erro ao consultar status da carga.', 'Erro');
-        });
-    }, 2000);
-  }
-
-  private pararPollingStatus(): void {
-    if (this.statusInterval) {
-      clearInterval(this.statusInterval);
-      this.statusInterval = null;
+      try {
+        await this.processarPessoaLinhaLote(pessoaId);
+        this.totalProcessado++;
+      } catch (e) {
+        console.error(`Erro ao processar a pessoa ${pessoaId}`, e);
+        this.totalErros++;
+        this.mensagemErro = `Erro ao processar a pessoa ${pessoaId}.`;
+      } finally {
+        concluidos++;
+        this.progressoLote = Math.round((concluidos / totalItens) * 100);
+      }
     }
+
+    this.statusCarga = 'FINALIZADO';
+
+    this.toastrService.success(
+      `Lote finalizado. Processados: ${this.totalProcessado}. Erros: ${this.totalErros}.`,
+      'Sucesso'
+    );
+
+    this.listar();
+
+  } catch (e) {
+    console.error(e);
+    this.statusCarga = 'ERRO';
+    this.mensagemErro = 'Erro ao executar o processamento em lote.';
+    this.toastrService.danger(this.mensagemErro, 'Erro');
+  } finally {
+    this.processandoLote = false;
+    this.isLoading = false;
   }
+}
 
   private normalizePessoaRow(p: any): any {
     const digits =

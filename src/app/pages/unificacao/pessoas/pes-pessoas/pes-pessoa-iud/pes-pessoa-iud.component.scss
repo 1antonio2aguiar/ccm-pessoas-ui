@@ -58,3 +58,25 @@
   opacity: 1;
   transform: scale(1.1);
 }
+
+.lote-progress-wrapper {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f7f9fc;
+  border: 1px solid #edf1f7;
+  border-radius: 0.5rem;
+}
+
+.lote-progress-text {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.lote-erro {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff2f2;
+  border: 1px solid #ffd6d6;
+  border-radius: 0.5rem;
+  color: #b42318;
+}

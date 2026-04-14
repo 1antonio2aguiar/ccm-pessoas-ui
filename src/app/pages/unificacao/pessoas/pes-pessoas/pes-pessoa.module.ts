@@ -19,6 +19,7 @@ import {
   NbUserModule,
   NbToastrModule,
   NbButtonGroupModule,
+  NbProgressBarModule
 } from '@nebular/theme';
 
 import { pesPessoaRoutedComponents } from './pes-pessoa-routing.module';
@@ -46,6 +47,7 @@ import { PesPessoaRoutingModule } from './pes-pessoa-routing.module';
     NbSelectModule,
     ngFormsModule,
     NbToastrModule.forRoot(),
+    NbProgressBarModule,
 
     ReactiveFormsModule,
     NbInputModule,
