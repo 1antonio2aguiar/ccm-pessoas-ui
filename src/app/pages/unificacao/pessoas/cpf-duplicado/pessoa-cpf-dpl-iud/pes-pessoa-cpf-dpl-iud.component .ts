@@ -1,27 +1,25 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService } from '@nebular/theme';
-import { HttpParams } from '@angular/common/http';
 
-import { PesPessoaService, PessoaFilters } from '../pes-pessoa.service';
+import { PesPessoaCpfDplService, PessoaFilters } from '../pes-pessoa-cpf-dpl.service';
 
 @Component({
-  selector: 'ngx-pes-pessoa-iud',
-  templateUrl: './pes-pessoa-iud.component.html',
-  styleUrls: ['./pes-pessoa-iud.component.scss'],
+  selector: 'ngx-pes-pessoa-cpf-dpl-iud',
+  templateUrl: './pes-pessoa-cpf-dpl-iud.component.html',
+  styleUrls: ['./pes-pessoa-cpf-dpl-iud.component.scss'],
 })
-export class PesPessoaIudComponent implements OnInit, OnDestroy {
+export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
 
   source: LocalDataSource = new LocalDataSource();
-  isLoading = false;
   processandoLote = false;
+  isLoading = false;
   progressoLote = 0;
 
   filtro: PessoaFilters = new PessoaFilters();
+  rows: any[] = [];
 
-  statusCarga = '';
-  totalProcessado = 0;
-  totalErros = 0;
   mensagemErro = '';
 
   settings = {
@@ -92,9 +90,9 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   };
 
   constructor(
-    private service: PesPessoaService,
+    private service: PesPessoaCpfDplService,
     private toastrService: NbToastrService,
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.listar();
@@ -106,8 +104,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-  }
+  ngOnDestroy(): void {}
 
   listar(): void {
     this.filtro = new PessoaFilters();
@@ -115,10 +112,6 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     this.filtro.itensPorPagina = 1000;
 
     this.execSearch(this.buildBaseParams());
-  }
-
-  onCreateConfirm(event: any): void {
-    this.processarLoteTela();
   }
 
   onEditarLinha(event: any): void {
@@ -129,13 +122,63 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.processarPessoaLinha(pessoaId);
+    this.service.processarPessoaCpfDpl(pessoaId)
+      .then(() => {
+        this.toastrService.success('Processado com sucesso', 'Sucesso');
+        this.listar();
+      })
+      .catch((e) => {
+        console.error(e);
+        this.toastrService.danger('Erro ao processar', 'Erro');
+    });
   }
+
+  async onCreateConfirm(_event: any): Promise<void> {
+  if (this.processandoLote) {
+    return;
+  }
+
+  this.mensagemErro = '';
+  this.progressoLote = 0;
+
+  const gruposUnicos = this.getGruposUnicosParaLote();
+
+  if (!gruposUnicos.length) {
+    this.toastrService.warning('Nenhum registro disponível para processar.', 'Aviso');
+    return;
+  }
+
+  this.processandoLote = true;
+
+  let processados = 0;
+
+  try {
+    for (const item of gruposUnicos) {
+      await this.service.processarPessoaCpfDpl(item.pessoa);
+
+      processados++;
+      this.progressoLote = Math.round((processados / gruposUnicos.length) * 100);
+    }
+
+    this.toastrService.success(
+      `${processados} grupo(s) processado(s) com sucesso.`,
+      'Sucesso',
+    );
+
+    this.listar();
+  } catch (e: any) {
+    console.error(e);
+    this.mensagemErro = 'Erro ao processar o lote.';
+    this.toastrService.danger(this.mensagemErro, 'Erro');
+  } finally {
+    this.processandoLote = false;
+  }
+}
 
   private buildBaseParams(): HttpParams {
     return new HttpParams()
       .set('fisicaJuridica', 'F')
-      .set('somenteCpfUnico', 'true')
+      .set('somenteCpfUnico', 'false')
       .set('somenteNaoMigradas', 'true')
       .set('sort', 'pessoa');
   }
@@ -193,16 +236,19 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     this.execSearch(params);
   }
 
-  private execSearch(params: HttpParams): void {
+  /*private execSearch(params: HttpParams): void {
+    this.filtro.pagina = 0;
+    this.filtro.itensPorPagina = 1000;
     this.filtro.params = params;
 
     this.isLoading = true;
+
     this.service.pesquisar({ ...this.filtro, params } as any)
       .then(({ pesPessoas, total }) => {
         this.filtro.totalRegistros = total ?? 0;
 
         const lista = (pesPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
-        console.log('LISTA', lista);
+        //console.log('LISTA ' , lista)
         this.source.load(lista);
       })
       .catch((e) => {
@@ -213,109 +259,82 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       .finally(() => {
         this.isLoading = false;
       });
-  }
+  }*/
 
-  private processarPessoaLinha(pessoaId: number): void {
+  private execSearch(params: HttpParams): void {
+    this.filtro.pagina = 0;
+    this.filtro.itensPorPagina = 1000;
+    this.filtro.params = params;
+
     this.isLoading = true;
 
-    this.service.processarPessoaUnica(pessoaId)
-      .then((msg) => {
-        this.toastrService.success(msg || `Pessoa ${pessoaId} processada com sucesso.`, 'Sucesso');
-        this.listar();
+    this.service.pesquisar({ ...this.filtro, params } as any)
+      .then(({ pesPessoas, total }) => {
+        this.filtro.totalRegistros = total ?? 0;
+
+        const lista = (pesPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
+
+        this.rows = lista;
+        this.source.load(lista);
       })
       .catch((e) => {
         console.error(e);
-        this.toastrService.danger(`Erro ao processar a pessoa ${pessoaId}.`, 'Erro');
+        this.rows = [];
+        this.source.load([]);
+        this.toastrService.danger('Erro ao carregar a lista.', 'Erro');
       })
       .finally(() => {
         this.isLoading = false;
       });
   }
 
-  private processarPessoaLinhaLote(pessoaId: number): Promise<void> {
-    return this.service.processarPessoaUnica(pessoaId)
-      .then(() => undefined);
+  private getGruposUnicosParaLote(): any[] {
+    const mapa = new Map<string, any>();
+
+    for (const row of this.rows ?? []) {
+      const chave = this.buildCpfDuplicadoKey(row);
+
+      if (!chave) {
+        continue;
+      }
+
+      if (!mapa.has(chave)) {
+        mapa.set(chave, row);
+      }
   }
 
-  private async processarLoteTela(): Promise<void> {
-    if (this.processandoLote) {
-      this.toastrService.warning('Já existe um processamento em andamento.', 'Aviso');
-      return;
+    return Array.from(mapa.values());
+  }
+
+  private buildCpfDuplicadoKey(row: any): string {
+    const cpf = String(row?.cgcCpfDigits ?? '').trim();
+    const nome = this.normalizeTextKey(row?.nome);
+
+    if (!cpf || !nome) {
+      return '';
     }
 
-    this.processandoLote = true;
-    this.isLoading = true;
-    this.statusCarga = 'PROCESSANDO';
-    this.totalProcessado = 0;
-    this.totalErros = 0;
-    this.mensagemErro = '';
-    this.progressoLote = 0;
+    return `${cpf}::${nome}`;
+  }
 
-    try {
-      const listaTela = await this.source.getAll();
-
-      if (!listaTela || listaTela.length === 0) {
-        this.toastrService.warning('Não há registros na tela para processar.', 'Aviso');
-        this.statusCarga = 'SEM_REGISTROS';
-        return;
-      }
-
-      const totalItens = listaTela.length;
-      let concluidos = 0;
-
-      for (const item of listaTela) {
-        const pessoaId = item?.pessoa;
-
-        if (!pessoaId) {
-          this.totalErros++;
-          concluidos++;
-          this.progressoLote = Math.round((concluidos / totalItens) * 100);
-          continue;
-        }
-
-        try {
-          await this.processarPessoaLinhaLote(pessoaId);
-          this.totalProcessado++;
-        } catch (e) {
-          console.error(`Erro ao processar a pessoa ${pessoaId}`, e);
-          this.totalErros++;
-          this.mensagemErro = `Erro ao processar a pessoa ${pessoaId}.`;
-        } finally {
-          concluidos++;
-          this.progressoLote = Math.round((concluidos / totalItens) * 100);
-        }
-      }
-
-      this.statusCarga = 'FINALIZADO';
-
-      this.toastrService.success(
-        `Lote finalizado. Processados: ${this.totalProcessado}. Erros: ${this.totalErros}.`,
-        'Sucesso'
-      );
-
-      this.listar();
-
-    } catch (e) {
-      console.error(e);
-      this.statusCarga = 'ERRO';
-      this.mensagemErro = 'Erro ao executar o processamento em lote.';
-      this.toastrService.danger(this.mensagemErro, 'Erro');
-    } finally {
-      this.processandoLote = false;
-      this.isLoading = false;
-    }
+  private normalizeTextKey(value: any): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
   }
 
   private normalizePessoaRow(p: any): any {
-    const digits =
-      String(
-        p?.cgcCpf ??
-        p?.cpf ??
-        p?.cnpj ??
-        p?.dadosPessoaFisica?.cpf ??
-        p?.dadosPessoaJuridica?.cnpj ??
-        ''
-      ).replace(/\D/g, '');
+    const digits = String(
+      p?.cgcCpf ??
+      p?.cpf ??
+      p?.cnpj ??
+      p?.dadosPessoaFisica?.cpf ??
+      p?.dadosPessoaJuridica?.cnpj ??
+      ''
+    ).replace(/\D/g, '');
 
     let cgcCpf = '';
 
@@ -324,18 +343,24 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     } else if (digits.length === 14) {
       cgcCpf = this.formatCnpj(digits);
     } else {
-      cgcCpf = String(p?.cgcCpf ?? '');
+      cgcCpf = String(
+        p?.cgcCpf ??
+        p?.cpf ??
+        p?.cnpj ??
+        ''
+      );
     }
 
     const dnRaw =
-      (p?.dataNascimento ??
-        p?.dadosPessoaFisica?.dataNascimento ??
-        '');
+      p?.dataNascimento ??
+      p?.dadosPessoaFisica?.dataNascimento ??
+      '';
 
     let dataNascimento = '';
     if (dnRaw) {
       const s = String(dnRaw).substring(0, 10);
       const parts = s.split('-');
+
       if (parts.length === 3) {
         dataNascimento = `${parts[2]}/${parts[1]}/${parts[0]}`;
       } else {

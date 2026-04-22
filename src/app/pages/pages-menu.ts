@@ -69,7 +69,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
         children: [
           {
             title: 'CPF ÚNICO',
-            link: '/pages/pes-pessoa',
+            link: '/pages/unificacao/pessoas/pes-pessoa',
+          },
+          {
+            title: 'CPF DUPLICADO',
+            link: '/pages/unificacao/pessoas/cpf-duplicado',
           },
         ],
       },

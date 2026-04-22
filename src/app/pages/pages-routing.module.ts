@@ -60,8 +60,14 @@ const routes: Routes = [{
     },
 
     {
-      path: 'pes-pessoa',
+      path: 'unificacao/pessoas/pes-pessoa',
       loadChildren: () => import('./unificacao/pessoas/pes-pessoas/pes-pessoa.module').then(m => m.PesPessoaModule),
+    },
+
+    {
+      path: 'unificacao/pessoas/cpf-duplicado',
+      loadChildren: () => 
+        import('./unificacao/pessoas/cpf-duplicado/pes-pessoa-cpf-dpl.module').then(m => m.PesPessoaCpfDplModule),
     },
 
     {

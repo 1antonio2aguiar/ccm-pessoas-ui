@@ -18,14 +18,15 @@ export class PessoaFilters {
   cnpj: string | null = null;
 
   params = new HttpParams();
-}
+} 
 
 @Injectable({ providedIn: 'root' })
-export class PesPessoaService extends BaseResourceService<PesPessoas> {
+
+export class PesPessoaCpfDplService extends BaseResourceService<PesPessoas> {
 
   private pesPessoasEventHendlerId: EventEmitter<PesPessoas>;
-  private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cpf-unico';
-  private listaApiPath = environment.apiUrl + 'pes-pessoas/cpf-unico-nao-migradas';
+  private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cpf-duplicado';
+  private listaApiPath = environment.apiUrl + 'pes-pessoas/cpf-duplicado-nao-migradas';
 
   constructor(protected injector: Injector) {
     super(environment.apiUrl + 'pes-pessoas', injector, PesPessoas.fromJson);
@@ -41,10 +42,10 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .then((response) => {
         const pesPessoas = Array.isArray(response) ? response : (response?.content ?? []);
         const total = Array.isArray(response) ? pesPessoas.length : (response?.totalElements ?? 0);
-
+        
         return { pesPessoas, total };
       });
-  }
+  } 
 
   pesquisarCpfDpl(filtro: FiltroPaginado): Promise<any> {
     const params = filtro.params || new HttpParams();
@@ -66,7 +67,7 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .toPromise();
   }
 
-  processarPessoaCpfpl(pessoaId: number): Promise<string> {
+  processarPessoaCpfDpl(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
       .toPromise();

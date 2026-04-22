@@ -30,5 +30,5 @@ export class PesPessoaRoutingModule { }
 
 export const pesPessoaRoutedComponents = [
   PesPessoaComponent,
-  PesPessoaIudComponent,
+  PesPessoaIudComponent
 ];

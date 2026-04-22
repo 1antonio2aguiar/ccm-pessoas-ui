@@ -1,0 +1,31 @@
+<nb-card>
+  <nb-card-header>
+    Pessoas com CPF duplicado
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Processando lote...</strong> {{ progressoLote }}%
+      </div>
+
+      <nb-progress-bar
+        [value]="progressoLote"
+        status="primary">
+      </nb-progress-bar>
+    </div>
+
+    <div *ngIf="mensagemErro" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (edit)="onEditarLinha($event)"
+      (create)="onCreateConfirm($event)">
+    </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>
