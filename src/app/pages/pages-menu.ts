@@ -75,6 +75,14 @@ export const MENU_ITEMS: NbMenuItem[] = [
             title: 'CPF DUPLICADO',
             link: '/pages/unificacao/pessoas/cpf-duplicado',
           },
+          {
+            title: 'CNPJ ÚNICO',
+            link: '/pages/unificacao/pessoas/cnpj-unico',
+          },
+          {
+            title: 'CNPJ DUPLICADO',
+            link: '/pages/unificacao/pessoas/cnpj-duplicado',
+          },
         ],
       },
 

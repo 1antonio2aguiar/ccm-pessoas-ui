@@ -71,6 +71,18 @@ const routes: Routes = [{
     },
 
     {
+      path: 'unificacao/pessoas/cnpj-unico',
+      loadChildren: () => 
+        import('./unificacao/pessoas/cnpj-unico/cnpj-unico.module').then(m => m.CnpjUnicoModule),
+    },
+
+    {
+      path: 'unificacao/pessoas/cnpj-duplicado',
+      loadChildren: () => 
+        import('./unificacao/pessoas/cnpj-duplicado/pes-pessoa-cnpj-dpl.module').then(m => m.PesPessoaCnpjDplModule),
+    },
+
+    {
       path: '',
       redirectTo: 'dashboard',
       pathMatch: 'full',

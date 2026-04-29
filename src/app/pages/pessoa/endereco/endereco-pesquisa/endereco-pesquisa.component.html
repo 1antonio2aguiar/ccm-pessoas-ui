@@ -39,7 +39,7 @@
                 {{ endereco.numero }}
                 {{ endereco.complemento ? ' ' + endereco.complemento : '' }}
               </p>
-              <p class="mb-1">{{ endereco.bairroNome }} {{ endereco.cidadeNome }} - {{ endereco.estadoUf }}</p> <!-- Fechei a tag <p> aqui -->
+              <p class="mb-1"> Bairro: {{ endereco.bairroNome }}, {{ endereco.cidadeNome }} - {{ endereco.estadoUf }}</p> <!-- Fechei a tag <p> aqui -->
               <p class="mb-1">CEP: {{ endereco.cep | cep }}</p> 
             </div>
 
