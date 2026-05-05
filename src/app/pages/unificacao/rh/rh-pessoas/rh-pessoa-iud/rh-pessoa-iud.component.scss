@@ -1,0 +1,106 @@
+:host ::ng-deep ng2-smart-table-pager {
+  justify-content: center;
+}
+
+/* Bloqueia ID em qualquer circunstância */
+:host ::ng-deep ng2-smart-table td input[ng-reflect-name="id"],
+:host ::ng-deep ng2-smart-table td input[name="id"] {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* Bloqueia Distrito em qualquer circunstância */
+:host ::ng-deep ng2-smart-table td input[ng-reflect-name="nomeDistrito"],
+:host ::ng-deep ng2-smart-table td input[name="nomeDistrito"] {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed; 
+}
+
+/* Bloqueia a coluna Cidade no modo edit (is-new=false) */
+:host ::ng-deep ng2-smart-table
+  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
+  ngx-distrito-nome-editor
+  .distrito-nome-input {
+  pointer-events: none;
+  user-select: none;
+  background: #f7f9fc;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+::ng-deep ng2-smart-table .icon-save-btn {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233366ff'>\
+<path d='M17,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3M12,19A2,2 0 0,1 10,17A2,2 0 0,1 12,15A2,2 0 0,1 14,17A2,2 0 0,1 12,19M15,9H5V5H15V9Z'/>\
+</svg>");
+}
+
+::ng-deep ng2-smart-table .icon-save-btn {
+  cursor: pointer;
+  opacity: 0.8;
+  transition: 0.2s;
+}
+
+::ng-deep ng2-smart-table .icon-save-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.lote-progress-wrapper {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f7f9fc;
+  border: 1px solid #edf1f7;
+  border-radius: 0.5rem;
+}
+
+.lote-progress-text {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.lote-erro {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff2f2;
+  border: 1px solid #ffd6d6;
+  border-radius: 0.5rem;
+  color: #b42318;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-cad-unico {
+  background-color: #9ffdc8 !important;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-unico-rh {
+  background-color: #fdcf8e !important;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-duplicado-rh {
+  background-color: #fdddda !important;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-cad-unico:hover {
+  background-color: #dff3e8 !important;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-unico-rh:hover {
+  background-color: #ffeacc !important;
+}
+
+:host ::ng-deep ng2-smart-table tbody tr.linha-status-duplicado-rh:hover {
+  background-color: #fdc2c2 !important;
+}

@@ -1,0 +1,33 @@
+<nb-card>
+  <nb-card-header>
+    Pessoas do RH
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Processamento será implementado na próxima etapa.
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Processando lote...</strong> {{ progressoLote }}%
+      </div>
+
+      <nb-progress-bar
+        [value]="progressoLote"
+        status="primary">
+      </nb-progress-bar>
+    </div>
+
+    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+    -->
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (create)="onCreateConfirm($event)"
+      (edit)="onEditarLinha($event)">
+    </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>

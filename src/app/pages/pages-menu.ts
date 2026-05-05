@@ -1,10 +1,10 @@
 import { NbMenuItem } from '@nebular/theme';
 
 export const MENU_ITEMS: NbMenuItem[] = [
- /* {
-    title: 'AÇÕES',
-    group: true,
-  },*/
+  /* {
+     title: 'AÇÕES',
+     group: true,
+   },*/
   {
     title: 'Cadastros',
     icon: 'layout-outline',
@@ -13,7 +13,7 @@ export const MENU_ITEMS: NbMenuItem[] = [
         title: 'Estados',
         link: '/pages/estado/estado-iud',
       },
-       {
+      {
         title: 'Ceps',
         link: '/pages/cep/cep-pesquisa',
       },
@@ -65,24 +65,44 @@ export const MENU_ITEMS: NbMenuItem[] = [
       // =================================================================
       {
         title: 'Unifica Pessoas',
-        // icon: 'lock-outline', // Você pode adicionar um ícone se quiser
         children: [
+
+          // ===== PESSOAS =====
           {
-            title: 'CPF ÚNICO',
-            link: '/pages/unificacao/pessoas/pes-pessoa',
+            title: 'Pessoas',
+            icon: 'people-outline',
+            children: [
+              {
+                title: 'CPF ÚNICO',
+                link: '/pages/unificacao/pessoas/pes-pessoa',
+              },
+              {
+                title: 'CPF DUPLICADO',
+                link: '/pages/unificacao/pessoas/cpf-duplicado',
+              },
+              {
+                title: 'CNPJ ÚNICO',
+                link: '/pages/unificacao/pessoas/cnpj-unico',
+              },
+              {
+                title: 'CNPJ DUPLICADO',
+                link: '/pages/unificacao/pessoas/cnpj-duplicado',
+              },
+            ],
           },
+
+          // ===== RH =====
           {
-            title: 'CPF DUPLICADO',
-            link: '/pages/unificacao/pessoas/cpf-duplicado',
+            title: 'RH',
+            icon: 'briefcase-outline',
+            children: [
+              {
+                title: 'Pessoas RH',
+                link: '/pages/unificacao/rh',
+              },
+            ],
           },
-          {
-            title: 'CNPJ ÚNICO',
-            link: '/pages/unificacao/pessoas/cnpj-unico',
-          },
-          {
-            title: 'CNPJ DUPLICADO',
-            link: '/pages/unificacao/pessoas/cnpj-duplicado',
-          },
+
         ],
       },
 

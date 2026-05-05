@@ -83,6 +83,13 @@ const routes: Routes = [{
     },
 
     {
+      path: 'unificacao/rh',
+      loadChildren: () =>
+        import('./unificacao/rh/rh-pessoas/rh-pessoa.module')
+          .then(m => m.RhPessoaModule),
+    },
+
+    {
       path: '',
       redirectTo: 'dashboard',
       pathMatch: 'full',
