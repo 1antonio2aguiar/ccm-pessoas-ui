@@ -58,4 +58,16 @@ private cargaApiPath = environment.apiUrl + 'rh-pessoas';
       .post(`${this.cargaApiPath}/processar-cpf-duplicado/${pessoaId}`, {}, { responseType: 'text' })
       .toPromise();
   }
+
+  processarJaExisteCadUnico(pessoaId: number): Promise<string> {
+  return this.http
+    .post(`${this.cargaApiPath}/processar-ja-existe-cad-unico/${pessoaId}`, {}, { responseType: 'text' })
+    .toPromise();
+  }
+
+  processarCnpjUnico(pessoaId: number): Promise<string> {
+  return this.http
+    .post(`${this.cargaApiPath}/processar-cnpj-unico/${pessoaId}`, {}, { responseType: 'text' })
+    .toPromise();
+}
 }

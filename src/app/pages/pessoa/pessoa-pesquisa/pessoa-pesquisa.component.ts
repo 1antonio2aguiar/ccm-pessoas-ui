@@ -30,7 +30,7 @@ export class PessoaPesquisaComponent implements OnInit, OnDestroy {
     mode: 'external',
 
     pager: {
-      perPage: 5,
+      perPage: 6,
       display: true,
     },
 

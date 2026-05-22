@@ -26,6 +26,7 @@ export class PessoaIudComponent implements OnInit, OnDestroy {
     { title: 'Endereços', icon: 'pin-outline', link: './enderecos' },
     { title: 'Contatos', icon: 'phone-outline', link: './contatos' },
     { title: 'Documentos', icon: 'file-text-outline', link: './documentos' },
+    { title: 'Origem', icon: 'archive-outline', link: './origem' },
   ];
 
   constructor(

@@ -8,7 +8,7 @@ import { HttpParams } from '@angular/common/http';
  */
 export class FiltroPaginado {
   pagina = 0;
-  itensPorPagina = 5;
+  itensPorPagina = 6;
   totalRegistros = 0;
   params: HttpParams = new HttpParams();
 

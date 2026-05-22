@@ -9,6 +9,13 @@ const routes: Routes = [{
   children: [
 
     {
+      path: 'dashboard',
+      loadChildren: () =>
+        import('./dashboard/cad-unico-dashboard.module')
+          .then(m => m.CadUnicoDashboardModule),
+    },
+
+    {
       path: 'bairro',
       loadChildren: () => import('./bairro/bairro.module').then(m => m.BairroModule),
     },

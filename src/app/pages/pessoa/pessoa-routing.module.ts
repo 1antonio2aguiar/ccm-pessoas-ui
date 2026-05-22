@@ -12,6 +12,7 @@ import { ContatoPesquisaComponent } from './contato/contato-pesquisa/contato-pes
 import { ContatoIudComponent } from './contato/contato-iud/contato-iud.component';
 import { DocumentoPesquisaComponent } from './documento/documento-pesquisa/documento-pesquisa.component';
 import { DocumentoIudComponent } from './documento/documento-iud/documento-iud.component';
+import { OrigemPesquisaComponent } from './origem/origem-pesquisa/origem-pesquisa.component';
 
 const routes: Routes = [{
   path: '',
@@ -36,6 +37,7 @@ const routes: Routes = [{
         { path: 'enderecos', component: EnderecoPesquisaComponent },
         { path: 'contatos', component: ContatoPesquisaComponent },
         { path: 'documentos', component: DocumentoPesquisaComponent },
+        { path: 'origem', component: OrigemPesquisaComponent },
       ]
     },
 
@@ -48,6 +50,7 @@ const routes: Routes = [{
         { path: 'enderecos', component: EnderecoPesquisaComponent },
         { path: 'contatos', component: ContatoPesquisaComponent },
         { path: 'documentos', component: DocumentoPesquisaComponent },
+        { path: 'origem', component: OrigemPesquisaComponent },
       ]
     },
 
@@ -75,5 +78,6 @@ export const pessoaRoutedComponents = [
   ContatoPesquisaComponent,
   ContatoIudComponent,
   DocumentoPesquisaComponent,
-  DocumentoIudComponent
+  DocumentoIudComponent,
+  OrigemPesquisaComponent
 ];

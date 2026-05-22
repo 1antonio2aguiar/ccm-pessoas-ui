@@ -1,0 +1,107 @@
+<div *ngIf="isLoading" class="text-center my-5">
+  <nb-spinner status="primary"></nb-spinner>
+</div>
+
+<div *ngIf="!isLoading && resumo">
+
+  <div class="row">
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Total Cad. Único</div>
+          <div class="valor">{{ resumo.totalPessoasUnificadas }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Total Vínculos</div>
+          <div class="valor">{{ resumo.totalVinculos }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Origem PESSOAS</div>
+          <div class="valor">{{ resumo.totalOrigemPessoas }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Origem RH</div>
+          <div class="valor">{{ resumo.totalOrigemRh }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">CPF</div>
+          <div class="valor">{{ resumo.totalCpf }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">CNPJ</div>
+          <div class="valor">{{ resumo.totalCnpj }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Sem Endereço</div>
+          <div class="valor">{{ resumo.totalSemEndereco }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <nb-card>
+        <nb-card-body>
+          <div class="titulo">Múltiplas Origens</div>
+          <div class="valor">{{ resumo.totalComMaisDeUmaOrigem }}</div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+  </div>
+
+  <div class="row mt-4">
+  <div class="col-md-6 mb-3">
+    <nb-card>
+      <nb-card-header>Origem dos vínculos</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="origemChartOptions" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-6 mb-3">
+    <nb-card>
+      <nb-card-header>CPF x CNPJ</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="tipoPessoaChartOptions" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+</div>

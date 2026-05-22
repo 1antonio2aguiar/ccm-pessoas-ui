@@ -204,25 +204,59 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (fisicaJuridica !== 'F') {
-      this.toastrService.warning('Neste momento, somente pessoa física será processada.', 'Atenção');
+    if (fisicaJuridica === 'F') {
+      if (status === 'UNICO_RH') {
+        this.processarCpfUnicoLinha(pessoaId);
+        return;
+      }
+
+      if (status === 'DUPLICADO_RH') {
+        this.processarCpfDuplicadoLinha(pessoaId);
+        return;
+      }
+
+      if (status === 'JA_EXISTE_CAD_UNICO') {
+        this.processarJaExisteCadUnicoLinha(pessoaId);
+        return;
+      }
+    }
+
+    if (fisicaJuridica === 'J') {
+      if (status === 'UNICO_RH') {
+        this.processarCnpjUnicoLinha(pessoaId);
+        return;
+      }
+
+      this.toastrService.warning('Processamento de CNPJ disponível somente para Único no RH.', 'Atenção');
       return;
     }
 
-    if (status === 'UNICO_RH') {
-      this.processarCpfUnicoLinha(pessoaId);
-      return;
-    }
+    this.toastrService.warning('Tipo de pessoa não suportado.', 'Atenção');
+  }
 
-    if (status === 'DUPLICADO_RH') {
-      this.processarCpfDuplicadoLinha(pessoaId);
-      return;
-    }
+  private processarCnpjUnicoLinha(pessoaId: number): void {
+    this.isLoading = true;
 
-    this.toastrService.warning(
-      'Este status ainda não está liberado para processamento.',
-      'Atenção'
-    );
+    this.service.processarCnpjUnico(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(
+          msg || `Pessoa jurídica ${pessoaId} processada com sucesso.`,
+          'Sucesso'
+        );
+
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+
+        this.toastrService.danger(
+          e?.error || `Erro ao processar CNPJ único da pessoa ${pessoaId}.`,
+          'Erro'
+        );
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   }
 
   private buildBaseParams(): HttpParams {
@@ -483,5 +517,30 @@ private processarCpfDuplicadoLinha(pessoaId: number): void {
     if (p5) out += '-' + p5;
 
     return out;
+  }
+
+  private processarJaExisteCadUnicoLinha(pessoaId: number): void {
+    this.isLoading = true;
+
+    this.service.processarJaExisteCadUnico(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(
+          msg || `Pessoa ${pessoaId} vinculada ao Cadastro Único com sucesso.`,
+          'Sucesso'
+        );
+
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+
+        this.toastrService.danger(
+          e?.error || `Erro ao vincular a pessoa ${pessoaId} ao Cadastro Único.`,
+          'Erro'
+        );
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   }
 }
