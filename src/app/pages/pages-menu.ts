@@ -110,6 +110,22 @@ export const MENU_ITEMS: NbMenuItem[] = [
             ],
           },
 
+          // ===== SANEAMENTO =====
+          {
+            title: 'SANEAMENTO',
+            icon: 'briefcase-outline',
+            children: [
+              {
+                title: 'CPF ÚNICO',
+                link: '/pages/unificacao/saneamento',
+              },
+              {
+                title: 'CNPJ ÚNICO',
+                link: '/pages/unificacao/saneamento/sane-cnpj-unico',
+              },
+            ],
+          },
+
         ],
       },
 

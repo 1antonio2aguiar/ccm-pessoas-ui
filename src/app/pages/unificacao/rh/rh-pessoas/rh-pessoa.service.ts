@@ -7,7 +7,7 @@ import { FiltroPaginado } from '../../../../shared/filters/filtro-paginado';
 
 export class RhPessoaFilters {
   pagina = 0;
-  itensPorPagina = 40;
+  itensPorPagina = 7;
   totalRegistros = 0;
 
   id: number | null = null;

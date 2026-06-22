@@ -148,7 +148,18 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
         type: 'string',
         width: '180px',
         filter: true,
-        filterFunction: (_cell?: any, _search?: string) => true,
+        valuePrepareFunction: (value: any) => {
+          if (!value) {
+            return '';
+          }
+
+          const cpf = value.toString().replace(/\D/g, '').padStart(11, '0');
+
+          return cpf.replace(
+            /(\d{3})(\d{3})(\d{3})(\d{2})/,
+            '$1.$2.$3-$4'
+          );
+        },
       },
 
       dataNascimento: {

@@ -68,9 +68,21 @@
             <div class="row">
               <div class="col-md-3 form-group">
                 <label for="cpf" class="label">CPF</label>
-                <input nbInput #cpfInput fullWidth id="cpf" placeholder="000.000.000-00" 
+
+                <input
+                  nbInput
+                  #cpfInput
+                  fullWidth
+                  id="cpf"
+                  placeholder="000.000.000-00"
                   formControlName="cpf"
-                  ngxMaskFormatter="cpf" >
+                  ngxMaskFormatter="cpf"
+                  [status]="cpfDuplicado ? 'danger' : 'basic'"
+                />
+
+                <small class="mensagem-duplicado" *ngIf="cpfDuplicado">
+                  CPF já cadastrado. Informe outro CPF.
+                </small>
               </div>
 
               <div class="col-md-3 form-group">
@@ -175,10 +187,23 @@
 
             <div class="row">
               <div class="col-md-4 form-group">
-                <label for="cnpj" class="label">CNPJ</label>
-                <input nbInput #cnpjInput fullWidth id="cnpj" placeholder="00.000.000/0000-00" formControlName="cnpj"
-                  ngxMaskFormatter="cnpj">
-              </div>
+              <label for="cnpj" class="label">CNPJ</label>
+
+              <input
+                nbInput
+                #cnpjInput
+                fullWidth
+                id="cnpj"
+                placeholder="00.000.000/0000-00"
+                formControlName="cnpj"
+                ngxMaskFormatter="cnpj"
+                [status]="cnpjDuplicado ? 'danger' : 'basic'"
+              />
+
+              <small class="mensagem-duplicado" *ngIf="cnpjDuplicado">
+                CNPJ já cadastrado. Informe outro CNPJ.
+              </small>
+            </div>
 
               <div class="col-md-4 form-group">
                 <label for="tipoEmpresa" class="label">Tipo de Empresa</label>

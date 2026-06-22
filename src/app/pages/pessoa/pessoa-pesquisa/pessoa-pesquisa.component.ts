@@ -6,8 +6,8 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { debounceTime, filter } from 'rxjs/operators';
-
 import { AfterViewInit, ElementRef } from '@angular/core';
+import { ConfirmationDialogComponent } from '../../components/base-resource-confirmation-delete/confirmation-dialog/confirmation-dialog.component';
 
 import { PessoaService, PessoaFilters } from '../pessoa.service';
 
@@ -30,7 +30,7 @@ export class PessoaPesquisaComponent implements OnInit, OnDestroy {
     mode: 'external',
 
     pager: {
-      perPage: 6,
+      perPage: 5,
       display: true,
     },
 
@@ -258,7 +258,62 @@ export class PessoaPesquisaComponent implements OnInit, OnDestroy {
   }
 
   onDelete(event: any): void {
-    console.log('Oi');
+    const item = event.data;
+
+    this.dialogService.open(ConfirmationDialogComponent, {
+      context: {
+        title: 'Confirmar Exclusão',
+        message: `
+          Você tem certeza que deseja excluir a pessoa
+          <strong>"${item.nome}"</strong>?
+          <br><br>
+          Esta ação também excluirá endereços, documentos, contatos
+          e vínculos no Cadastro Único.
+        `,
+        confirmButtonText: 'Sim, Excluir',
+        cancelButtonText: 'Cancelar',
+        status: 'danger',
+        icon: 'trash-2-outline',
+      },
+      closeOnBackdropClick: false,
+    }).onClose.subscribe((confirmado) => {
+      if (confirmado) {
+        this.pessoaService.deletePessoa(item.id).subscribe({
+          next: () => {
+            if (event.confirm) {
+              event.confirm.resolve();
+            }
+
+            this.toastr.show(
+              `Pessoa "${item.nome}" foi excluída com sucesso.`,
+              'Exclusão Realizada',
+              { status: 'success', icon: 'trash-2-outline' },
+            );
+
+            this.listarPessoas();
+          },
+          error: (error) => {
+            console.error('Erro ao deletar pessoa:', error);
+
+            event.confirm.reject();
+
+            const mensagem =
+              error?.error?.message ||
+              error?.error?.detail ||
+              error?.message ||
+              'Não foi possível excluir a pessoa.';
+
+            this.toastr.show(
+              mensagem,
+              'Erro na Exclusão',
+              { status: 'danger', icon: 'alert-circle-outline' },
+            );
+          },
+        });
+      } else {
+        event.confirm.reject();
+      }
+    });
   }
 
   /**

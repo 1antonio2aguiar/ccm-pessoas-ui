@@ -1,0 +1,36 @@
+<nb-card>
+  <nb-card-header>
+    CPF Único - Saneamento
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Processando lote...</strong> {{ progressoLote }}%
+      </div>
+
+      <nb-progress-bar
+        [value]="progressoLote"
+        status="primary">
+      </nb-progress-bar>
+    </div>
+
+    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <div *ngIf="isLoading" class="text-center my-3">
+      <nb-spinner status="primary"></nb-spinner>
+      <p>Carregando pessoas do saneamento...</p>
+    </div>
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (create)="onCreateConfirm($event)"
+      (edit)="onEditarLinha($event)">
+    </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>

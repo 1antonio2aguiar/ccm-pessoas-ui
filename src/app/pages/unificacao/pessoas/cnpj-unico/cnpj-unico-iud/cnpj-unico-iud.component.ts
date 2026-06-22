@@ -52,7 +52,7 @@ export class CnpjUnicoIudComponent implements OnInit, OnDestroy {
       saveButtonContent: '',
       cancelButtonContent: '',
       confirmSave: true,
-    },
+    }, 
 
     columns: {
       pessoa: {
@@ -113,14 +113,14 @@ export class CnpjUnicoIudComponent implements OnInit, OnDestroy {
   }
 
   onEditarLinha(event: any): void {
-    const pessoaId = event?.data?.pessoa;
+    const pessoa = event?.data;
 
-    if (!pessoaId) {
+    if (!pessoa?.pessoa) {
       this.toastrService.danger('Código da pessoa não encontrado.', 'Erro');
       return;
     }
 
-    this.processarPessoaLinha(pessoaId);
+    this.processarPessoaLinha(pessoa);
   }
 
   private buildBaseParams(): HttpParams {
@@ -187,13 +187,36 @@ export class CnpjUnicoIudComponent implements OnInit, OnDestroy {
       });
   }
 
-  private processarPessoaLinha(pessoaId: number): void {
+  private processarPessoaLinha(pessoa: any): void {
+    const pessoaId = pessoa?.pessoa;
+    const cnpj = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
+
+    if (!cnpj) {
+      this.toastrService.danger('CNPJ não encontrado para validação.', 'Erro');
+      return;
+    }
+
     this.isLoading = true;
 
-    this.service.processarPessoaUnica(pessoaId)
-      .then((msg) => {
-        this.toastrService.success(msg || `Pessoa ${pessoaId} processada com sucesso.`, 'Sucesso');
-        this.listar();
+    this.service.existeCpfCnpjNoCadUnico(cnpj, 'J')
+      .then((existe) => {
+        if (existe) {
+          this.toastrService.warning(
+            'CNPJ já existe no Cadastro Único. Use a rotina de EXISTE NO CAD. ÚNICO.',
+            'Atenção'
+          );
+          return;
+        }
+
+        return this.service.processarPessoaUnica(pessoaId)
+          .then((msg) => {
+            this.toastrService.success(
+              msg || `Pessoa ${pessoaId} processada com sucesso.`,
+              'Sucesso'
+            );
+
+            this.listar();
+          });
       })
       .catch((e) => {
         console.error(e);
@@ -201,7 +224,7 @@ export class CnpjUnicoIudComponent implements OnInit, OnDestroy {
       })
       .finally(() => {
         this.isLoading = false;
-      });
+    });
   }
 
   private processarPessoaLinhaLote(pessoaId: number): Promise<void> {

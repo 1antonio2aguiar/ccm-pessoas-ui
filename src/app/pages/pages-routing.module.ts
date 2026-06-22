@@ -96,6 +96,13 @@ const routes: Routes = [{
           .then(m => m.RhPessoaModule),
     },
 
+     {
+      path: 'unificacao/saneamento',
+      loadChildren: () =>
+        import('./unificacao/saneamento/sane-pessoa.module')
+          .then(m => m.SanePessoaModule),
+    },
+
     {
       path: '',
       redirectTo: 'dashboard',

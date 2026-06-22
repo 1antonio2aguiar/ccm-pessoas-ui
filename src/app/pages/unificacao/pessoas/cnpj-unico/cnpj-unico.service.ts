@@ -5,11 +5,11 @@ import { environment } from '../../../../../environments/environment';
 import { BaseResourceService } from '../../../../shared/services/base-resource.service';
 import { FiltroPaginado } from '../../../../shared/filters/filtro-paginado';
 
-import { PesPessoas } from '../../../../shared/models/unificacao/pes-pessoas';
+import { PesPessoas } from '../../../../shared/models/unificacao/pes-pessoas'; 
 
 export class PessoaFilters {
   pagina = 0;
-  itensPorPagina = 40;
+  itensPorPagina = 8;
   totalRegistros = 0;
 
   id: number | null = null;
@@ -49,6 +49,16 @@ export class CnpjUnicoService extends BaseResourceService<PesPessoas> {
   processarPessoaUnica(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
+  }
+
+  existeCpfCnpjNoCadUnico(cpfCnpj: string | number, fisicaJuridica: string): Promise<boolean> {
+    const params = new HttpParams()
+      .set('cpfCnpj', String(cpfCnpj).replace(/\D/g, ''))
+      .set('fisicaJuridica', fisicaJuridica);
+
+    return this.http
+      .get<boolean>(`${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`, { params })
       .toPromise();
   }
 }

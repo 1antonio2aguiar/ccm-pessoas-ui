@@ -1,6 +1,7 @@
 import { Injectable, Injector, EventEmitter } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 import { BaseResourceService } from '../../shared/services/base-resource.service';
@@ -66,6 +67,90 @@ export class PessoaService extends BaseResourceService<PessoaOut> {
   
   public updatePessoa(id: number, pessoa: any): Observable<PessoaOut> {
     return this.http.put<PessoaOut>(`${this.apiPath}/${id}`, pessoa);
+  }
+
+  public verificarCpfCnpjDuplicado(cpf?: string | null, cnpj?: string | null, idIgnorar?: number | null): Observable<boolean> {
+    const cpfLimpo = cpf ? String(cpf).replace(/\D/g, '') : '';
+    const cnpjLimpo = cnpj ? String(cnpj).replace(/\D/g, '') : '';
+
+    if (!cpfLimpo && !cnpjLimpo) {
+      return of(false);
+    }
+
+    const documentoPesquisado = cpfLimpo || cnpjLimpo;
+
+    let params = new HttpParams()
+      .set('pagina', '0')
+      .set('itensPorPagina', '20');
+
+    if (cpfLimpo) {
+      params = params.set('cpf', cpfLimpo);
+    }
+
+    if (cnpjLimpo) {
+      params = params.set('cnpj', cnpjLimpo);
+    }
+
+    return this.http.get<any>(this.apiPath + '/filter', { params }).pipe(
+      map((response) => {
+        const lista = this.extrairListaPessoas(response);
+        const idAtual = idIgnorar !== null && idIgnorar !== undefined ? Number(idIgnorar) : null;
+
+        return lista.some((p: any) => {
+          const idEncontrado = p?.id !== null && p?.id !== undefined ? Number(p.id) : null;
+
+          if (idAtual !== null && idEncontrado === idAtual) {
+            return false;
+          }
+
+          const documentoEncontrado = this.extrairCpfCnpjPessoa(p);
+
+          // Garante que só acusa duplicidade quando o CPF/CNPJ retornado é exatamente o mesmo.
+          // Isso evita falso positivo caso o /filter volte registros por outro critério.
+          return documentoEncontrado === documentoPesquisado;
+        });
+      })
+    );
+  }
+
+  private extrairListaPessoas(response: any): any[] {
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (Array.isArray(response?.content)) {
+      return response.content;
+    }
+
+    if (Array.isArray(response?.pessoas)) {
+      return response.pessoas;
+    }
+
+    if (Array.isArray(response?.data)) {
+      return response.data;
+    }
+
+    if (Array.isArray(response?.resultado)) {
+      return response.resultado;
+    }
+
+    return [];
+  }
+
+  private extrairCpfCnpjPessoa(pessoa: any): string {
+    return String(
+      pessoa?.cpf ??
+      pessoa?.cnpj ??
+      pessoa?.cpfCnpj ??
+      pessoa?.cgcCpf ??
+      pessoa?.dadosPessoaFisica?.cpf ??
+      pessoa?.dadosPessoaJuridica?.cnpj ??
+      ''
+    ).replace(/\D/g, '');
+  }
+
+  public deletePessoa(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiPath}/${id}`);
   }
 
 }

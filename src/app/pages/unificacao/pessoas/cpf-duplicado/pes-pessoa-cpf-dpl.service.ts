@@ -9,7 +9,7 @@ import { PesPessoas } from '../../../../shared/models/unificacao/pes-pessoas';
 
 export class PessoaFilters {
   pagina = 0;
-  itensPorPagina = 40;
+  itensPorPagina = 8;
   totalRegistros = 0;
 
   id: number | null = null;

@@ -72,6 +72,10 @@ export class CadUnicoDashboardComponent implements OnInit {
               value: this.resumo.totalOrigemRh,
               name: 'RH',
             },
+            {
+              value: this.resumo.totalOrigemSane,
+              name: 'SANE',
+            },
           ],
         },
       ],

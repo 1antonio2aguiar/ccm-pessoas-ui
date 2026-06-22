@@ -62,6 +62,13 @@ export class CidadeIudComponent {
         width: '90px',
       },
 
+      nome: {
+        title: 'Nome',
+        type: 'string',
+        width: '600px',
+        filter: true,
+      },
+
       estadoNome: {
         title: 'Estado',
         type: 'string',
@@ -71,13 +78,6 @@ export class CidadeIudComponent {
           type: 'custom',
           component: EstadoNomeEditorComponent,
         },
-      },
-
-      nome: {
-        title: 'Nome',
-        type: 'string',
-        width: '600px',
-        filter: true,
       },
 
      sigla: {

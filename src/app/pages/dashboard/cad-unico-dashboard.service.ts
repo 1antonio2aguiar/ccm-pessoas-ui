@@ -8,6 +8,7 @@ export interface CadUnicoDashboardResumo {
   totalVinculos: number;
   totalOrigemPessoas: number;
   totalOrigemRh: number;
+  totalOrigemSane: number;
   totalCpf: number;
   totalCnpj: number;
   totalSemEndereco: number;

@@ -14,7 +14,7 @@
 
 :host nb-card-header {
   flex-shrink: 0;
-}
+} 
 
 :host nb-card-body {
   flex: 1;
@@ -23,55 +23,8 @@
   padding: 1.5rem;
 }
 
-.model-full {
-  width: 80% !important;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.loading {
-  padding: 0.5rem 0;
-}
-
 :host ::ng-deep ng2-smart-table-pager {
   justify-content: center;
-}
-
-/* Bloqueia ID em qualquer circunstância */
-:host ::ng-deep ng2-smart-table td input[ng-reflect-name="id"],
-:host ::ng-deep ng2-smart-table td input[name="id"] {
-  pointer-events: none;
-  user-select: none;
-  background: #f7f9fc;
-  opacity: 0.85;
-  cursor: not-allowed;
-}
-
-/* Bloqueia Distrito em qualquer circunstância */
-:host ::ng-deep ng2-smart-table td input[ng-reflect-name="nomeDistrito"],
-:host ::ng-deep ng2-smart-table td input[name="nomeDistrito"] {
-  pointer-events: none;
-  user-select: none;
-  background: #f7f9fc;
-  opacity: 0.85;
-  cursor: not-allowed;
-}
-
-/* Bloqueia a coluna Distrito no modo edit */
-:host ::ng-deep ng2-smart-table
-  ng2-smart-table-cell[ng-reflect-is-in-editing="true"][ng-reflect-is-new="false"]
-  ngx-distrito-nome-editor
-  .distrito-nome-input {
-  pointer-events: none;
-  user-select: none;
-  background: #f7f9fc;
-  opacity: 0.85;
-  cursor: not-allowed;
 }
 
 ::ng-deep ng2-smart-table .icon-save-btn {
@@ -79,12 +32,12 @@
   width: 16px;
   height: 16px;
   vertical-align: middle;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: 0.2s;
   background-repeat: no-repeat;
   background-position: center;
   background-size: 16px 16px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: 0.2s;
   background-image: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233366ff'>\
 <path d='M17,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3M12,19A2,2 0 0,1 10,17A2,2 0 0,1 12,15A2,2 0 0,1 14,17A2,2 0 0,1 12,19M15,9H5V5H15V9Z'/>\
@@ -116,6 +69,10 @@
   border: 1px solid #ffd6d6;
   border-radius: 0.5rem;
   color: #b42318;
+}
+
+:host ::ng-deep ng2-smart-table-pager {
+  justify-content: center;
 }
 
 ::ng-deep tr.linha-verde td {

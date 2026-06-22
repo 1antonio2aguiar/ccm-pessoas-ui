@@ -1,6 +1,6 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -50,6 +50,8 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
   filtro: Filters = new Filters();
 
   showCidadeDropdown = false;
+  cpfDuplicado = false;
+  cnpjDuplicado = false;
 
   // ids selecionados
   cidadeId: number | null = null;
@@ -82,42 +84,43 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
 
     // Obter o pessoaId da rota PAI (PessoaApiIudComponent)
     this.route.parent?.params.pipe(takeUntil(this.destroy$)).subscribe(parentParams => {
-      
+
       if (parentParams['id']) {
-      this.modoEdicao = true;
-      this.pessoaId = +parentParams['id'];
-      this.cardHeaderTitle = `${this.pessoaNome}`;
-      this.pessoaForm.get('fisicaJuridica')?.disable();
-      this.carregarDadosPessoaParaEdicao(this.pessoaId);
+        this.modoEdicao = true;
+        this.pessoaId = +parentParams['id'];
+        this.cardHeaderTitle = `${this.pessoaNome}`;
+        this.pessoaForm.get('fisicaJuridica')?.disable();
+        this.carregarDadosPessoaParaEdicao(this.pessoaId);
 
-    } else {
-      // MODO CRIAÇÃO
-      this.modoEdicao = false;
-      this.pessoaId = null;
-      this.cardHeaderTitle = 'Cadastrar Novo Perfil';
-      this.pessoaForm.get('fisicaJuridica')?.enable();
+      } else {
+        // MODO CRIAÇÃO
+        this.modoEdicao = false;
+        this.pessoaId = null;
+        this.cardHeaderTitle = 'Cadastrar Novo Perfil';
+        this.pessoaForm.get('fisicaJuridica')?.enable();
 
-      this.configurarValidadoresDinamicos(); 
-    }
+        this.configurarValidadoresDinamicos();
+      }
     });
 
     // Listener de mudanças no tipo de pessoa
     this.pessoaForm.get('fisicaJuridica')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      this.configurarValidadoresDinamicos(); 
+      this.configurarValidadoresDinamicos();
     });
 
     this.pessoaForm.get('cpf')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       const control = this.pessoaForm.get('cpf');
-      if (control && value && /[^\d]/.test(value)) { 
+      if (control && value && /[^\d]/.test(value)) {
         const onlyDigits = value.replace(/\D/g, '');
         control.setValue(onlyDigits, { emitEvent: false, onlySelf: true });
       }
     });
 
+    this.configurarValidacaoCpfCnpjDuplicado();
     this.configurarAutocompletes();
-  
+
   }
 
   initForm(): void {
@@ -125,14 +128,14 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
       // --- CAMPOS COMUNS E OBRIGATÓRIOS ---
       id: [null],
       nome: ['', Validators.required], // Já começa como obrigatório
-      
+
       // VALOR PADRÃO para "Criação": 'F' (Física)
-      fisicaJuridica: ['F', Validators.required], 
-      
+      fisicaJuridica: ['F', Validators.required],
+
       // VALOR PADRÃO para "Criação": 0 (ATIVO), convertido para string para o nb-select
       // Estamos assumindo que '0' é o valor para 'ATIVO' no seu HTML
       situacao: ['1', Validators.required],
-      
+
       // VALOR PADRÃO para "Criação": 1 (Pessoa Física), se for o ID correto no seu DB
       // Se o ID for 0, ajuste aqui. Começa como obrigatório.
       tipoPessoaId: [1, Validators.required], // <<<<<< AJUSTE O VALOR '1' SE NECESSÁRIO
@@ -141,10 +144,10 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
 
       // --- CAMPOS ESPECÍFICOS (INICIAM SEM VALIDADOR) ---
       // Os validadores para estes campos serão adicionados dinamicamente
-      cpf: [''], 
+      cpf: [''],
       sexo: [null],
       estadoCivil: [null],
-      dataNascimento: [null], 
+      dataNascimento: [null],
       nomeMae: [''],
       nomePai: [''],
 
@@ -170,110 +173,249 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
       .catch(error => {
         console.error('Erro ao carregar tipos pessoas:', error);
         this.tiposPessoas = [];
-    });
+      });
   }
 
   isPessoaFisica(): boolean { return this.pessoaForm.get('fisicaJuridica')?.value === 'F'; }
   isPessoaJuridica(): boolean { return this.pessoaForm.get('fisicaJuridica')?.value === 'J'; }
 
   carregarDadosPessoaParaEdicao(id: number): void {
-  this.isLoadingDados = true;
+    this.isLoadingDados = true;
 
-  this.pessoaService.getPessoaById(id)
-    .then((pessoa: PessoaOut) => {
-      console.log('Dados da API para edição:', pessoa);
+    this.pessoaService.getPessoaById(id)
+      .then((pessoa: PessoaOut) => {
+        console.log('Dados da API para edição:', pessoa);
 
-      const tipoPessoaApi = pessoa.fisicaJuridica;
-      const pf = pessoa.dadosPessoaFisica ?? null;
-      const pj = pessoa.dadosPessoaJuridica ?? null;
+        const tipoPessoaApi = pessoa.fisicaJuridica;
+        const pf = pessoa.dadosPessoaFisica ?? null;
+        const pj = pessoa.dadosPessoaJuridica ?? null;
 
-      this.pessoaForm.get('fisicaJuridica')?.setValue(tipoPessoaApi);
+        this.pessoaForm.get('fisicaJuridica')?.setValue(tipoPessoaApi);
 
-      const dataParaFormulario: any = {
-        id: pessoa.id,
-        nome: pessoa.nome ?? '',
-        fisicaJuridica: pessoa.fisicaJuridica ?? 'F',
-        tipoPessoaId: pessoa.tipoPessoaId ?? null,
-        observacao: pessoa.observacao,
-        situacao: pessoa.situacaoId !== null && pessoa.situacaoId !== undefined
-          ? String(pessoa.situacaoId)
-          : '1',
-      };
+        const dataParaFormulario: any = {
+          id: pessoa.id,
+          nome: pessoa.nome ?? '',
+          fisicaJuridica: pessoa.fisicaJuridica ?? 'F',
+          tipoPessoaId: pessoa.tipoPessoaId ?? null,
+          observacao: pessoa.observacao,
+          situacao: pessoa.situacaoId !== null && pessoa.situacaoId !== undefined
+            ? String(pessoa.situacaoId)
+            : '1',
+        };
 
-      if (tipoPessoaApi === 'F' && pf) {
-        dataParaFormulario.cpf = pf.cpf ?? '';
-        dataParaFormulario.sexo = pf.sexo ?? null;
-        dataParaFormulario.estadoCivil = pf.estadoCivil ?? null;
-        dataParaFormulario.nomeMae = pf.mae ?? '';
-        dataParaFormulario.nomePai = pf.pai ?? '';
-        dataParaFormulario.localNascimentoId = pf.localNascimentoId ?? null;
-        dataParaFormulario.ufNascimento = pf.ufNascimento ?? '';
-      }
+        if (tipoPessoaApi === 'F' && pf) {
+          dataParaFormulario.cpf = pf.cpf ?? '';
+          dataParaFormulario.sexo = pf.sexo ?? null;
+          dataParaFormulario.estadoCivil = pf.estadoCivil ?? null;
+          dataParaFormulario.nomeMae = pf.mae ?? '';
+          dataParaFormulario.nomePai = pf.pai ?? '';
+          dataParaFormulario.localNascimentoId = pf.localNascimentoId ?? null;
+          dataParaFormulario.ufNascimento = pf.ufNascimento ?? '';
+        }
 
-      if (tipoPessoaApi === 'J' && pj) {
-        dataParaFormulario.cnpj = pj.cnpj ?? '';
-        dataParaFormulario.nomeFantasia = pj.nomeFantasia ?? '';
-        dataParaFormulario.objetoSocial = pj.objetoSocial ?? '';
-        dataParaFormulario.microEmpresa = pj.microEmpresa ?? 'N';
-        dataParaFormulario.tipoEmpresa = pj.tipoEmpresa !== null && pj.tipoEmpresa !== undefined
-          ? String(pj.tipoEmpresa)
-          : null;
-      }
+        if (tipoPessoaApi === 'J' && pj) {
+          dataParaFormulario.cnpj = pj.cnpj ?? '';
+          dataParaFormulario.nomeFantasia = pj.nomeFantasia ?? '';
+          dataParaFormulario.objetoSocial = pj.objetoSocial ?? '';
+          dataParaFormulario.microEmpresa = pj.microEmpresa ?? 'N';
+          dataParaFormulario.tipoEmpresa = pj.tipoEmpresa !== null && pj.tipoEmpresa !== undefined
+            ? String(pj.tipoEmpresa)
+            : null;
+        }
 
-      this.pessoaForm.patchValue(dataParaFormulario);
+        this.pessoaForm.patchValue(dataParaFormulario);
 
-      if (tipoPessoaApi === 'F' && pf?.localNascimentoNome) {
-        this.cidadeCtrl.setValue(pf.localNascimentoNome, { emitEvent: false });
-      }
+        if (tipoPessoaApi === 'F' && pf?.localNascimentoNome) {
+          this.cidadeCtrl.setValue(pf.localNascimentoNome, { emitEvent: false });
+        }
 
-      if (tipoPessoaApi === 'F' && pf?.dataNascimento) {
-        const dataApi = String(pf.dataNascimento).substring(0, 10); // yyyy-MM-dd
-        const parts = dataApi.split('-');
+        if (tipoPessoaApi === 'F' && pf?.dataNascimento) {
+          const dataApi = String(pf.dataNascimento).substring(0, 10); // yyyy-MM-dd
+          const parts = dataApi.split('-');
 
-        if (parts.length === 3) {
-          const dataFormatadaParaTela = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          if (parts.length === 3) {
+            const dataFormatadaParaTela = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
+            setTimeout(() => {
+              if (this.dataNascimentoInputRef?.nativeElement) {
+                this.dataNascimentoInputRef.nativeElement.value = dataFormatadaParaTela;
+              }
+            }, 0);
+          }
+        }
+
+        if (tipoPessoaApi === 'F' && pf?.cpf) {
           setTimeout(() => {
-            if (this.dataNascimentoInputRef?.nativeElement) {
-              this.dataNascimentoInputRef.nativeElement.value = dataFormatadaParaTela;
+            if (this.cpfInputRef?.nativeElement) {
+              this.cpfInputRef.nativeElement.value = this.formatarCpfParaDisplay(pf.cpf);
             }
           }, 0);
         }
-      }
 
-      if (tipoPessoaApi === 'F' && pf?.cpf) {
-        setTimeout(() => {
-          if (this.cpfInputRef?.nativeElement) {
-            this.cpfInputRef.nativeElement.value = this.formatarCpfParaDisplay(pf.cpf);
-          }
-        }, 0);
-      }
+        if (tipoPessoaApi === 'J' && pj?.cnpj) {
+          setTimeout(() => {
+            if (this.cnpjInputRef?.nativeElement) {
+              this.cnpjInputRef.nativeElement.value = this.formatarCnpjParaDisplay(pj.cnpj);
+            }
+          }, 0);
+        }
 
-      if (tipoPessoaApi === 'J' && pj?.cnpj) {
-        setTimeout(() => {
-          if (this.cnpjInputRef?.nativeElement) {
-            this.cnpjInputRef.nativeElement.value = this.formatarCnpjParaDisplay(pj.cnpj);
-          }
-        }, 0);
-      }
+        this.configurarValidadoresDinamicos();
 
-    this.configurarValidadoresDinamicos();
-
-    })
-    .catch(error => {
-      console.error(`Erro ao carregar dados da pessoa com ID ${id}:`, error);
-      this.showToast('Erro ao carregar dados do perfil.', 'Erro', 'danger');
-    })
-    .finally(() => {
-      this.isLoadingDados = false;
-    });
+      })
+      .catch(error => {
+        console.error(`Erro ao carregar dados da pessoa com ID ${id}:`, error);
+        this.showToast('Erro ao carregar dados do perfil.', 'Erro', 'danger');
+      })
+      .finally(() => {
+        this.isLoadingDados = false;
+      });
   }
 
   //-----------------------------------------------------------------
 
+  private configurarValidacaoCpfCnpjDuplicado(): void {
+    this.pessoaForm.get('cpf')?.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(500),
+      map((value: any) => String(value ?? '').replace(/\D/g, '')),
+      distinctUntilChanged(),
+      filter((cpf: string) => cpf.length === 0 || cpf.length === 11)
+    ).subscribe((cpf: string) => {
+      this.cpfDuplicado = false;
+      this.removerErroDocumentoDuplicado('cpf');
+
+      if (!cpf || !this.isPessoaFisica()) {
+        return;
+      }
+
+      this.pessoaService.verificarCpfCnpjDuplicado(cpf, null, this.pessoaId).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (duplicado: boolean) => {
+          this.cpfDuplicado = duplicado;
+
+          if (duplicado) {
+            this.marcarDocumentoDuplicado('cpf');
+            this.showToast(
+              'CPF já cadastrado para outra pessoa.',
+              'Documento duplicado',
+              'warning'
+            );
+            return;
+          }
+
+          this.removerErroDocumentoDuplicado('cpf');
+        },
+        error: (erro) => {
+          console.error('Erro ao validar CPF duplicado:', erro);
+          this.cpfDuplicado = false;
+          this.removerErroDocumentoDuplicado('cpf');
+          this.showToast(
+            'Não foi possível validar se o CPF já está cadastrado.',
+            'Validação',
+            'warning'
+          );
+        },
+      });
+    });
+
+    this.pessoaForm.get('cnpj')?.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(500),
+      map((value: any) => String(value ?? '').replace(/\D/g, '')),
+      distinctUntilChanged(),
+      filter((cnpj: string) => cnpj.length === 0 || cnpj.length === 14)
+    ).subscribe((cnpj: string) => {
+      this.cnpjDuplicado = false;
+      this.removerErroDocumentoDuplicado('cnpj');
+
+      if (!cnpj || !this.isPessoaJuridica()) {
+        return;
+      }
+
+      this.pessoaService.verificarCpfCnpjDuplicado(null, cnpj, this.pessoaId).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (duplicado: boolean) => {
+          this.cnpjDuplicado = duplicado;
+
+          if (duplicado) {
+            this.marcarDocumentoDuplicado('cnpj');
+            this.showToast(
+              'CNPJ já cadastrado para outra pessoa.',
+              'Documento duplicado',
+              'warning'
+            );
+            return;
+          }
+
+          this.removerErroDocumentoDuplicado('cnpj');
+        },
+        error: (erro) => {
+          console.error('Erro ao validar CNPJ duplicado:', erro);
+          this.cnpjDuplicado = false;
+          this.removerErroDocumentoDuplicado('cnpj');
+          this.showToast(
+            'Não foi possível validar se o CNPJ já está cadastrado.',
+            'Validação',
+            'warning'
+          );
+        },
+      });
+    });
+  }
+
+  private marcarDocumentoDuplicado(campo: 'cpf' | 'cnpj'): void {
+    const control = this.pessoaForm.get(campo);
+    if (!control) {
+      return;
+    }
+
+    control.setErrors({ ...(control.errors ?? {}), documentoDuplicado: true });
+    control.markAsTouched();
+  }
+
+  private removerErroDocumentoDuplicado(campo: 'cpf' | 'cnpj'): void {
+    const control = this.pessoaForm.get(campo);
+    if (!control?.errors?.['documentoDuplicado']) {
+      return;
+    }
+
+    const errors = { ...control.errors };
+    delete errors['documentoDuplicado'];
+    control.setErrors(Object.keys(errors).length ? errors : null);
+  }
+
+  private getDocumentoAtual(): { cpf: string | null; cnpj: string | null; tipo: 'CPF' | 'CNPJ' | null } {
+    const raw = this.pessoaForm.getRawValue();
+
+    if (this.isPessoaFisica()) {
+      return {
+        cpf: raw.cpf ? String(raw.cpf).replace(/\D/g, '') : null,
+        cnpj: null,
+        tipo: 'CPF',
+      };
+    }
+
+    if (this.isPessoaJuridica()) {
+      return {
+        cpf: null,
+        cnpj: raw.cnpj ? String(raw.cnpj).replace(/\D/g, '') : null,
+        tipo: 'CNPJ',
+      };
+    }
+
+    return { cpf: null, cnpj: null, tipo: null };
+  }
+
   onSubmit(): void {
     if (this.pessoaForm.invalid) {
-      this.showToast('Preencha os campos obrigatórios.', 'Validação', 'warning');
+      if (this.pessoaForm.get('cpf')?.errors?.['documentoDuplicado'] || this.pessoaForm.get('cnpj')?.errors?.['documentoDuplicado']) {
+        this.showToast('CPF/CNPJ já cadastrado para outra pessoa.', 'Documento duplicado', 'warning');
+      } else {
+        this.showToast('Preencha os campos obrigatórios.', 'Validação', 'warning');
+      }
       return;
     }
 
@@ -338,6 +480,33 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
 
     //console.log('PAYLOAD FINAL PARA API:', payload);
 
+    const cpf = payload.dadosPessoaFisica?.cpf ?? null;
+    const cnpj = payload.dadosPessoaJuridica?.cnpj ?? null;
+
+    this.pessoaService.verificarCpfCnpjDuplicado(cpf, cnpj, this.pessoaId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (duplicado: boolean) => {
+        if (duplicado) {
+          this.isLoading = false;
+          const documento = cpf ? 'CPF' : 'CNPJ';
+          this.marcarDocumentoDuplicado(cpf ? 'cpf' : 'cnpj');
+          this.showToast(`${documento} já cadastrado para outra pessoa.`, 'Documento duplicado', 'warning');
+          return;
+        }
+
+        this.salvarPessoa(payload);
+      },
+      error: (erro) => {
+        this.isLoading = false;
+        console.error('Erro ao validar CPF/CNPJ duplicado:', erro);
+        const mensagemErro = erro.error?.message || erro.message || 'Erro ao validar CPF/CNPJ duplicado.';
+        this.toastrService.danger(mensagemErro, 'Falha na Validação');
+      }
+    });
+  }
+
+  private salvarPessoa(payload: any): void {
     if (this.modoEdicao && this.pessoaId) {
       this.pessoaService.updatePessoa(this.pessoaId, payload).pipe(
         takeUntil(this.destroy$),
@@ -346,8 +515,6 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
         next: (pessoaAtualizada: PessoaOut) => {
           this.pessoaContext.setPessoaNome(pessoaAtualizada.nome);
           this.showToast('Pessoa atualizada com sucesso!', 'Sucesso', 'success');
-
-          // recarrega da API para preencher novamente tudo certo
           this.carregarDadosPessoaParaEdicao(this.pessoaId!);
         },
         error: (erro) => {
@@ -356,33 +523,36 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
           this.toastrService.danger(mensagemErro, 'Falha na Atualização');
         }
       });
-    } else {
-      this.pessoaService.createPessoa(payload).pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.isLoading = false)
-      ).subscribe({
-        next: (pessoaCadastrada: PessoaOut) => {
-          this.pessoaId = pessoaCadastrada.id ?? null;
-          this.modoEdicao = true;
-
-          this.showToast('Pessoa inserida com sucesso!', 'Sucesso', 'success');
-
-          if (pessoaCadastrada.id) {
-            this.pessoaContext.setPessoaId(pessoaCadastrada.id);
-          }
-          this.pessoaContext.setPessoaNome(pessoaCadastrada.nome);
-
-          if (this.pessoaId) {
-            this.router.navigate(['/pages/pessoas/editar', this.pessoaId, 'perfil']);
-          }
-        },
-        error: (erro) => {
-          console.error('Erro ao cadastrar pessoa:', erro);
-          const mensagemErro = erro.error?.message || erro.message || 'Erro desconhecido ao cadastrar pessoa.';
-          this.toastrService.danger(mensagemErro, 'Falha no Cadastro');
-        }
-      });
+      return;
     }
+
+    this.pessoaService.createPessoa(payload).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.isLoading = false)
+    ).subscribe({
+      next: (pessoaCadastrada: PessoaOut) => {
+        this.pessoaId = pessoaCadastrada.id ?? null;
+        this.modoEdicao = true;
+
+        this.showToast('Pessoa inserida com sucesso! Continue o cadastro dos dados adicionais.', 'Sucesso', 'success');
+
+        if (pessoaCadastrada.id) {
+          this.pessoaContext.setPessoaId(pessoaCadastrada.id);
+        }
+        this.pessoaContext.setPessoaNome(pessoaCadastrada.nome);
+
+        if (this.pessoaId) {
+          // Permanece no módulo de pessoa e já abre Endereços para continuar o cadastro.
+          // Uso relativo evita cair no dashboard caso o prefixo real da rota seja diferente de /pages/pessoas.
+          this.router.navigate(['../../editar', this.pessoaId, 'enderecos'], { relativeTo: this.route });
+        }
+      },
+      error: (erro) => {
+        console.error('Erro ao cadastrar pessoa:', erro);
+        const mensagemErro = erro.error?.message || erro.message || 'Erro desconhecido ao cadastrar pessoa.';
+        this.toastrService.danger(mensagemErro, 'Falha no Cadastro');
+      }
+    });
   }
 
   //----------------------------------------------------------------------
@@ -397,7 +567,7 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
 
   formatarCnpjParaDisplay(cnpjNumeros: string): string {
     console.log('chegou na função cnpj ', cnpjNumeros);
-    if (!cnpjNumeros || cnpjNumeros.length !== 14) { 
+    if (!cnpjNumeros || cnpjNumeros.length !== 14) {
       return cnpjNumeros; // Retorna original se não for um CNPJ válido para formatação
     }
     const cnpjFormtado = `${cnpjNumeros.substring(0, 2)}.${cnpjNumeros.substring(2, 5)}.${cnpjNumeros.substring(5, 8)}/${cnpjNumeros.substring(8, 12)}-${cnpjNumeros.substring(12, 14)}`;
@@ -426,7 +596,7 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
       if (!this.modoEdicao) {
         this.pessoaForm.get('tipoPessoaId')?.setValue(1); // Supondo que 1 é "Pessoa Física"
       }
-      
+
       // 2. Limpa e remove validadores de PJ
       camposPJ.forEach(campo => {
         this.pessoaForm.get(campo)?.clearValidators();
@@ -440,7 +610,7 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
 
     } else if (this.isPessoaJuridica()) {
       // --- LÓGICA PARA PESSOA JURÍDICA ---
-      
+
       // 1. Define valores padrão ao mudar para PJ (se estiver em modo de criação)
       if (!this.modoEdicao) {
         this.pessoaForm.get('tipoPessoaId')?.setValue(2); // <<<< AJUSTE: Supondo que 2 é "Empresa Privada"
@@ -453,8 +623,8 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
         this.pessoaForm.get(campo)?.setValue(null);
       });
       // Limpa também o valor do input de data manualmente
-      if (this.dataNascimentoInputRef && this.dataNascimentoInputRef.nativeElement) { 
-          this.dataNascimentoInputRef.nativeElement.value = '';
+      if (this.dataNascimentoInputRef && this.dataNascimentoInputRef.nativeElement) {
+        this.dataNascimentoInputRef.nativeElement.value = '';
       }
 
       // 3. Aplica validadores para PJ
@@ -530,5 +700,5 @@ export class PessoaPerfilFormComponent implements OnInit, OnDestroy {
   onCidadeBlur() {
     setTimeout(() => (this.showCidadeDropdown = false), 150);
   }
-  
+
 }

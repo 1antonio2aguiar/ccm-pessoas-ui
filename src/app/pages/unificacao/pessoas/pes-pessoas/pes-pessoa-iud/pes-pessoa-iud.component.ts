@@ -77,7 +77,18 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         type: 'string',
         width: '200px',
         filter: true,
-        filterFunction: (_cell?: any, _search?: string) => true,
+        valuePrepareFunction: (value: any) => {
+          if (!value) {
+            return '';
+          }
+
+          const cpf = value.toString().replace(/\D/g, '').padStart(11, '0');
+
+          return cpf.replace(
+            /(\d{3})(\d{3})(\d{3})(\d{2})/,
+            '$1.$2.$3-$4'
+          );
+        },
       },
 
       dataNascimento: {
@@ -122,14 +133,14 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   onEditarLinha(event: any): void {
-    const pessoaId = event?.data?.pessoa;
+    const pessoa = event?.data;
 
-    if (!pessoaId) {
+    if (!pessoa?.pessoa) {
       this.toastrService.danger('Código da pessoa não encontrado.', 'Erro');
       return;
     }
 
-    this.processarPessoaLinha(pessoaId);
+    this.processarPessoaLinha(pessoa);
   }
 
   private buildBaseParams(): HttpParams {
@@ -215,21 +226,32 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       });
   }
 
-  private processarPessoaLinha(pessoaId: number): void {
-    this.isLoading = true;
+  private processarPessoaLinha(pessoa: any): void {
+    const pessoaId = pessoa?.pessoa;
+    const cpfCnpj = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
+    const fisicaJuridica = pessoa?.fisicaJuridica || 'F';
 
-    this.service.processarPessoaUnica(pessoaId)
-      .then((msg) => {
-        this.toastrService.success(msg || `Pessoa ${pessoaId} processada com sucesso.`, 'Sucesso');
-        this.listar();
-      })
-      .catch((e) => {
-        console.error(e);
-        this.toastrService.danger(`Erro ao processar a pessoa ${pessoaId}.`, 'Erro');
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+    if (!cpfCnpj) {
+      this.toastrService.danger('CPF/CNPJ não encontrado para validação.', 'Erro');
+      return;
+    }
+
+    this.service.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
+      .then((existe) => {
+        if (existe) {
+          this.toastrService.warning(
+            'CPF/CNPJ já existe no Cadastro Único. Use a rotina de EXISTE NO CAD. ÚNICO.',
+            'Atenção'
+          );
+          return;
+        }
+
+        this.service.processarPessoaUnica(pessoaId)
+          .then((msg) => {
+            this.toastrService.success(msg, 'Sucesso');
+            this.listar();
+          });
+    });
   }
 
   private processarPessoaLinhaLote(pessoaId: number): Promise<void> {
