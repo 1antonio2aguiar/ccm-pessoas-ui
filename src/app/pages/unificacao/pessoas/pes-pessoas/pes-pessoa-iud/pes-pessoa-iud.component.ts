@@ -103,7 +103,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   };
 
   constructor(
-    private service: PesPessoaService,
+    private pesPessoaService: PesPessoaService,
     private toastrService: NbToastrService,
   ) { }
 
@@ -208,12 +208,12 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     this.filtro.params = params;
 
     this.isLoading = true;
-    this.service.pesquisar({ ...this.filtro, params } as any)
+    this.pesPessoaService.pesquisar({ ...this.filtro, params } as any)
       .then(({ pesPessoas, total }) => {
         this.filtro.totalRegistros = total ?? 0;
 
         const lista = (pesPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
-        console.log('LISTA', lista);
+        //console.log('LISTA', lista);
         this.source.load(lista);
       })
       .catch((e) => {
@@ -236,7 +236,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.service.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
+    this.pesPessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
       .then((existe) => {
         if (existe) {
           this.toastrService.warning(
@@ -246,17 +246,12 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
           return;
         }
 
-        this.service.processarPessoaUnica(pessoaId)
+        this.pesPessoaService.processarPessoaUnica(pessoaId)
           .then((msg) => {
             this.toastrService.success(msg, 'Sucesso');
             this.listar();
           });
     });
-  }
-
-  private processarPessoaLinhaLote(pessoaId: number): Promise<void> {
-    return this.service.processarPessoaUnica(pessoaId)
-      .then(() => undefined);
   }
 
   private async processarLoteTela(): Promise<void> {
@@ -274,18 +269,30 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     this.progressoLote = 0;
 
     try {
-      const listaTela = await this.source.getAll();
+      const paramsLote = this.buildBaseParams()
+        .set('page', '0')
+        .set('size', '1000')
+        .set('sort', 'pessoa');
 
-      if (!listaTela || listaTela.length === 0) {
-        this.toastrService.warning('Não há registros na tela para processar.', 'Aviso');
+      const filtroLote = new PessoaFilters();
+      filtroLote.pagina = 0;
+      filtroLote.itensPorPagina = 1000;
+      filtroLote.params = paramsLote;
+
+      const { pesPessoas } = await this.pesPessoaService.pesquisar(filtroLote as any);
+
+      const listaLote = pesPessoas ?? [];
+
+      if (!listaLote || listaLote.length === 0) {
+        this.toastrService.warning('Não há registros para processar.', 'Aviso');
         this.statusCarga = 'SEM_REGISTROS';
         return;
       }
 
-      const totalItens = listaTela.length;
+      const totalItens = listaLote.length;
       let concluidos = 0;
 
-      for (const item of listaTela) {
+      for (const item of listaLote) {
         const pessoaId = item?.pessoa;
 
         if (!pessoaId) {
@@ -296,7 +303,8 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         }
 
         try {
-          await this.processarPessoaLinhaLote(pessoaId);
+          //await this.processarPessoaLinhaLote(pessoaId);
+          await this.processarPessoaLinhaLote(item);
           this.totalProcessado++;
         } catch (e) {
           console.error(`Erro ao processar a pessoa ${pessoaId}`, e);
@@ -326,6 +334,28 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       this.processandoLote = false;
       this.isLoading = false;
     }
+  }
+
+  private async processarPessoaLinhaLote(pessoa: any): Promise<void> {
+    const pessoaId = pessoa?.pessoa;
+    const cpfCnpj = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
+    const fisicaJuridica = pessoa?.fisicaJuridica || 'F';
+
+    if (!pessoaId) {
+      throw new Error('Código da pessoa não encontrado.');
+    }
+
+    if (!cpfCnpj) {
+      throw new Error(`CPF/CNPJ não encontrado para a pessoa ${pessoaId}.`);
+    }
+
+    const existe = await this.pesPessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica);
+
+    if (existe) {
+      throw new Error(`CPF/CNPJ já existe no Cadastro Único para a pessoa ${pessoaId}.`);
+    }
+
+    await this.pesPessoaService.processarPessoaUnica(pessoaId);
   }
 
   private normalizePessoaRow(p: any): any {

@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 import { SaneCpfUnicoComponent } from '../saneamento/cpf-unico/sane-cpf-unico.component';
+import { SaneCpfDuplicadoComponent } from './cpf-duplicado/sane-cpf-duplicado.component';
 import { SanePessoaIudComponent } from '../saneamento/sane-pessoa.component';
 import { SaneCnpjUnicoComponent } from './cnpj-unico/sane-cnpj-unico.component';
 
@@ -20,6 +21,10 @@ const routes: Routes = [
         component: SaneCpfUnicoComponent,
       },
       {
+        path: 'sane-cpf-duplicado',
+        component: SaneCpfDuplicadoComponent,
+      },
+      {
         path: 'sane-cnpj-unico',
         component: SaneCnpjUnicoComponent,
       },
@@ -35,6 +40,7 @@ export class SanePessoaRoutingModule { }
 
 export const sanePessoaRoutedComponents = [
   SaneCpfUnicoComponent,
+  SaneCpfDuplicadoComponent,
   SaneCnpjUnicoComponent,
   SanePessoaIudComponent,
 ];

@@ -44,9 +44,29 @@ export class SanePessoaService extends BaseResourceService<any> {
       });
   }
 
+  pesquisarCpfDuplicado(filtro: FiltroPaginado): Promise<any> {
+    const params = filtro.params || new HttpParams();
+
+    return this.http
+      .get<any>(`${this.listaApiPath}/cpf-duplicado`, { params })
+      .toPromise()
+      .then((response) => {
+        const sanePessoas = Array.isArray(response) ? response : (response?.content ?? []);
+        const total = Array.isArray(response) ? sanePessoas.length : (response?.totalElements ?? 0);
+
+        return { sanePessoas, total };
+      });
+  }
+
   processarCpfUnico(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.listaApiPath}/processar-cpf-unico/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
+  }
+
+  processarCpfDuplicado(pessoaId: number): Promise<string> {
+    return this.http
+      .post(`${this.listaApiPath}/processar-cpf-duplicado/${pessoaId}`, {}, { responseType: 'text' })
       .toPromise();
   }
 

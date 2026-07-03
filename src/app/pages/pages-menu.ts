@@ -120,6 +120,10 @@ export const MENU_ITEMS: NbMenuItem[] = [
                 link: '/pages/unificacao/saneamento',
               },
               {
+                title: 'CPF DUPLICADO',
+                link: '/pages/unificacao/saneamento/sane-cpf-duplicado',
+              },
+              {
                 title: 'CNPJ ÚNICO',
                 link: '/pages/unificacao/saneamento/sane-cnpj-unico',
               },

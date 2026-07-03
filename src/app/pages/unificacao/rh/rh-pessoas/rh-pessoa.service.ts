@@ -25,8 +25,7 @@ export class RhPessoaService extends BaseResourceService<any> {
 
   private rhPessoasEventHendlerId: EventEmitter<any>;
   private listaApiPath = environment.apiUrl + 'rh-pessoas';
-  
-private cargaApiPath = environment.apiUrl + 'rh-pessoas';
+  private cargaApiPath = environment.apiUrl + 'rh-pessoas';
 
   constructor(protected injector: Injector) {
     super(environment.apiUrl + 'rh-pessoas', injector, (json) => json);
@@ -47,6 +46,16 @@ private cargaApiPath = environment.apiUrl + 'rh-pessoas';
       });
   }
 
+  existeCpfCnpjNoCadUnico(cpfCnpj: string | number, fisicaJuridica: string): Promise<boolean> {
+    const params = new HttpParams()
+      .set('cpfCnpj', String(cpfCnpj).replace(/\D/g, ''))
+      .set('fisicaJuridica', fisicaJuridica);
+
+    return this.http
+      .get<boolean>(`${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`, { params })
+      .toPromise();
+  }
+
   processarCpfUnico(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.cargaApiPath}/processar-cpf-unico/${pessoaId}`, {}, { responseType: 'text' })
@@ -60,14 +69,14 @@ private cargaApiPath = environment.apiUrl + 'rh-pessoas';
   }
 
   processarJaExisteCadUnico(pessoaId: number): Promise<string> {
-  return this.http
-    .post(`${this.cargaApiPath}/processar-ja-existe-cad-unico/${pessoaId}`, {}, { responseType: 'text' })
-    .toPromise();
+    return this.http
+      .post(`${this.cargaApiPath}/processar-ja-existe-cad-unico/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
   }
 
   processarCnpjUnico(pessoaId: number): Promise<string> {
-  return this.http
-    .post(`${this.cargaApiPath}/processar-cnpj-unico/${pessoaId}`, {}, { responseType: 'text' })
-    .toPromise();
-}
+    return this.http
+      .post(`${this.cargaApiPath}/processar-cnpj-unico/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
+  }
 }

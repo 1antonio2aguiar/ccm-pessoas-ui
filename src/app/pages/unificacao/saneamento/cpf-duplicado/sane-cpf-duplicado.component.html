@@ -1,6 +1,6 @@
 <nb-card>
   <nb-card-header>
-    Pessoas do RH
+    CPF Duplicado - Saneamento
   </nb-card-header>
 
   <nb-card-body>
@@ -18,6 +18,11 @@
 
     <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
       <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <div *ngIf="isLoading" class="text-center my-3">
+      <nb-spinner status="primary"></nb-spinner>
+      <p>Carregando pessoas do saneamento...</p>
     </div>
 
     <ng2-smart-table

@@ -18,7 +18,7 @@ export class PessoaFilters {
   cnpj: string | null = null;
 
   params = new HttpParams();
-}
+} 
 
 @Injectable({ providedIn: 'root' })
 export class PesPessoaService extends BaseResourceService<PesPessoas> {
@@ -41,7 +41,6 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .then((response) => {
         const pesPessoas = Array.isArray(response) ? response : (response?.content ?? []);
         const total = Array.isArray(response) ? pesPessoas.length : (response?.totalElements ?? 0);
-
         return { pesPessoas, total };
       });
   }
@@ -66,12 +65,6 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .toPromise();
   }
 
-  processarPessoaCpfpl(pessoaId: number): Promise<string> {
-    return this.http
-      .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
-      .toPromise();
-  } 
-
   existeCpfCnpjNoCadUnico(cpfCnpj: string | number, fisicaJuridica: string): Promise<boolean> {
     let params = new HttpParams()
       .set('cpfCnpj', String(cpfCnpj).replace(/\D/g, ''))
@@ -81,6 +74,5 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .get<boolean>(`${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`, { params })
       .toPromise();
   }
-
   
 }

@@ -15,12 +15,12 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
   source: LocalDataSource = new LocalDataSource();
   isLoading = false;
 
-  // Processamento será implementado na próxima etapa.
   processandoLote = false;
   progressoLote = 0;
   statusCarga = '';
   totalProcessado = 0;
   totalErros = 0;
+  totalIgnorados = 0;
   mensagemErro = '';
 
   filtro: RhPessoaFilters = new RhPessoaFilters();
@@ -108,39 +108,14 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
           config: {
             selectText: 'Todos',
             list: [
-              {
-                value: 'JA_EXISTE_CAD_UNICO',
-                title: 'Já existe no Cad. Único',
-              },
-              {
-                value: 'UNICO_RH',
-                title: 'Único no RH',
-              },
-              {
-                value: 'DUPLICADO_RH',
-                title: 'Duplicado no RH',
-              },
-              {
-                value: 'SEM_CPF_CNPJ',
-                title: 'Sem CPF/CNPJ',
-              },
+              { value: 'JA_EXISTE_CAD_UNICO', title: 'Já existe no Cad. Único' },
+              { value: 'UNICO_RH', title: 'Único no RH' },
+              { value: 'DUPLICADO_RH', title: 'Duplicado no RH' },
+              { value: 'SEM_CPF_CNPJ', title: 'Sem CPF/CNPJ' },
             ],
           },
         },
-        valuePrepareFunction: (value: string) => {
-          switch (value) {
-            case 'JA_EXISTE_CAD_UNICO':
-              return 'Já existe no Cad. Único';
-            case 'UNICO_RH':
-              return 'Único no RH';
-            case 'DUPLICADO_RH':
-              return 'Duplicado no RH';
-            case 'SEM_CPF_CNPJ':
-              return 'Sem CPF/CNPJ';
-            default:
-              return value ?? '';
-          }
-        },
+        valuePrepareFunction: (value: string) => this.descreverStatusCadastro(value),
       },
 
       cgcCpf: {
@@ -148,18 +123,7 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
         type: 'string',
         width: '180px',
         filter: true,
-        valuePrepareFunction: (value: any) => {
-          if (!value) {
-            return '';
-          }
-
-          const cpf = value.toString().replace(/\D/g, '').padStart(11, '0');
-
-          return cpf.replace(
-            /(\d{3})(\d{3})(\d{3})(\d{2})/,
-            '$1.$2.$3-$4'
-          );
-        },
+        valuePrepareFunction: (value: any) => this.formatDocumento(String(value ?? '').replace(/\D/g, '')),
       },
 
       dataNascimento: {
@@ -171,7 +135,7 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
         filterFunction: (_cell?: any, _search?: string) => true,
       },
     },
-  }; 
+  };
 
   constructor(
     private service: RhPessoaService,
@@ -200,15 +164,14 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   onCreateConfirm(event: any): void {
-    // Processamento será implementado na próxima etapa.
-    // this.processarLoteTela();
-    this.toastrService.info('Processamento do RH será implementado na próxima etapa.', 'Aviso');
+    this.processarLoteTela();
   }
 
   onEditarLinha(event: any): void {
-    const pessoaId = event?.data?.pessoa;
-    const status = event?.data?.statusCadastro;
-    const fisicaJuridica = event?.data?.fisicaJuridica;
+    const pessoa = event?.data;
+    const pessoaId = pessoa?.pessoa;
+    const status = pessoa?.statusCadastro;
+    const fisicaJuridica = pessoa?.fisicaJuridica;
 
     if (!pessoaId) {
       this.toastrService.danger('Código da pessoa não encontrado.', 'Erro');
@@ -217,12 +180,12 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
 
     if (fisicaJuridica === 'F') {
       if (status === 'UNICO_RH') {
-        this.processarCpfUnicoLinha(pessoaId);
+        this.processarCpfUnicoLinha(pessoa);
         return;
       }
 
       if (status === 'DUPLICADO_RH') {
-        this.processarCpfDuplicadoLinha(pessoaId);
+        this.processarCpfDuplicadoLinha(pessoa);
         return;
       }
 
@@ -234,7 +197,7 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
 
     if (fisicaJuridica === 'J') {
       if (status === 'UNICO_RH') {
-        this.processarCnpjUnicoLinha(pessoaId);
+        this.processarCnpjUnicoLinha(pessoa);
         return;
       }
 
@@ -245,34 +208,8 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
     this.toastrService.warning('Tipo de pessoa não suportado.', 'Atenção');
   }
 
-  private processarCnpjUnicoLinha(pessoaId: number): void {
-    this.isLoading = true;
-
-    this.service.processarCnpjUnico(pessoaId)
-      .then((msg) => {
-        this.toastrService.success(
-          msg || `Pessoa jurídica ${pessoaId} processada com sucesso.`,
-          'Sucesso'
-        );
-
-        this.execSearch(this.filtro.params || this.buildBaseParams());
-      })
-      .catch((e) => {
-        console.error(e);
-
-        this.toastrService.danger(
-          e?.error || `Erro ao processar CNPJ único da pessoa ${pessoaId}.`,
-          'Erro'
-        );
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
-  }
-
   private buildBaseParams(): HttpParams {
-    return new HttpParams()
-      .set('sort', 'pessoa');
+    return new HttpParams().set('sort', 'pessoa');
   }
 
   onTableFilter(change: any): void {
@@ -351,91 +288,255 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
       });
   }
 
-  private processarCpfUnicoLinha(pessoaId: number): void {
-  this.isLoading = true;
+  private async processarCpfUnicoLinha(pessoa: any): Promise<void> {
+    const pessoaId = pessoa?.pessoa;
 
-  this.service.processarCpfUnico(pessoaId)
-    .then((msg) => {
-      this.toastrService.success(
-        msg || `Pessoa ${pessoaId} processada com sucesso.`,
-        'Sucesso'
-      );
+    if (!(await this.validarDocumentoAntesProcessar(pessoa))) {
+      return;
+    }
 
-      this.execSearch(this.filtro.params || this.buildBaseParams());
-    })
-    .catch((e) => {
-      console.error(e);
-
-      this.toastrService.danger(
-        e?.error || `Erro ao processar CPF único da pessoa ${pessoaId}.`,
-        'Erro'
-      );
-    })
-    .finally(() => {
-      this.isLoading = false;
-    });
-}
-
-private processarCpfDuplicadoLinha(pessoaId: number): void {
-  this.isLoading = true;
-
-  this.service.processarCpfDuplicado(pessoaId)
-    .then((msg) => {
-      this.toastrService.success(
-        msg || `Grupo duplicado da pessoa ${pessoaId} processado com sucesso.`,
-        'Sucesso'
-      );
-
-      this.execSearch(this.filtro.params || this.buildBaseParams());
-    })
-    .catch((e) => {
-      console.error(e);
-
-      this.toastrService.danger(
-        e?.error || `Erro ao processar CPF duplicado da pessoa ${pessoaId}.`,
-        'Erro'
-      );
-    })
-    .finally(() => {
-      this.isLoading = false;
-    });
+    this.isLoading = true;
+    this.service.processarCpfUnico(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(msg || `Pessoa ${pessoaId} processada com sucesso.`, 'Sucesso');
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+        this.toastrService.danger(e?.error || `Erro ao processar CPF único da pessoa ${pessoaId}.`, 'Erro');
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   }
 
-  private processarPessoaLinhaLote(pessoaId: number, statusCadastro: string): Promise<void> {
-    if (statusCadastro === 'UNICO_RH') {
-      return this.service.processarCpfUnico(pessoaId).then(() => undefined);
+  private async processarCpfDuplicadoLinha(pessoa: any): Promise<void> {
+    const pessoaId = pessoa?.pessoa;
+
+    if (!(await this.validarDocumentoAntesProcessar(pessoa))) {
+      return;
     }
 
-    if (statusCadastro === 'DUPLICADO_RH') {
-      return this.service.processarCpfDuplicado(pessoaId).then(() => undefined);
+    this.isLoading = true;
+    this.service.processarCpfDuplicado(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(msg || `Grupo duplicado da pessoa ${pessoaId} processado com sucesso.`, 'Sucesso');
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+        this.toastrService.danger(e?.error || `Erro ao processar CPF duplicado da pessoa ${pessoaId}.`, 'Erro');
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
+  }
+
+  private async processarCnpjUnicoLinha(pessoa: any): Promise<void> {
+    const pessoaId = pessoa?.pessoa;
+
+    if (!(await this.validarDocumentoAntesProcessar(pessoa))) {
+      return;
     }
 
-    return Promise.resolve();
+    this.isLoading = true;
+    this.service.processarCnpjUnico(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(msg || `Pessoa jurídica ${pessoaId} processada com sucesso.`, 'Sucesso');
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+        this.toastrService.danger(e?.error || `Erro ao processar CNPJ único da pessoa ${pessoaId}.`, 'Erro');
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
+  }
+
+  private processarJaExisteCadUnicoLinha(pessoaId: number): void {
+    this.isLoading = true;
+
+    this.service.processarJaExisteCadUnico(pessoaId)
+      .then((msg) => {
+        this.toastrService.success(msg || `Pessoa ${pessoaId} vinculada ao Cadastro Único com sucesso.`, 'Sucesso');
+        this.execSearch(this.filtro.params || this.buildBaseParams());
+      })
+      .catch((e) => {
+        console.error(e);
+        this.toastrService.danger(e?.error || `Erro ao vincular a pessoa ${pessoaId} ao Cadastro Único.`, 'Erro');
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
+  }
+
+  private async processarPessoaLinhaLote(pessoa: any): Promise<'PROCESSADO' | 'IGNORADO'> {
+    const pessoaId = pessoa?.pessoa;
+    const statusCadastro = pessoa?.statusCadastro;
+    const fisicaJuridica = pessoa?.fisicaJuridica;
+
+    if (!pessoaId) {
+      throw new Error('Código da pessoa não encontrado.');
+    }
+
+    if (statusCadastro === 'JA_EXISTE_CAD_UNICO') {
+      await this.service.processarJaExisteCadUnico(pessoaId);
+      return 'PROCESSADO';
+    }
+
+    if (statusCadastro !== 'UNICO_RH' && statusCadastro !== 'DUPLICADO_RH') {
+      return 'IGNORADO';
+    }
+
+    const podeProcessar = await this.validarDocumentoAntesProcessar(pessoa, false);
+    if (!podeProcessar) {
+      return 'IGNORADO';
+    }
+
+    if (fisicaJuridica === 'F') {
+      if (statusCadastro === 'UNICO_RH') {
+        await this.service.processarCpfUnico(pessoaId);
+        return 'PROCESSADO';
+      }
+
+      if (statusCadastro === 'DUPLICADO_RH') {
+        await this.service.processarCpfDuplicado(pessoaId);
+        return 'PROCESSADO';
+      }
+    }
+
+    if (fisicaJuridica === 'J' && statusCadastro === 'UNICO_RH') {
+      await this.service.processarCnpjUnico(pessoaId);
+      return 'PROCESSADO';
+    }
+
+    return 'IGNORADO';
   }
 
   private async processarLoteTela(): Promise<void> {
-    // implementar depois que a listagem estiver validada
+    if (this.processandoLote) {
+      this.toastrService.warning('Já existe um processamento em andamento.', 'Aviso');
+      return;
+    }
+
+    this.processandoLote = true;
+    this.isLoading = true;
+    this.statusCarga = 'PROCESSANDO';
+    this.totalProcessado = 0;
+    this.totalErros = 0;
+    this.totalIgnorados = 0;
+    this.mensagemErro = '';
+    this.progressoLote = 0;
+
+    try {
+      const paramsLote = (this.filtro.params || this.buildBaseParams())
+        .set('page', '0')
+        .set('size', '1000')
+        .set('sort', 'pessoa');
+
+      const filtroLote = new RhPessoaFilters();
+      filtroLote.pagina = 0;
+      filtroLote.itensPorPagina = 1000;
+      filtroLote.params = paramsLote;
+
+      const { rhPessoas } = await this.service.pesquisar(filtroLote as any);
+      const listaLote = (rhPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
+
+      if (!listaLote || listaLote.length === 0) {
+        this.toastrService.warning('Não há registros para processar.', 'Aviso');
+        this.statusCarga = 'SEM_REGISTROS';
+        return;
+      }
+
+      const totalItens = listaLote.length;
+      let concluidos = 0;
+
+      for (const item of listaLote) {
+        try {
+          const resultado = await this.processarPessoaLinhaLote(item);
+
+          if (resultado === 'PROCESSADO') {
+            this.totalProcessado++;
+          } else {
+            this.totalIgnorados++;
+          }
+        } catch (e) {
+          console.error(`Erro ao processar a pessoa ${item?.pessoa}`, e);
+          this.totalErros++;
+          this.mensagemErro = `Erro ao processar a pessoa ${item?.pessoa}.`;
+        } finally {
+          concluidos++;
+          this.progressoLote = Math.round((concluidos / totalItens) * 100);
+        }
+      }
+
+      this.statusCarga = 'FINALIZADO';
+      this.toastrService.success(
+        `Lote finalizado. Processados: ${this.totalProcessado}. Ignorados: ${this.totalIgnorados}. Erros: ${this.totalErros}.`,
+        'Sucesso'
+      );
+
+      this.execSearch(this.filtro.params || this.buildBaseParams());
+
+    } catch (e) {
+      console.error(e);
+      this.statusCarga = 'ERRO';
+      this.mensagemErro = 'Erro ao executar o processamento em lote.';
+      this.toastrService.danger(this.mensagemErro, 'Erro');
+    } finally {
+      this.processandoLote = false;
+      this.isLoading = false;
+    }
   }
-  
+
+  private async validarDocumentoAntesProcessar(pessoa: any, mostrarMensagem = true): Promise<boolean> {
+    const pessoaId = pessoa?.pessoa;
+    const fisicaJuridica = pessoa?.fisicaJuridica;
+    const documento = this.obterDocumentoDigits(pessoa);
+
+    if (!documento) {
+      if (mostrarMensagem) {
+        this.toastrService.danger('CPF/CNPJ não encontrado para validação.', 'Erro');
+      }
+      return false;
+    }
+
+    if (fisicaJuridica !== 'F' && fisicaJuridica !== 'J') {
+      if (mostrarMensagem) {
+        this.toastrService.warning('Tipo de pessoa não suportado para validação.', 'Atenção');
+      }
+      return false;
+    }
+
+    const existe = await this.service.existeCpfCnpjNoCadUnico(documento, fisicaJuridica);
+
+    if (existe) {
+      if (mostrarMensagem) {
+        const label = fisicaJuridica === 'F' ? 'CPF' : 'CNPJ';
+        this.toastrService.warning(
+          `${label} já existe no Cadastro Único. Pessoa ${pessoaId} não será processada nesta rotina.`,
+          'Atenção'
+        );
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  private obterDocumentoDigits(p: any): string {
+    return String(
+      p?.cgcCpfDigits ??
+      p?.cgcCpf ??
+      p?.cpf ??
+      p?.cnpj ??
+      ''
+    ).replace(/\D/g, '');
+  }
 
   private normalizePessoaRow(p: any): any {
-    const digits =
-      String(
-        p?.cgcCpf ??
-        p?.cpf ??
-        p?.cnpj ??
-        ''
-      ).replace(/\D/g, '');
-
-    let cgcCpf = '';
-
-    if (digits.length === 11) {
-      cgcCpf = this.formatCpf(digits);
-    } else if (digits.length === 14) {
-      cgcCpf = this.formatCnpj(digits);
-    } else {
-      cgcCpf = String(p?.cgcCpf ?? '');
-    }
+    const digits = this.obterDocumentoDigits(p);
 
     const dnRaw = p?.dataNascimento ?? '';
 
@@ -453,7 +554,7 @@ private processarCpfDuplicadoLinha(pessoaId: number): void {
     return {
       ...p,
       cgcCpfDigits: digits,
-      cgcCpf,
+      cgcCpf: this.formatDocumento(digits) || String(p?.cgcCpf ?? ''),
       dataNascimento,
       statusCadastroDescricao: this.descreverStatusCadastro(p?.statusCadastro),
     };
@@ -500,6 +601,18 @@ private processarCpfDuplicadoLinha(pessoaId: number): void {
     }
   }
 
+  private formatDocumento(d: string): string {
+    if (!d) {
+      return '';
+    }
+
+    if (d.length <= 11) {
+      return this.formatCpf(d.padStart(11, '0'));
+    }
+
+    return this.formatCnpj(d.padStart(14, '0'));
+  }
+
   private formatCpf(d: string): string {
     const p1 = d.substring(0, 3);
     const p2 = d.substring(3, 6);
@@ -528,30 +641,5 @@ private processarCpfDuplicadoLinha(pessoaId: number): void {
     if (p5) out += '-' + p5;
 
     return out;
-  }
-
-  private processarJaExisteCadUnicoLinha(pessoaId: number): void {
-    this.isLoading = true;
-
-    this.service.processarJaExisteCadUnico(pessoaId)
-      .then((msg) => {
-        this.toastrService.success(
-          msg || `Pessoa ${pessoaId} vinculada ao Cadastro Único com sucesso.`,
-          'Sucesso'
-        );
-
-        this.execSearch(this.filtro.params || this.buildBaseParams());
-      })
-      .catch((e) => {
-        console.error(e);
-
-        this.toastrService.danger(
-          e?.error || `Erro ao vincular a pessoa ${pessoaId} ao Cadastro Único.`,
-          'Erro'
-        );
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
   }
 }

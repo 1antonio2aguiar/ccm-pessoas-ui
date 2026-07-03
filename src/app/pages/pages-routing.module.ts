@@ -94,7 +94,7 @@ const routes: Routes = [{
       loadChildren: () =>
         import('./unificacao/rh/rh-pessoas/rh-pessoa.module')
           .then(m => m.RhPessoaModule),
-    },
+    }, 
 
      {
       path: 'unificacao/saneamento',
