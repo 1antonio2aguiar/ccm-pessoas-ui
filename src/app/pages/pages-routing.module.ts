@@ -67,6 +67,13 @@ const routes: Routes = [{
     },
 
     {
+      path: 'unificacao/pessoas/cpf-no-nome',
+      loadChildren: () =>
+        import('./unificacao/pessoas/cpf-no-nome/cpf-no-nome.module') 
+          .then(m => m.CpfNoNomeModule),
+    },
+
+    {
       path: 'unificacao/pessoas/pes-pessoa',
       loadChildren: () => import('./unificacao/pessoas/pes-pessoas/pes-pessoa.module').then(m => m.PesPessoaModule),
     },

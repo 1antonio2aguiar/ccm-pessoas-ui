@@ -41,6 +41,7 @@ export class PesPessoaService extends BaseResourceService<PesPessoas> {
       .then((response) => {
         const pesPessoas = Array.isArray(response) ? response : (response?.content ?? []);
         const total = Array.isArray(response) ? pesPessoas.length : (response?.totalElements ?? 0);
+        //console.log('RETORNOU >>>> ', pesPessoas)
         return { pesPessoas, total };
       });
   }

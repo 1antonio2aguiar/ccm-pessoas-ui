@@ -5,7 +5,7 @@ import { PesPessoaComponent } from './pes-pessoa.component';
 import { PesPessoaIudComponent } from './pes-pessoa-iud/pes-pessoa-iud.component';
 
 const routes: Routes = [
-  {
+  { 
     path: '',
     component: PesPessoaComponent,
     children: [

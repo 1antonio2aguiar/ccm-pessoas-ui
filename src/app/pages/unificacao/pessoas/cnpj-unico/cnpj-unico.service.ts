@@ -18,7 +18,7 @@ export class PessoaFilters {
   cnpj: string | null = null;
 
   params = new HttpParams();
-}
+} 
 
 @Injectable({ providedIn: 'root' })
 export class CnpjUnicoService extends BaseResourceService<PesPessoas> {

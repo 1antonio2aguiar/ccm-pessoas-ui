@@ -89,6 +89,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
             '$1.$2.$3-$4'
           );
         },
+        filterFunction: (_cell?: any, _search?: string) => true,
       },
 
       dataNascimento: {
@@ -260,7 +261,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.processandoLote = true;
+    this.processandoLote = true; 
     this.isLoading = true;
     this.statusCarga = 'PROCESSANDO';
     this.totalProcessado = 0;

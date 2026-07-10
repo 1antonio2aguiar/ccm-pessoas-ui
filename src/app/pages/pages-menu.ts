@@ -80,6 +80,10 @@ export const MENU_ITEMS: NbMenuItem[] = [
             icon: 'people-outline',
             children: [
               {
+                title: 'CPF NO NOME',
+                link: '/pages/unificacao/pessoas/cpf-no-nome',
+              },
+              {
                 title: 'CPF ÚNICO',
                 link: '/pages/unificacao/pessoas/pes-pessoa',
               },
