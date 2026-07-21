@@ -1,73 +1,180 @@
 <nb-card size="large" class="perfil-card">
 
   <nb-card-header class="d-flex justify-content-between align-items-center">
+
     <span>{{ cardHeaderTitle }}</span>
+
     <div class="form-header-buttons">
-      <button nbButton status="basic" type="button" (click)="onCancelar()" [disabled]="isLoading" size="small" ghost>
-        <nb-icon icon="close-outline" pack="eva"></nb-icon> CANCELAR
+
+      <button
+        nbButton
+        status="basic"
+        type="button"
+        size="small"
+        ghost
+        [disabled]="isLoading"
+        (click)="onCancelar()">
+
+        <nb-icon icon="close-outline" pack="eva"></nb-icon>
+
+        CANCELAR
       </button>
 
-      <button nbButton status="primary" type="submit" size="small" (click)="$event.preventDefault(); onSubmit()"
-        style="margin-left: 10px;" [disabled]="pessoaForm.invalid || isLoading"> <!-- << LINHA MODIFICADA -->
+      <button
+        nbButton
+        status="primary"
+        type="submit"
+        size="small"
+        style="margin-left: 10px;"
+        [disabled]="pessoaForm.invalid || isLoading"
+        (click)="$event.preventDefault(); onSubmit()">
 
-        <nb-icon icon="save-outline" pack="eva" *ngIf="!isLoading"></nb-icon>
+        <nb-icon
+          icon="save-outline"
+          pack="eva"
+          *ngIf="!isLoading">
+        </nb-icon>
+
         {{ modoEdicao ? 'SALVAR ALTERAÇÕES' : 'SALVAR PERFIL' }}
       </button>
 
     </div>
+
   </nb-card-header>
 
   <nb-card-body>
+
     <div class="perfil-form-wrapper">
-      <form [formGroup]="pessoaForm" (ngSubmit)="onSubmit()">
-        <!-- TODO: Cole aqui todo o conteúdo do seu formulário de perfil -->
-        <!-- Linha 1: Nome -->
+
+      <form
+        [formGroup]="pessoaForm"
+        (ngSubmit)="onSubmit()">
+
+        <!-- ===================================================== -->
+        <!-- NOME                                                  -->
+        <!-- ===================================================== -->
+
         <div class="row">
+
           <div class="col-md-12 form-group">
-            <label for="nome" class="label">Nome Completo / Razão Social</label>
-            <input nbInput fullWidth id="nome" placeholder="Nome Completo ou Razão Social" formControlName="nome">
-            <!-- Adicionar mensagens de erro de validação aqui -->
+
+            <label
+              for="nome"
+              class="label">
+              Nome Completo
+            </label>
+
+            <input
+              nbInput
+              fullWidth
+              id="nome"
+              placeholder="Nome completo"
+              formControlName="nome">
+
           </div>
+
         </div>
 
-        <!-- Linha 2: Tipo Pessoa, Situação, Tipo Pessoa (ID) -->
+        <!-- ===================================================== -->
+        <!-- TIPO, SITUAÇÃO E IDENTIFICAÇÃO                        -->
+        <!-- ===================================================== -->
+
         <div class="row">
+
           <div class="col-md-4 form-group">
-            <label class="label">Fisíca/Jurídica:</label>
-            <nb-radio-group formControlName="fisicaJuridica" id="fisicaJuridica" name="fisicaJuridica"
-              class="radio-group-inline d-flex align-items-center">
-              <nb-radio value="F" class="mr-3">Física</nb-radio>
-              <nb-radio value="J">Jurídica</nb-radio>
-            </nb-radio-group>
+
+            <label class="label">
+              Física/Jurídica
+            </label>
+
+            <input
+              nbInput
+              fullWidth
+              value="Pessoa Física"
+              readonly>
+
+            <!--
+              O valor continua fazendo parte do FormGroup,
+              porém não pode mais ser alterado pelo usuário.
+            -->
+            <input
+              type="hidden"
+              formControlName="fisicaJuridica">
+
           </div>
 
           <div class="col-md-4 form-group">
-            <label for="tipoPessoaId" class="label">Tipo Pessoa</label>
-            <nb-select fullWidth id="tipoPessoaId" placeholder="Selecione..." formControlName="tipoPessoaId">
-              <nb-option *ngFor="let tp of tiposPessoas" [value]="tp.id">{{ tp.descricao }}</nb-option>
+
+            <label
+              for="tipoPessoaId"
+              class="label">
+              Tipo Pessoa
+            </label>
+
+            <nb-select
+              fullWidth
+              id="tipoPessoaId"
+              placeholder="Selecione..."
+              formControlName="tipoPessoaId">
+
+              <nb-option
+                *ngFor="let tp of tiposPessoas"
+                [value]="tp.id">
+
+                {{ tp.descricao }}
+
+              </nb-option>
+
             </nb-select>
+
           </div>
 
           <div class="col-md-4 form-group">
-            <label for="situacao" class="label">Situação</label>
-            <nb-select fullWidth placeholder="Selecione" formControlName="situacao">
+
+            <label
+              for="situacao"
+              class="label">
+              Situação
+            </label>
+
+            <nb-select
+              fullWidth
+              id="situacao"
+              placeholder="Selecione"
+              formControlName="situacao">
+
               <nb-option value="1">ATIVO</nb-option>
               <nb-option value="2">INATIVO</nb-option>
               <nb-option value="3">BLOQUEADO</nb-option>
               <nb-option value="4">OUTRO</nb-option>
+
             </nb-select>
+
           </div>
+
         </div>
+
+        <!-- ===================================================== -->
+        <!-- DADOS DA PESSOA FÍSICA                               -->
+        <!-- ===================================================== -->
 
         <div class="dados-pessoa-wrapper">
 
-          <!-- PESSOA FÍSICA -->
-          <div *ngIf="isPessoaFisica()" class="tipo-pessoa-bloco">
+          <div class="tipo-pessoa-bloco">
+
             <h6>Dados Pessoa Física</h6>
 
             <div class="row">
+
+              <!-- CPF -->
+
               <div class="col-md-3 form-group">
-                <label for="cpf" class="label">CPF</label>
+
+                <label
+                  for="cpf"
+                  class="label">
+                  CPF
+                </label>
 
                 <input
                   nbInput
@@ -77,179 +184,251 @@
                   placeholder="000.000.000-00"
                   formControlName="cpf"
                   ngxMaskFormatter="cpf"
-                  [status]="cpfDuplicado ? 'danger' : 'basic'"
-                />
+                  [status]="cpfDuplicado ? 'danger' : 'basic'">
 
-                <small class="mensagem-duplicado" *ngIf="cpfDuplicado">
+                <small
+                  class="mensagem-duplicado"
+                  *ngIf="cpfDuplicado">
+
                   CPF já cadastrado. Informe outro CPF.
+
                 </small>
+
               </div>
 
+              <!-- DATA DE NASCIMENTO -->
+
               <div class="col-md-3 form-group">
-                <label for="dataNascimento" class="label">Data de Nascimento</label>
-                <input #dataNascimentoInput nbInput fullWidth id="dataNascimento" placeholder="dd/MM/yyyy"
+
+                <label
+                  for="dataNascimento"
+                  class="label">
+                  Data de Nascimento
+                </label>
+
+                <input
+                  #dataNascimentoInput
+                  nbInput
+                  fullWidth
+                  id="dataNascimento"
+                  placeholder="dd/MM/yyyy"
                   [nbDatepicker]="pickerFisica">
-                <nb-datepicker #pickerFisica format="dd/MM/yyyy"></nb-datepicker>
+
+                <nb-datepicker
+                  #pickerFisica
+                  format="dd/MM/yyyy">
+                </nb-datepicker>
+
               </div>
 
+              <!-- SEXO -->
+
               <div class="col-md-3 form-group">
-                <label class="label">Sexo</label>
-                <nb-select fullWidth placeholder="Selecione" formControlName="sexo">
+
+                <label
+                  for="sexo"
+                  class="label">
+                  Sexo
+                </label>
+
+                <nb-select
+                  fullWidth
+                  id="sexo"
+                  placeholder="Selecione"
+                  formControlName="sexo">
+
                   <nb-option value="M">Masculino</nb-option>
                   <nb-option value="F">Feminino</nb-option>
                   <nb-option value="O">Outro</nb-option>
+
                 </nb-select>
+
               </div>
+
+              <!-- ESTADO CIVIL -->
 
               <div class="col-md-3 form-group">
-                <label for="estadoCivil" class="label">Estado Civil</label>
-                <nb-select fullWidth placeholder="Selecione" formControlName="estadoCivil">
-                   <nb-option [value]="0">Amaziado(a)</nb-option>
-                    <nb-option [value]="1">Casado(a)</nb-option>
-                    <nb-option [value]="2">Divorciado(a)</nb-option>
-                    <nb-option [value]="3">Solteiro(a)</nb-option>
-                    <nb-option [value]="4">União estável</nb-option>
-                    <nb-option [value]="5">Viúvo(a)</nb-option>
-                    <nb-option [value]="6">Outro</nb-option>
-                    <nb-option [value]="7">Separado Judici</nb-option>
-                    <nb-option [value]="8">Concubinato</nb-option>
+
+                <label
+                  for="estadoCivil"
+                  class="label">
+                  Estado Civil
+                </label>
+
+                <nb-select
+                  fullWidth
+                  id="estadoCivil"
+                  placeholder="Selecione"
+                  formControlName="estadoCivil">
+
+                  <nb-option [value]="0">Amasiado(a)</nb-option>
+                  <nb-option [value]="1">Casado(a)</nb-option>
+                  <nb-option [value]="2">Divorciado(a)</nb-option>
+                  <nb-option [value]="3">Solteiro(a)</nb-option>
+                  <nb-option [value]="4">União estável</nb-option>
+                  <nb-option [value]="5">Viúvo(a)</nb-option>
+                  <nb-option [value]="6">Outro</nb-option>
+                  <nb-option [value]="7">Separado Judicialmente</nb-option>
+                  <nb-option [value]="8">Concubinato</nb-option>
+
                 </nb-select>
+
               </div>
+
             </div>
+
+            <!-- ================================================= -->
+            <!-- FILIAÇÃO                                         -->
+            <!-- ================================================= -->
 
             <div class="row">
+
               <div class="col-md-6 form-group">
-                <label for="nomeMae" class="label">Nome da Mãe</label>
-                <input nbInput fullWidth id="nomeMae" placeholder="Nome completo da mãe" formControlName="nomeMae">
+
+                <label
+                  for="nomeMae"
+                  class="label">
+                  Nome da Mãe
+                </label>
+
+                <input
+                  nbInput
+                  fullWidth
+                  id="nomeMae"
+                  placeholder="Nome completo da mãe"
+                  formControlName="nomeMae">
+
               </div>
+
               <div class="col-md-6 form-group">
-                <label for="nomePai" class="label">Nome do Pai</label>
-                <input nbInput fullWidth id="nomePai" placeholder="Nome completo do pai" formControlName="nomePai">
+
+                <label
+                  for="nomePai"
+                  class="label">
+                  Nome do Pai
+                </label>
+
+                <input
+                  nbInput
+                  fullWidth
+                  id="nomePai"
+                  placeholder="Nome completo do pai"
+                  formControlName="nomePai">
+
               </div>
+
             </div>
 
-          <!-- Cidade (autocomplete) -->
-          <div class="row">
-          <div class="form-group col-md-10">
-            <label>Cidade Nascimento</label>
+            <!-- ================================================= -->
+            <!-- CIDADE DE NASCIMENTO                              -->
+            <!-- ================================================= -->
 
-            <div class="autocomplete">
-              <input
-                nbInput
-                fullWidth
-                class="cidade-input"
-                [formControl]="cidadeCtrl"
-                placeholder="Digite o nome da cidade..."
-                (focus)="showCidadeDropdown = true"
-                (blur)="onCidadeBlur()"
-              />
+            <div class="row">
 
-              <div *ngIf="showCidadeDropdown && sugestoesCidades.length > 0" class="dropdown">
-                <div
-                  *ngFor="let c of sugestoesCidades"
-                  class="dropdown-item"
-                  (mousedown)="selecionarCidade(c)"
-                >
-                  <strong>{{ c.cidadeNome }}</strong>
-                  <span *ngIf="c.estadoUf"> ({{ c.estadoUf }})</span>
-                  <span *ngIf="c.nome"> - {{ c.nome }}</span>
+              <div class="form-group col-md-10">
+
+                <label class="label">
+                  Cidade de Nascimento
+                </label>
+
+                <div class="autocomplete">
+
+                  <input
+                    nbInput
+                    fullWidth
+                    class="cidade-input"
+                    [formControl]="cidadeCtrl"
+                    placeholder="Digite o nome da cidade..."
+                    (focus)="showCidadeDropdown = true"
+                    (blur)="onCidadeBlur()">
+
+                  <div
+                    *ngIf="
+                      showCidadeDropdown &&
+                      sugestoesCidades.length > 0
+                    "
+                    class="dropdown">
+
+                    <div
+                      *ngFor="let c of sugestoesCidades"
+                      class="dropdown-item"
+                      (mousedown)="selecionarCidade(c)">
+
+                      <strong>
+                        {{ c.cidadeNome }}
+                      </strong>
+
+                      <span *ngIf="c.estadoUf">
+                        ({{ c.estadoUf }})
+                      </span>
+
+                      <span *ngIf="c.nome">
+                        - {{ c.nome }}
+                      </span>
+
+                    </div>
+
+                  </div>
+
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="form-group col-md-2">
-            <label for="ufNascimento">UF</label>
-            <input
-              id="ufNascimento"
-              type="text"
-              nbInput
-              fullWidth
-              formControlName="ufNascimento"
-              readonly
-            />
-          </div>
-        </div> 
-        
-         <div class="row">
-              <div class="col-md-12 form-group">
-                <label for="observacaoJuridica" class="label">Observação</label>
-                <textarea rows="1" nbInput fullWidth placeholder="Observação" formControlName="observacao"></textarea>
               </div>
-            </div>
-      
-      
-      </div>
 
-          <!-- PESSOA JURÍDICA -->
-          <div *ngIf="isPessoaJuridica()" class="tipo-pessoa-bloco">
-            <h6>Dados Pessoa Jurídica</h6>
+              <div class="form-group col-md-2">
+
+                <label
+                  for="ufNascimento"
+                  class="label">
+                  UF
+                </label>
+
+                <input
+                  id="ufNascimento"
+                  type="text"
+                  nbInput
+                  fullWidth
+                  formControlName="ufNascimento"
+                  readonly>
+
+              </div>
+
+            </div>
+
+            <!-- ================================================= -->
+            <!-- OBSERVAÇÃO                                       -->
+            <!-- ================================================= -->
 
             <div class="row">
-              <div class="col-md-4 form-group">
-              <label for="cnpj" class="label">CNPJ</label>
 
-              <input
-                nbInput
-                #cnpjInput
-                fullWidth
-                id="cnpj"
-                placeholder="00.000.000/0000-00"
-                formControlName="cnpj"
-                ngxMaskFormatter="cnpj"
-                [status]="cnpjDuplicado ? 'danger' : 'basic'"
-              />
-
-              <small class="mensagem-duplicado" *ngIf="cnpjDuplicado">
-                CNPJ já cadastrado. Informe outro CNPJ.
-              </small>
-            </div>
-
-              <div class="col-md-4 form-group">
-                <label for="tipoEmpresa" class="label">Tipo de Empresa</label>
-                <nb-select fullWidth placeholder="Selecione o Tipo" formControlName="tipoEmpresa">
-                  <nb-option value="0">LTDA</nb-option>
-                  <nb-option value="1">S.A.</nb-option>
-                  <nb-option value="2">MEI</nb-option>
-                  <nb-option value="3">EIRELI</nb-option>
-                  <nb-option value="4">Outro</nb-option>
-                </nb-select>
-              </div>
-
-              <div class="col-md-4 form-group">
-                <label class="label">Micro Empresa?</label>
-                <nb-radio-group formControlName="microEmpresa" id="microEmpresa" name="microEmpresa"
-                  class="radio-group-inline d-flex align-items-center">
-                  <nb-radio value="S" class="mr-3">Sim</nb-radio>
-                  <nb-radio value="N">Não</nb-radio>
-                </nb-radio-group>
-              </div>
-            </div>
-
-            <div class="row">
               <div class="col-md-12 form-group">
-                <label for="nomeFantasia" class="label">Nome Fantasia</label>
-                <input nbInput fullWidth id="nomeFantasia" placeholder="Nome Fantasia" formControlName="nomeFantasia">
+
+                <label
+                  for="observacao"
+                  class="label">
+                  Observação
+                </label>
+
+                <textarea
+                  id="observacao"
+                  rows="2"
+                  nbInput
+                  fullWidth
+                  placeholder="Observação"
+                  formControlName="observacao">
+                </textarea>
+
               </div>
+
             </div>
 
-            <div class="row">
-              <div class="col-md-12 form-group">
-                <label for="objetoSocial" class="label">Objeto Social</label>
-                <textarea rows="1" nbInput fullWidth id="objetoSocial" placeholder="Objeto Social" formControlName="objetoSocial"></textarea>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-12 form-group">
-                <label for="observacaoJuridica" class="label">Observação</label>
-                <textarea rows="1" nbInput fullWidth placeholder="Observação" formControlName="observacao"></textarea>
-              </div>
-            </div>
           </div>
 
         </div>
+
       </form>
+
     </div>
+
   </nb-card-body>
+
 </nb-card>

@@ -65,7 +65,7 @@ export class PessoaPesquisaComponent implements OnInit, OnDestroy {
       },
 
       cpfCnpj: {
-        title: 'CPF/CNPJ',
+        title: 'CPF',
         type: 'string',
         width: '200px',
         filter: true,

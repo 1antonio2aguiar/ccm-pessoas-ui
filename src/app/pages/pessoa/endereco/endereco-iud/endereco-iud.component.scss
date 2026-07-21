@@ -44,3 +44,36 @@ nb-card.dialog-card {
   margin-top: 10px;
   font-weight: 600;
 }
+
+:host ::ng-deep nb-select[ng-reflect-disabled="true"] button {
+  background-color: #f7f9fc !important;
+  color: #8f9bb3 !important;
+  cursor: not-allowed !important;
+}
+
+/* Campos protegidos no modo edição */
+
+:host ::ng-deep input[disabled],
+:host ::ng-deep textarea[disabled] {
+  opacity: 1 !important;
+  color: #222b45 !important;
+  background-color: #f7f9fc !important;
+  -webkit-text-fill-color: #222b45 !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep nb-select button[disabled] {
+  opacity: 1 !important;
+  color: #222b45 !important;
+  background-color: #f7f9fc !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep nb-radio input:disabled + .native-input + .text {
+  opacity: 1 !important;
+  color: #52606d !important;
+}
+
+:host ::ng-deep nb-radio input:disabled + .native-input {
+  opacity: 1 !important;
+}

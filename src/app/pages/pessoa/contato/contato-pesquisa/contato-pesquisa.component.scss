@@ -128,3 +128,24 @@ nb-card-header button[nbButton] {
     }
   }
 }
+
+.identificacao-contato {
+  gap: .75rem;
+}
+
+.tipo-contato-display {
+  flex-shrink: 0;
+}
+
+.estabelecimento-identificacao {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .85rem;
+  color: #6c757d;
+}
+
+.estabelecimento-identificacao strong {
+  color: #222b45;
+  font-weight: 600;
+}

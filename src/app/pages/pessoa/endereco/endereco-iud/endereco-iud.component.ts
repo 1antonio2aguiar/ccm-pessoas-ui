@@ -20,6 +20,8 @@ import { BairroSimple } from '../../../../shared/models/bairroSimple';
 import { Distrito } from '../../../../shared/models/distrito';
 import { DistritoService } from '../../../distrito/distrito.service';
 import { BairroService } from '../../../bairro/bairro.service';
+import { PessoaService } from '../../pessoa.service';
+import { EstabelecimentoSelect } from '../../../../shared/models/estabelecimento-select';
 
 @Component({
   selector: 'ngx-endereco-iud',
@@ -51,6 +53,7 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
   sugestoesCidades: Distrito[] = [];
   sugestoesLogradouros: LogradouroSimple[] = [];
   sugestoesBairros: BairroSimple[] = [];
+  estabelecimentos: EstabelecimentoSelect[] = [];
 
   cepsEncontrados: string[] = [];
   mostrarSeletorCepEncontrado = false;
@@ -90,27 +93,36 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
     private logradouroService: LogradouroService,
     private bairroService: BairroService,
     private distritoService: DistritoService,
+    private pessoaService: PessoaService,
   ) { }
 
   ngOnInit(): void {
     this.modoEdicao = !!this.enderecoParaEdicao;
     this.initForm();
+    this.configurarTipoEndereco();
+
+    this.carregarEstabelecimentos();
 
     if (this.modoEdicao && this.enderecoParaEdicao) {
-      let tipoEnderecoStringParaForm: string;
+      let tipoEnderecoStringParaForm: string | null = null;
 
-      if (this.enderecoParaEdicao.tipoEndereco === 1) {
+      if (this.enderecoParaEdicao.dadosPessoaJuridicaId) {
+        tipoEnderecoStringParaForm = 'ESTABELECIMENTO';
+      } else if (this.enderecoParaEdicao.tipoEndereco === 0) {
         tipoEnderecoStringParaForm = 'CASA';
-      } else if (this.enderecoParaEdicao.tipoEndereco === 2) {
+      } else if (this.enderecoParaEdicao.tipoEndereco === 1) {
         tipoEnderecoStringParaForm = 'TRABALHO';
-      } else {
-        tipoEnderecoStringParaForm = this.enderecoForm.get('tipoEndereco')?.value || 'CASA';
+      } else if (this.enderecoParaEdicao.tipoEndereco === 2) {
+        tipoEnderecoStringParaForm = 'ESTABELECIMENTO';
       }
 
       const { tipoEndereco, ...dadosRestantes } = this.enderecoParaEdicao;
 
       const dadosParaFormulario = {
         ...dadosRestantes,
+
+        dadosPessoaJuridicaId: null,
+
         tipoEndereco: tipoEnderecoStringParaForm,
         tipoLogradouro: this.enderecoParaEdicao.tipoLogradouro,
         cep: (this.enderecoParaEdicao.cep ?? '').trim(),
@@ -182,6 +194,8 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
       id: [null], // Usado para edição
       nomePessoa: [this.nomePessoa],
       //cep: ['', [Validators.required, Validators.pattern(/^\d{5}\d{3}$/)]],
+
+      dadosPessoaJuridicaId: [null],
 
       cep: ['', [
         //Validators.required,
@@ -351,17 +365,36 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
 
     // Mapear o valor do formulário para o tipo EnderecoIn
     const enderecoPayload: EnderecoIn = {
-      id: null,
-      cepId: this.cepId > 0 ? this.cepId : (formValue.cepId || null),
-      //cepId: formValue.cepId ,
-      logradouroId: this.logradouroId > 0 ? this.logradouroId : formValue.logradouroId,
-      //logradouroId: formValue.logradouroId ,
+      id: undefined,
+      pessoaId: this.pessoaId ?? undefined,
+
+      dadosPessoaJuridicaId:
+        formValue.tipoEndereco === 'ESTABELECIMENTO'
+          ? formValue.dadosPessoaJuridicaId
+          : null,
+
+      cepId:
+        this.cepId > 0
+          ? this.cepId
+          : (formValue.cepId || null),
+
+      logradouroId:
+        this.logradouroId > 0
+          ? this.logradouroId
+          : formValue.logradouroId,
+
       bairroId: formValue.bairros?.id || null,
       numero: formValue.numero,
-      complemento: formValue.complemento || null, // Enviar null se o campo estiver vazio
-      pessoaId: this.pessoaId,
-      tipoEndereco: formValue.tipoEndereco === 'CASA' ? 1 : (formValue.tipoEndereco === 'TRABALHO' ? 2 : 1),
-      principal: formValue.principal ? 'S' : 'N'
+      complemento: formValue.complemento || null,
+
+      tipoEndereco:
+        formValue.tipoEndereco === 'CASA'
+          ? 0
+          : formValue.tipoEndereco === 'TRABALHO'
+            ? 1
+            : 2,
+
+      principal: formValue.principal ? 'S' : 'N',
     };
 
     if (this.modoEdicao) {
@@ -403,44 +436,46 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
     }
   }
 
-  onLogradouroSelecionado(logradouro: LogradouroPesquisaOut | string): void {
+  onLogradouroSelecionado(
+    logradouro: LogradouroPesquisaOut | string,
+  ): void {
 
     if (typeof logradouro === 'string' || !logradouro) {
-      // Se o usuário apagar o campo ou não selecionar nada, ou se for string (evento de limpar)
-      this.logradourosPesquisa = []; // Limpa sugestões
-      // Poderia resetar campos aqui se desejado quando o campo logradouroNome é limpo
+      this.logradourosPesquisa = [];
       return;
     }
 
     this.isSelectingLogradouro = true;
 
-    this.logradouroId = logradouro.id;
-    this.cepId = logradouro.cepId;
-    const primeiroBairro = logradouro.bairros && logradouro.bairros.length > 0 ? logradouro.bairros[0] : null;
-    this.bairroId = primeiroBairro ? primeiroBairro.id : 0;
+    this.logradouroId = logradouro.id ?? 0;
+    this.cepId = logradouro.cepId ?? 0;
 
+    const primeiroBairro =
+      logradouro.bairros && logradouro.bairros.length > 0
+        ? logradouro.bairros[0]
+        : null;
 
-    // Importante: use patchValue com { emitEvent: false } para não disparar valueChanges novamente
+    this.bairroId = primeiroBairro?.id ?? 0;
+
     this.enderecoForm.patchValue({
-      id: logradouro.id,
-      logradouroNome: logradouro.logradouroNome,
-      //tipoLogradouro: logradouro.tipoLogradouro,
-      bairros: logradouro.bairros,
-      cidadeNome: logradouro.cidadeNome,
-      estadoUf: logradouro.uf,
-
+      id: logradouro.id ?? null,
+      logradouroNome: logradouro.logradouroNome ?? '',
+      bairros: logradouro.bairros ?? [],
+      cidadeNome: logradouro.cidadeNome ?? '',
+      estadoUf: logradouro.uf ?? '',
     }, { emitEvent: false });
 
-    const bairroControl = this.enderecoForm.get('bairros') as FormGroup;
-    if (logradouro.bairros && logradouro.bairros.length > 0) {
-      this.bairros = logradouro.bairros;
-      const primeiroBairro = logradouro.bairros[0];
+    const bairroControl =
+      this.enderecoForm.get('bairros') as FormGroup;
 
-      const bairroControl = this.enderecoForm.get('bairros') as FormGroup;
+    if (logradouro.bairros?.length) {
+      this.bairros = logradouro.bairros;
+
       bairroControl.patchValue({
-        id: primeiroBairro.id
+        id: primeiroBairro?.id ?? null,
       });
-      this.bairroId = primeiroBairro.id || 0;
+
+      this.bairroId = primeiroBairro?.id ?? 0;
     } else {
       this.bairros = [];
       this.bairroId = 0;
@@ -797,6 +832,7 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.enderecoForm.get('tipoEndereco')?.disable({ emitEvent: false });
     this.enderecoForm.get('cep')?.disable({ emitEvent: false });
     this.enderecoForm.get('cidadeId')?.disable({ emitEvent: false });
     this.enderecoForm.get('cidadeNome')?.disable({ emitEvent: false });
@@ -806,7 +842,160 @@ export class EnderecoIudComponent implements OnInit, OnDestroy {
     this.enderecoForm.get('tipoLogradouro')?.disable({ emitEvent: false });
     this.enderecoForm.get(['bairros', 'id'])?.disable({ emitEvent: false });
 
+    this.enderecoForm
+      .get('dadosPessoaJuridicaId')
+      ?.disable({ emitEvent: false });
+
     this.bairroCtrl.disable({ emitEvent: false });
   }
 
+  private carregarEstabelecimentos(): void {
+    if (!this.pessoaId) {
+      this.estabelecimentos = [];
+      return;
+    }
+
+    this.pessoaService.getEstabelecimentos(this.pessoaId)
+      .then((estabelecimentos: EstabelecimentoSelect[]) => {
+        this.estabelecimentos = estabelecimentos ?? [];
+
+        if (!this.modoEdicao || !this.enderecoParaEdicao) {
+          return;
+        }
+
+        const estabelecimentoId =
+          this.resolverEstabelecimentoIdEdicao();
+
+        this.enderecoForm
+          .get('dadosPessoaJuridicaId')
+          ?.setValue(estabelecimentoId, {
+            emitEvent: false,
+          });
+
+        this.enderecoForm
+          .get('dadosPessoaJuridicaId')
+          ?.updateValueAndValidity({
+            emitEvent: false,
+          });
+      })
+      .catch((erro) => {
+        console.error(
+          'Erro ao carregar estabelecimentos:',
+          erro,
+        );
+
+        this.estabelecimentos = [];
+      });
+  }
+
+  formatarCnpj(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const cnpj = String(value)
+      .replace(/\D/g, '')
+      .padStart(14, '0');
+
+    if (cnpj.length !== 14) {
+      return String(value);
+    }
+
+    return cnpj.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      '$1.$2.$3/$4-$5',
+    );
+  }
+
+  private configurarTipoEndereco(): void {
+    const tipoEnderecoControl =
+      this.enderecoForm.get('tipoEndereco');
+
+    const estabelecimentoControl =
+      this.enderecoForm.get('dadosPessoaJuridicaId');
+
+    tipoEnderecoControl?.valueChanges.subscribe((tipo: string | null) => {
+
+      if (tipo === 'ESTABELECIMENTO') {
+        estabelecimentoControl?.setValidators(
+          Validators.required
+        );
+      } else {
+        estabelecimentoControl?.clearValidators();
+
+        estabelecimentoControl?.setValue(
+          null,
+          { emitEvent: false }
+        );
+      }
+
+      estabelecimentoControl?.updateValueAndValidity({
+        emitEvent: false,
+      });
+    });
+  }
+
+  private resolverEstabelecimentoIdEdicao(): number | null {
+    const endereco = this.enderecoParaEdicao;
+
+    if (!endereco) {
+      return null;
+    }
+
+    const idInformado =
+      endereco.dadosPessoaJuridicaId ??
+      endereco.originalApiData?.dadosPessoaJuridicaId;
+
+    if (idInformado !== null && idInformado !== undefined) {
+      const id = Number(idInformado);
+
+      const encontradoPorId = this.estabelecimentos.find(
+        estabelecimento =>
+          Number(estabelecimento.id) === id
+      );
+
+      if (encontradoPorId) {
+        return Number(encontradoPorId.id);
+      }
+    }
+
+    const cnpjEndereco = String(
+      endereco.estabelecimentoCnpj ??
+      endereco.originalApiData?.estabelecimentoCnpj ??
+      '',
+    ).replace(/\D/g, '');
+
+    if (cnpjEndereco) {
+      const encontradoPorCnpj = this.estabelecimentos.find(
+        estabelecimento =>
+          String(estabelecimento.cnpj ?? '')
+            .replace(/\D/g, '') === cnpjEndereco
+      );
+
+      if (encontradoPorCnpj?.id != null) {
+        return Number(encontradoPorCnpj.id);
+      }
+    }
+
+    const nomeEndereco = String(
+      endereco.estabelecimentoNome ??
+      endereco.originalApiData?.estabelecimentoNome ??
+      '',
+    ).trim().toUpperCase();
+
+    if (nomeEndereco) {
+      const encontradoPorNome = this.estabelecimentos.find(
+        estabelecimento =>
+          String(estabelecimento.nome ?? '')
+            .trim()
+            .toUpperCase() === nomeEndereco
+      );
+
+      if (encontradoPorNome?.id != null) {
+        return Number(encontradoPorNome.id);
+      }
+    }
+
+    return null;
+  }
 }

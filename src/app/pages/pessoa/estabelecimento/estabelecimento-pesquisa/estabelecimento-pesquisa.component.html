@@ -1,0 +1,78 @@
+<nb-card>
+
+  <nb-card-header class="header">
+
+    <span>Lista de CNPJ(S) da pessoa</span>
+
+    <div class="header-actions">
+
+      <button nbButton status="primary" size="small" (click)="novoEstabelecimento()">
+
+        <nb-icon icon="plus-outline"></nb-icon>
+
+        Novo CNPJ(S)
+
+      </button>
+
+    </div>
+
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div *ngIf="isLoading">
+
+      Carregando CNPJ(S)...
+
+    </div>
+
+    <table *ngIf="!isLoading" class="table table-hover">
+
+      <thead>
+
+        <tr>
+
+          <th>CNPJ</th>
+
+          <th>Nome</th>
+
+          <th width="120">Ações</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let item of estabelecimentos">
+
+          <td>{{ formatarCnpj(item.cnpj) }}</td>
+
+          <td>{{ item.nome }}</td>
+
+
+          <td>
+
+            <button nbButton ghost size="tiny" status="primary" class="acao-btn" (click)="editarEstabelecimento(item)">
+
+              <nb-icon icon="edit-outline"></nb-icon>
+
+            </button>
+
+            <button nbButton ghost size="tiny" status="danger" class="acao-btn" (click)="excluirEstabelecimento(item)">
+
+              <nb-icon icon="trash-2-outline"></nb-icon>
+
+            </button>
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </nb-card-body>
+
+</nb-card>

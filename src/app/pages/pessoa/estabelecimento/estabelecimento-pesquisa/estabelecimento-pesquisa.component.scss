@@ -1,0 +1,21 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.acao-btn nb-icon {
+  font-size: 1.5rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.acao-btn {
+  margin-right: 0.25rem;
+}

@@ -1,75 +1,260 @@
 <nb-card>
+
   <nb-card-header class="d-flex justify-content-between align-items-center">
+
     <span>Meus contatos</span>
-    <button nbButton status="primary" size="small" (click)="adicionarNovoContato()">
-      <nb-icon icon="plus-outline"></nb-icon> Inserir novo contato
+
+    <button
+      nbButton
+      status="primary"
+      size="small"
+      (click)="adicionarNovoContato()">
+
+      <nb-icon icon="plus-outline"></nb-icon>
+      Inserir novo contato
+
     </button>
+
   </nb-card-header>
 
   <nb-card-body>
+
     <div>
-      <div *ngIf="isLoadingContatos" class="text-center my-3">
+
+      <div
+        *ngIf="isLoadingContatos"
+        class="text-center my-3">
+
         <nb-spinner status="primary"></nb-spinner>
+
         <p>Carregando contatos...</p>
-      </div> 
+
+      </div>
 
       <div *ngIf="!isLoadingContatos">
+
         <div *ngIf="contatosParaExibir.length > 0">
-          <div *ngFor="let contato of contatosParaExibir" class="contato-item mb-3 p-3 border rounded">
-            <div class="contato-header d-flex justify-content-between align-items-start">
-              <div>
-                <span class="nome-contato font-weight-bold d-block">{{ contato.nomeContato }}</span>
-              </div>
+
+          <div
+            *ngFor="let contato of contatosParaExibir"
+            class="contato-item mb-3 p-3 border rounded">
+
+            <!-- ===================================================== -->
+            <!-- CABEÇALHO -->
+            <!-- ===================================================== -->
+
+            <div
+              class="contato-header d-flex justify-content-between align-items-start">
+
+              <div></div>
+
               <div class="acoes-contato">
-                  <button nbButton ghost status="info" size="tiny" class="mr-1" (click)="editarContato(contato)">
-                    <nb-icon icon="edit-outline"></nb-icon> Editar
-                  </button>
-                  <button nbButton ghost status="danger" size="tiny" (click)="excluirContatoWrapper(contato)" *ngIf="(!pessoaId && contato.includes(contato)) || (pessoaId && !contato.principal)">
-                    <nb-icon icon="trash-2-outline"></nb-icon> Excluir
-                  </button>
+
+                <button
+                  nbButton
+                  ghost
+                  status="info"
+                  size="tiny"
+                  class="mr-1"
+                  (click)="editarContato(contato)">
+
+                  <nb-icon icon="edit-outline"></nb-icon>
+                  Editar
+
+                </button>
+
+                <button
+                  nbButton
+                  ghost
+                  status="danger"
+                  size="tiny"
+                  *ngIf="
+                    (!pessoaId && contato.includes(contato)) ||
+                    (pessoaId && !contato.principal)
+                  "
+                  (click)="excluirContatoWrapper(contato)">
+
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                  Excluir
+
+                </button>
+
               </div>
+
             </div>
+
             <hr class="my-2">
 
-            <div class="detalhes-contato small">
-              <p class="mb-1">
-                <span *ngIf="contato.tipoContato !== null && contato.contato !== 'N/I'"></span>
-                {{ contato.tipoContatoDescricao }}: 
+            <!-- ===================================================== -->
+            <!-- DADOS DO CONTATO -->
+            <!-- ===================================================== -->
 
-                <ng-container *ngIf="contato.tipoContato !== 3; else semPipeTelefone">
-                  <strong>{{ contato.contato | telefone : contato.tipoContato }}</strong>
+            <div class="detalhes-contato small">
+
+              <p class="mb-1">
+
+                <strong>
+                  {{ contato.tipoContatoDescricao }}
+                </strong>
+
+                :
+
+                <ng-container
+                  *ngIf="contato.tipoContato !== 3; else contatoTexto">
+
+                  <strong>
+                    {{ contato.contato | telefone: contato.tipoContato }}
+                  </strong>
+
                 </ng-container>
 
-                <ng-template #semPipeTelefone>
-                  <strong>{{ contato.contato }}</strong>
+                <ng-template #contatoTexto>
+
+                  <strong>
+                    {{ contato.contato }}
+                  </strong>
+
                 </ng-template>
 
-                {{ contato.complemento }}
+                <span *ngIf="contato.complemento">
+
+                  - {{ contato.complemento }}
+
+                </span>
+
               </p>
+
             </div>
-            
-            <div class="contato-conteudo-inferior d-flex justify-content-between align-items-center mt-2">
-              <div class="acoes-contato">
-                <button nbButton outline status="basic" size="tiny" *ngIf="!contato.principal" (click)="definirComoPadraoWrapper(contato)">
-                  Definir como padrão
+
+            <!-- ===================================================== -->
+            <!-- IDENTIFICAÇÃO -->
+            <!-- ===================================================== -->
+
+            <div
+              class="contato-conteudo-inferior
+                     d-flex
+                     justify-content-between
+                     align-items-center
+                     flex-wrap
+                     mt-2">
+
+              <div
+                class="d-flex
+                       align-items-center
+                       flex-wrap
+                       titular-container">
+
+                <button
+                  nbButton
+                  size="tiny"
+                  appearance="outline"
+                  type="button"
+                  tabindex="-1"
+                  class="tipo-contato-display"
+                  [status]="
+                    contato.dadosPessoaJuridicaId
+                      ? 'success'
+                      : 'info'
+                  ">
+
+                  {{
+                    contato.dadosPessoaJuridicaId
+                      ? 'ESTABELECIMENTO'
+                      : 'PESSOA FÍSICA'
+                  }}
+
                 </button>
+
+                <span
+                  *ngIf="contato.dadosPessoaJuridicaId"
+                  class="estabelecimento-identificacao ml-2">
+
+                  <strong>
+
+                    {{ contato.estabelecimentoNome }}
+
+                  </strong>
+
+                  <span *ngIf="contato.estabelecimentoCnpj">
+
+                    —
+
+                    {{ contato.estabelecimentoCnpj | cnpj }}
+
+                  </span>
+
+                </span>
+
               </div>
+
+              <button
+                nbButton
+                outline
+                status="basic"
+                size="tiny"
+                *ngIf="!contato.principal"
+                (click)="definirComoPadraoWrapper(contato)">
+
+                Definir como padrão
+
+              </button>
+
             </div>
+
           </div>
+
         </div>
 
+        <!-- ===================================================== -->
+        <!-- SEM CONTATOS -->
+        <!-- ===================================================== -->
+
         <div *ngIf="contatosParaExibir.length === 0">
-          <div *ngIf="pessoaId" class="text-center my-3 p-4 border rounded bg-light">
-            <nb-icon icon="pin-outline" pack="eva" style="font-size: 3rem; opacity: 0.5;"></nb-icon>
-            <p class="mt-2 mb-1">Nenhum contato cadastrado para esta pessoa.</p>
-            <p class="text-muted small">Clique em "Inserir novo contato" para começar.</p>
+
+          <div
+            *ngIf="pessoaId"
+            class="text-center my-3 p-4 border rounded bg-light">
+
+            <nb-icon
+              icon="phone-outline"
+              pack="eva"
+              style="font-size:3rem; opacity:.5">
+            </nb-icon>
+
+            <p class="mt-2 mb-1">
+
+              Nenhum contato cadastrado para esta pessoa.
+
+            </p>
+
+            <p class="text-muted small">
+
+              Clique em "Inserir novo contato" para começar.
+
+            </p>
+
           </div>
-          <div *ngIf="!pessoaId" class="alert alert-info text-center" role="alert">
-            <nb-icon icon="alert-circle-outline" pack="eva" class="mr-1"></nb-icon>
+
+          <div
+            *ngIf="!pessoaId"
+            class="alert alert-info text-center">
+
+            <nb-icon
+              icon="alert-circle-outline"
+              pack="eva"
+              class="mr-1">
+            </nb-icon>
+
             Para gerenciar os contatos, primeiro salve os dados da pessoa.
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
   </nb-card-body>
+
 </nb-card>

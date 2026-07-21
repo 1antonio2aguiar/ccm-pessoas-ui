@@ -1,0 +1,33 @@
+.modal-card {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.erro {
+  display: block;
+  margin-top: 0.25rem;
+  color: #d32f2f;
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.readonly-field {
+  background-color: #f7f9fc !important;
+  color: #8f9bb3 !important;
+  cursor: not-allowed;
+}
+
+.readonly-field:focus {
+  background-color: #f7f9fc !important;
+}

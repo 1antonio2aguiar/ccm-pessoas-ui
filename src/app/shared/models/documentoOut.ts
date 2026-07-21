@@ -1,9 +1,10 @@
-// endereco.ts
 import { BaseResourceModel } from './base-resource.model';
 
 export class DocumentoOut extends BaseResourceModel {
+
   constructor(
-    public id?: number,
+    public override id?: number,
+
     public tipoDocumento?: number,
     public tipoDocumentoDescricao?: string,
 
@@ -18,18 +19,27 @@ export class DocumentoOut extends BaseResourceModel {
     public zona?: number,
     public secao?: number,
     public observacao?: string,
-  
+
     public pessoaNome?: string,
     public pessoaId?: number,
 
+    public dadosPessoaJuridicaId?: number | null,
+    public estabelecimentoNome?: string | null,
+    public estabelecimentoCnpj?: string | null
+
   ) {
-      super(); 
+    super();
   }
 
   static fromJson(jsonData: any): DocumentoOut {
-    const documentos = {
-      ...jsonData,
+
+    const documentoOut = {
+      ...jsonData
     };
-    return Object.assign(new DocumentoOut(), documentos);
- }
+
+    return Object.assign(
+      new DocumentoOut(),
+      documentoOut
+    );
+  }
 }

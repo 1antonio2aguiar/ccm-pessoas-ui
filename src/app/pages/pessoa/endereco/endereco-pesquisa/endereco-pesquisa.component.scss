@@ -128,3 +128,30 @@ nb-card-header button[nbButton] {
     }
   }
 }
+
+.identificacao-endereco {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tipo-endereco-display {
+  pointer-events: none;
+  cursor: default;
+  opacity: 1 !important;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.estabelecimento-identificacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.estabelecimento-identificacao strong {
+  font-weight: 700;
+}

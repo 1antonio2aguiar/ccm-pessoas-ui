@@ -1,27 +1,33 @@
 import { BaseResourceModel } from './base-resource.model';
 
 export class ContatoIn extends BaseResourceModel {
-    constructor(
-      public override id?: number,
-      public numero?: string,
-      public principal?: string,
-      public tipoContato?: number,
-      public complemento?: string,
+  constructor(
+    public override id?: number,
 
-      public pessoaId?: number,
+    public contato?: string,
+    public principal?: string,
+    public tipoContato?: number,
+    public complemento?: string,
 
-    ) {
-      super();
+    public pessoaId?: number,
+    public dadosPessoaJuridicaId?: number,
+  ) {
+    super();
   }
 
   static fromJson(jsonData: any): ContatoIn {
-    const contatosIn = {
-      ...jsonData
-    };
-    return Object.assign(new ContatoIn(), contatosIn);
- }
+    return Object.assign(
+      new ContatoIn(),
+      {
+        ...jsonData,
+      },
+    );
+  }
 
   static toJson(jsonData: any): ContatoIn {
-      return Object.assign(new ContatoIn(), jsonData);
+    return Object.assign(
+      new ContatoIn(),
+      jsonData,
+    );
   }
 }

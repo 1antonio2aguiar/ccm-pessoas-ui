@@ -1,4 +1,4 @@
- import { Injectable, Injector, EventEmitter } from '@angular/core';
+import { Injectable, Injector, EventEmitter } from '@angular/core';
 import { BaseResourceService } from '../../../shared/services/base-resource.service';
 import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
@@ -8,14 +8,14 @@ import { ContatoIn } from '../../../shared/models/contatoIn';
 import { HttpParams } from '@angular/common/http';
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 
-export class ContatoService extends BaseResourceService<ContatoOut>{
-    
+export class ContatoService extends BaseResourceService<ContatoOut> {
+
     constructor(protected injector: Injector) {
         super(environment.apiUrl + 'contatos', injector, ContatoOut.fromJson);
-    } 
+    }
 
     getContatoByPessoaId(pessoaId: number): Observable<ContatoOut[]> {
         const url = `${this.apiPath}/por-pessoa/${pessoaId}`;
@@ -57,6 +57,26 @@ export class ContatoService extends BaseResourceService<ContatoOut>{
                 return this.jsonDataToResource(response); // Converte para instância de ContatoOut
             }),
             catchError(this.handleError)
+        );
+    }
+
+    definirComoPrincipal(
+        contatoId: number,
+        pessoaId: number,
+    ): Observable<void> {
+
+        const url =
+            `${this.apiPath}/${contatoId}/definir-como-principal`;
+
+        const params = new HttpParams()
+            .set('pessoaId', pessoaId.toString());
+
+        return this.http.put<void>(
+            url,
+            null,
+            { params },
+        ).pipe(
+            catchError(this.handleError),
         );
     }
 

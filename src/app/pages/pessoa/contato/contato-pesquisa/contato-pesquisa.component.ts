@@ -14,13 +14,20 @@ import { formatarTelefoneUtil } from '../../../../shared/utils/formatar-telefone
 
 interface ContatoDisplay {
   id: number;
-  tipoContato?: number; 
-  tipoContatoDescricao?: string,
+
+  tipoContato?: number;
+  tipoContatoDescricao?: string;
+
   contato: string;
   complemento?: string;
   principal?: boolean;
+
   pessoaNome?: string;
-  //pessoaId?: number;
+
+  dadosPessoaJuridicaId?: number | null;
+  estabelecimentoNome?: string;
+  estabelecimentoCnpj?: string;
+
   originalApiData?: ContatoOut;
 }
 
@@ -91,19 +98,43 @@ export class ContatoPesquisaComponent implements OnInit, OnDestroy {
         });
     }
 
-    private mapApiContatoToDisplay(apiContato: ContatoOut): ContatoDisplay {
+    private mapApiContatoToDisplay(
+    apiContato: ContatoOut,
+    ): ContatoDisplay {
 
-        return {
-            id: apiContato.id!, // '!' assume que o ID sempre existirá após vir da API
-            tipoContato: apiContato.tipoContato,
-            tipoContatoDescricao: apiContato.tipoContatoDescricao,
+    return {
+        id: apiContato.id!,
 
-            contato: apiContato.contato,
-            complemento: apiContato.complemento || '',
-            principal: apiContato.principal === 'S' || apiContato.principal === 'SIM',
-            pessoaNome: apiContato.pessoaNome,
+        tipoContato:
+        apiContato.tipoContato,
 
-            originalApiData: apiContato // Guardar o objeto original pode ser útil
+        tipoContatoDescricao:
+        apiContato.tipoContatoDescricao,
+
+        contato:
+        apiContato.contato ?? '',
+
+        complemento:
+        apiContato.complemento ?? '',
+
+        principal:
+        apiContato.principal === 'S' ||
+        apiContato.principal === 'SIM',
+
+        pessoaNome:
+        apiContato.pessoaNome,
+
+        dadosPessoaJuridicaId:
+        apiContato.dadosPessoaJuridicaId ?? null,
+
+        estabelecimentoNome:
+        apiContato.estabelecimentoNome ?? '',
+
+        estabelecimentoCnpj:
+        apiContato.estabelecimentoCnpj ?? '',
+
+        originalApiData:
+        apiContato,
         };
     }
 
@@ -135,24 +166,20 @@ export class ContatoPesquisaComponent implements OnInit, OnDestroy {
         });
     }
 
-    editarContato(contato: any): void {
-        console.log('Editando contato : ', contato, ' ', this.nomePessoaAtualParaDialog);
+    editarContato(contato: ContatoDisplay): void {
         this.dialogService.open(ContatoIudComponent, {
             context: {
-                pessoaId: this.pessoaId,
-                nomePessoa: this.nomePessoaAtualParaDialog,
-                contatoParaEdicao: { ...contato }, // Passa uma cópia para evitar mutação direta
-            }
+            pessoaId: this.pessoaId,
+            nomePessoa: this.nomePessoaAtualParaDialog,
+
+            contatoParaEdicao: {
+                ...(contato.originalApiData ?? contato),
+            },
+            },
+            closeOnBackdropClick: false,
         }).onClose.subscribe(contatoAtualizado => {
             if (contatoAtualizado) {
-                // Atualizar na lista correta (real ou exemplo)
-                const atualizarArray = (arr: any[]) => {
-                    const index = arr.findIndex(e => e.id === contatoAtualizado.id);
-                    if (index > -1) {
-                        arr[index] = contatoAtualizado;
-                    }
-                };
-                this.carregarContatos();
+            this.carregarContatos();
             }
         });
     }
@@ -198,5 +225,89 @@ export class ContatoPesquisaComponent implements OnInit, OnDestroy {
             position: NbGlobalPhysicalPosition.TOP_RIGHT,
             duration: 3000
         });
+    }
+
+    definirComoPadraoWrapper(
+    contato: ContatoDisplay,
+    ): void {
+
+    if (!this.pessoaId) {
+        this.showToast(
+        'Código da pessoa não encontrado.',
+        'Erro',
+        'danger',
+        );
+
+        return;
+    }
+
+    if (!contato.id) {
+        this.showToast(
+        'Código do contato não encontrado.',
+        'Erro',
+        'danger',
+        );
+
+        return;
+    }
+
+    this.isLoadingContatos = true;
+
+    this.contatoService
+        .definirComoPrincipal(
+        contato.id,
+        this.pessoaId,
+        )
+        .pipe(
+        takeUntil(this.destroy$),
+        )
+        .subscribe({
+        next: () => {
+            this.showToast(
+            `${contato.tipoContatoDescricao ?? 'Contato'} definido como principal com sucesso!`,
+            'Sucesso',
+            'success',
+            );
+
+            this.carregarContatos();
+        },
+
+        error: (err) => {
+            console.error(
+            'Erro ao definir contato como principal:',
+            err,
+            );
+
+            const errorMessage =
+            err?.error?.message ||
+            err?.message ||
+            'Falha ao definir o contato como principal. Tente novamente.';
+
+            this.showToast(
+            errorMessage,
+            'Erro',
+            'danger',
+            );
+
+            this.isLoadingContatos = false;
+        },
+        });
+    }
+
+    formatarCnpj(value: any): string {
+        if (!value) {
+            return '';
+        }
+
+        const cnpj = String(value).replace(/\D/g, '');
+
+        if (cnpj.length !== 14) {
+            return String(value);
+        }
+
+        return cnpj.replace(
+            /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+            '$1.$2.$3/$4-$5',
+        );
     }
 }

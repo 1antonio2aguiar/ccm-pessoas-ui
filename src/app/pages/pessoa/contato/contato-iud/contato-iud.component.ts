@@ -3,8 +3,11 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs'; 
 import { takeUntil, distinctUntilChanged, startWith } from 'rxjs/operators';
 import { NbDialogRef, NbToastrService  } from '@nebular/theme';
-import { ContatoService } from '../contato.service';
 import { formatarTelefoneUtil } from '../../../../shared/utils/formatar-telefone.util';
+
+import { ContatoService } from '../contato.service';
+import { PessoaService } from '../../pessoa.service';
+import { EstabelecimentoSelect } from '../../../../shared/models/estabelecimento-select';
 
 @Component({
     selector: 'ngx-contato-iud',
@@ -22,7 +25,9 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
   modoEdicao = false;
   isLoadingCep = false;
   isLoadingSalvar = false;
-   currentContactMask: string | null = null;
+  currentContactMask: string | null = null;
+  
+  estabelecimentos: EstabelecimentoSelect[] = []; 
 
   private destroy$ = new Subject<void>();
 
@@ -39,7 +44,8 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
     protected dialogRef: NbDialogRef<ContatoIudComponent>,
     private toastrService: NbToastrService,
     private fb: FormBuilder,
-    private contatoService: ContatoService 
+    private contatoService: ContatoService ,
+    private pessoaService: PessoaService,
   ) {}
 
   ngOnDestroy(): void {
@@ -49,45 +55,115 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
 
   ngOnInit(): void {
     this.modoEdicao = !!this.contatoParaEdicao;
-    this.initForm();
 
+    this.initForm();
+    this.configurarTitularContato();
+    this.listenToTipoContatoChanges();
 
     if (this.modoEdicao && this.contatoParaEdicao) {
-      this.listenToTipoContatoChanges();
 
-      // Formata
-      this.contatoParaEdicao.contato =
-      this.aplicarFormatacaoContatoBaseadoNoTipo(this.contatoParaEdicao.contato,this.contatoParaEdicao.tipoContato)
+      const tipoContato =
+        String(this.contatoParaEdicao.tipoContato ?? '');
 
-      const dadosParaPatch = {
-        ...this.contatoParaEdicao, // Espalha os valores de contatoParaEdicao
-        tipoContato: this.contatoParaEdicao.tipoContato?.toString(), // <<<< CONVERTE PARA STRING AQUI
-        principal: typeof this.contatoParaEdicao.principal === 'string' ?
-                    this.contatoParaEdicao.principal.toUpperCase() === 'S' :
-                    Boolean(this.contatoParaEdicao.principal) // Converte para booleano
-      };
+      const valorContato =
+        String(this.contatoParaEdicao.contato ?? '');
 
-      this.contatoForm.patchValue(dadosParaPatch);
+      /*
+      * A assinatura do método é:
+      * aplicarFormatacaoContato(tipoContato, valorContato)
+      */
+      const contatoFormatado =
+        this.aplicarFormatacaoContato(
+          tipoContato,
+          valorContato,
+        );
+
+      const titularContato =
+        this.contatoParaEdicao.dadosPessoaJuridicaId != null
+          ? 'ESTABELECIMENTO'
+          : 'PESSOA_FISICA';
+
+      /*
+      * Não usamos "...this.contatoParaEdicao" para evitar que
+      * propriedades do objeto sobrescrevam os valores preparados.
+      */
+      this.contatoForm.patchValue({
+        id:
+          this.contatoParaEdicao.id ?? null,
+
+        nomePessoa:
+          this.nomePessoa ??
+          this.contatoParaEdicao.pessoaNome ??
+          '',
+
+        titularContato:
+          titularContato,
+
+        dadosPessoaJuridicaId:
+          this.contatoParaEdicao.dadosPessoaJuridicaId != null
+            ? Number(
+                this.contatoParaEdicao.dadosPessoaJuridicaId,
+              )
+            : null,
+
+        tipoContato:
+          tipoContato,
+
+        tipoContatoDescricao:
+          this.contatoParaEdicao.tipoContatoDescricao ?? null,
+
+        contato:
+          contatoFormatado,
+
+        complemento:
+          this.contatoParaEdicao.complemento ?? '',
+
+        principal:
+          typeof this.contatoParaEdicao.principal === 'string'
+            ? this.contatoParaEdicao.principal
+                .toUpperCase() === 'S'
+            : Boolean(this.contatoParaEdicao.principal),
+      }, {
+        emitEvent: false,
+      });
+
+      /*
+      * Garante explicitamente a seleção do radio.
+      */
+      this.contatoForm
+        .get('titularContato')
+        ?.setValue(
+          titularContato,
+          { emitEvent: false },
+        );
     }
 
-    // 🔒 BLOQUEIA O TIPO CONTATO NO EDIT
-    this.aplicarProtecaoCamposEdicao();
+    /*
+    * Carrega as empresas depois que o formulário da edição
+    * já recebeu os valores.
+    */
+    this.carregarEstabelecimentos();
 
+    this.aplicarProtecaoCamposEdicao();
   }
 
   initForm(): void {
+  this.contatoForm = this.fb.group({
+    id: [null],
+    nomePessoa: [this.nomePessoa],
 
-    this.contatoForm = this.fb.group({
-      id: [null], // Usado para edição
-      nomePessoa: [this.nomePessoa],
-      contato: ['', Validators.required],
-      complemento: [''],
-      tipoContato: [null, Validators.required], 
-      tipoContatoDescricao: [null], 
-      principal: [null],
-    });
-    
-  } 
+    titularContato: [null, Validators.required],
+    dadosPessoaJuridicaId: [null],
+
+    contato: ['', Validators.required],
+    complemento: [''],
+
+    tipoContato: [null, Validators.required],
+    tipoContatoDescricao: [null],
+
+    principal: [false],
+  });
+}
 
   salvar(): void {
     this.isLoadingSalvar = true;
@@ -104,13 +180,30 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
     }
 
     const payload = {
-      id: this.modoEdicao ? this.contatoParaEdicao.id : null,
-      pessoaId: this.pessoaId,
-      tipoContato: parseInt(formValue.tipoContato, 10), // Converte para número
-      contato: contatoParaApi,
-      complemento: formValue.complemento || null,
-      principal: formValue.principal ? 'S' : 'N' // Converte booleano para 'S'/'N'
-    };
+  id: this.modoEdicao
+    ? this.contatoParaEdicao.id
+    : undefined,
+
+  pessoaId:
+    this.pessoaId ?? undefined,
+
+  dadosPessoaJuridicaId:
+    formValue.titularContato === 'ESTABELECIMENTO'
+      ? formValue.dadosPessoaJuridicaId
+      : null,
+
+  tipoContato:
+    Number(formValue.tipoContato),
+
+  contato:
+    contatoParaApi,
+
+  complemento:
+    formValue.complemento || null,
+
+  principal:
+    formValue.principal ? 'S' : 'N',
+};
 
     const operacao = this.modoEdicao ?
       this.contatoService.update(payload) :
@@ -154,24 +247,58 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
     }
   }
 
-  aplicarFormatacaoContatoBaseadoNoTipo(valorContato: string, tipoContato: string): string {
-    const contatoControl = this.contatoForm.get('contato');
+  aplicarFormatacaoContato(
+    tipoContato: string,
+    valorContato?: string,
+  ): string {
 
-    if (!valorContato) return;
+    const contatoControl =
+      this.contatoForm.get('contato');
 
-    if (tipoContato == "1" ||
-      tipoContato == "2" ||
-      tipoContato == "5" ||
-      tipoContato == "0") {
+    const valor = String(valorContato ?? '');
 
-      const apenasNumeros = (valorContato || '').replace(/\D/g, ''); // Garante que é string e remove não dígitos
-      const valorFormatado =formatarTelefoneUtil(apenasNumeros, tipoContato);
-      //console.log(`Aplicando formatação para tipo ${tipoContato}. Original: "${valorContato}", Numérico: "${apenasNumeros}", Formatado: "${valorFormatado}"`);
-      contatoControl.setValue(valorFormatado, { emitEvent: false });
-      return valorFormatado;
-    } else {
-      return valorContato;
+    if (!valor) {
+      return '';
     }
+
+    if (
+      tipoContato === '1' ||
+      tipoContato === '2' ||
+      tipoContato === '5' ||
+      tipoContato === '0'
+    ) {
+
+      const apenasNumeros =
+        valor.replace(/\D/g, '');
+
+      let valorFormatado = apenasNumeros;
+
+      if (apenasNumeros.length <= 10) {
+        valorFormatado = apenasNumeros.replace(
+          /^(\d{2})(\d{4})(\d+)/,
+          '($1) $2-$3'
+        );
+      } else {
+        valorFormatado = apenasNumeros.replace(
+          /^(\d{2})(\d{5})(\d+)/,
+          '($1) $2-$3'
+        );
+      }
+
+      contatoControl?.setValue(
+        valorFormatado,
+        { emitEvent: false },
+      );
+
+      return valorFormatado;
+    }
+
+    contatoControl?.setValue(
+      valor,
+      { emitEvent: false },
+    );
+
+    return valor;
   }
 
   onContatoInput(event: Event): void {
@@ -192,9 +319,119 @@ export class ContatoIudComponent implements OnInit , OnDestroy {
   }
 
   private aplicarProtecaoCamposEdicao(): void {
-    if (!this.modoEdicao) return;
+  if (!this.modoEdicao) {
+    return;
+  }
 
-    this.contatoForm.get('tipoContato')?.disable({ emitEvent: false });
+  this.contatoForm
+    .get('tipoContato')
+    ?.disable({ emitEvent: false });
+
+  this.contatoForm
+    .get('titularContato')
+    ?.disable({ emitEvent: false });
+
+  this.contatoForm
+    .get('dadosPessoaJuridicaId')
+    ?.disable({ emitEvent: false });
+}
+
+  private carregarEstabelecimentos(): void {
+  if (!this.pessoaId) {
+    this.estabelecimentos = [];
+    return;
+  }
+
+  this.pessoaService
+    .getEstabelecimentos(this.pessoaId)
+    .then((estabelecimentos: EstabelecimentoSelect[]) => {
+
+      this.estabelecimentos =
+        estabelecimentos ?? [];
+
+      if (
+        !this.modoEdicao ||
+        this.contatoParaEdicao?.dadosPessoaJuridicaId == null
+      ) {
+        return;
+      }
+
+      const estabelecimentoId =
+        Number(
+          this.contatoParaEdicao.dadosPessoaJuridicaId,
+        );
+
+      const estabelecimentoEncontrado =
+        this.estabelecimentos.find(
+          estabelecimento =>
+            Number(estabelecimento.id) ===
+            estabelecimentoId,
+        );
+
+      if (estabelecimentoEncontrado?.id != null) {
+        this.contatoForm
+          .get('dadosPessoaJuridicaId')
+          ?.setValue(
+            Number(estabelecimentoEncontrado.id),
+            { emitEvent: false },
+          );
+      }
+    })
+    .catch((erro) => {
+      console.error(
+        'Erro ao carregar estabelecimentos:',
+        erro,
+      );
+
+      this.estabelecimentos = [];
+    });
+}
+
+  private configurarTitularContato(): void {
+    const titularControl =
+      this.contatoForm.get('titularContato');
+
+    const estabelecimentoControl =
+      this.contatoForm.get('dadosPessoaJuridicaId');
+
+    titularControl?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((titular: string | null) => {
+
+        if (titular === 'ESTABELECIMENTO') {
+          estabelecimentoControl?.setValidators(
+            Validators.required,
+          );
+        } else {
+          estabelecimentoControl?.clearValidators();
+
+          estabelecimentoControl?.setValue(
+            null,
+            { emitEvent: false },
+          );
+        }
+
+        estabelecimentoControl?.updateValueAndValidity({
+          emitEvent: false,
+        });
+    });
+  }
+
+  formatarCnpj(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const cnpj = String(value).replace(/\D/g, '');
+
+    if (cnpj.length !== 14) {
+      return String(value);
+    }
+
+    return cnpj.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      '$1.$2.$3/$4-$5',
+    );
   }
 
 }

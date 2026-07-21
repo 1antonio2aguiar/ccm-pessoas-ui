@@ -1,0 +1,119 @@
+<nb-card class="modal-card">
+
+  <nb-card-header>
+    {{ estabelecimentoParaEdicao ? 'Editar CNPJ' : 'Novo CNPJ' }}
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div class="mb-3">
+      <strong>Pessoa:</strong> {{ nomePessoa }}
+    </div>
+
+    <form [formGroup]="estabelecimentoForm">
+
+      <input type="hidden" formControlName="estabelecimento">
+
+      <div class="row">
+
+        <div class="col-md-4">
+          <label class="label">CNPJ</label>
+
+          <input
+            nbInput
+            fullWidth
+            id="cnpj"
+            placeholder="00.000.000/0000-00"
+            formControlName="cnpj"
+            ngxMaskFormatter="cnpj"
+            maxlength="18"
+            [readonly]="!!estabelecimentoParaEdicao"
+            [class.readonly-field]="estabelecimentoParaEdicao">
+        </div>
+
+        <div class="col-md-4 form-group">
+          <label for="tipoEmpresa" class="label">Tipo de Empresa</label>
+          <nb-select fullWidth placeholder="Selecione o Tipo" formControlName="tipoEmpresa">
+            <nb-option [value]="0">LTDA</nb-option>
+              <nb-option [value]="1">S.A.</nb-option>
+              <nb-option [value]="2">MEI</nb-option>
+              <nb-option [value]="3">EIRELI</nb-option>
+              <nb-option [value]="4">Outro</nb-option>
+          </nb-select>
+        </div>
+
+        <div class="col-md-4 form-group">
+          <label class="label">Micro Empresa?</label>
+          <nb-radio-group formControlName="microEmpresa" id="microEmpresa" name="microEmpresa"
+            class="radio-group-inline d-flex align-items-center">
+            <nb-radio value="S" class="mr-3">Sim</nb-radio>
+            <nb-radio value="N">Não</nb-radio>
+          </nb-radio-group>
+        </div>
+
+        <div class="col-md-12">
+          <label class="label">Nome / Razão social</label>
+
+          <input
+            nbInput
+            fullWidth
+            formControlName="nome">
+        </div>
+
+      </div>
+
+      <div class="row mt-3">
+
+        <div class="col-md-12">
+          <label class="label">Nome fantasia</label>
+
+          <input
+            nbInput
+            fullWidth
+            formControlName="nomeFantasia">
+        </div>
+
+
+      </div>
+
+      <div class="row mt-3">
+
+        <div class="col-md-12">
+          <label class="label">Objeto social</label>
+
+          <textarea
+            nbInput
+            fullWidth
+            rows="5"
+            formControlName="objetoSocial">
+          </textarea>
+        </div>
+
+      </div>
+
+    </form>
+
+  </nb-card-body>
+
+  <nb-card-footer class="acoes">
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="cancelar()">
+      Cancelar
+    </button>
+
+    <button
+      nbButton
+      status="primary"
+      type="button"
+      [disabled]="estabelecimentoForm.invalid || isLoading"
+      (click)="salvar()">
+      Salvar
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>

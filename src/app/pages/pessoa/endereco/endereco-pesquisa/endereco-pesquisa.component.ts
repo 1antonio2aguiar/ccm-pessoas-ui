@@ -34,6 +34,10 @@ interface EnderecoDisplay {
   principal: boolean;
   cepId: number;
   logradouroId: number;
+
+  estabelecimentoNome?: string;
+  estabelecimentoCnpj?: string;
+
   originalApiData?: EnderecoOut;
 }
 
@@ -118,13 +122,14 @@ export class EnderecoPesquisaComponent implements OnInit, OnDestroy {
 
   private mapApiEnderecoToDisplay(apiEndereco: EnderecoOut): EnderecoDisplay {
     
-     let tipoEnderecoDescricao = '';
-    if (apiEndereco.tipoEndereco === 0) { 
+    let tipoEnderecoDescricao = '';
+
+    if (apiEndereco.tipoEndereco === 0) {
       tipoEnderecoDescricao = 'CASA';
     } else if (apiEndereco.tipoEndereco === 1) {
       tipoEnderecoDescricao = 'TRABALHO';
-    } else if (apiEndereco.tipoEndereco) { 
-        console.warn(`Tipo de endereço não mapeado: ${apiEndereco.tipoEndereco}`);
+    } else if (apiEndereco.tipoEndereco === 2) {
+      tipoEnderecoDescricao = 'ESTABELECIMENTO';
     }
 
     return {
@@ -143,7 +148,7 @@ export class EnderecoPesquisaComponent implements OnInit, OnDestroy {
       estadoUf: apiEndereco.estadoUf || 'N/I', 
       cep: apiEndereco.cep || 'N/I', 
       principal: apiEndereco.principal === 'S' || apiEndereco.principal === 'SIM', 
-      cepId: apiEndereco.cepId,
+      cepId: apiEndereco.cepId ,
       logradouroId: apiEndereco.logradouroId,
       originalApiData: apiEndereco // Guardar o objeto original pode ser útil
     };
@@ -189,7 +194,7 @@ export class EnderecoPesquisaComponent implements OnInit, OnDestroy {
       context: {
         pessoaId: this.pessoaId,
         nomePessoa: this.nomePessoaAtualParaDialog,
-        enderecoParaEdicao: { ...endereco }, // Passa uma cópia para evitar mutação direta
+        enderecoParaEdicao: { ...(endereco.originalApiData ?? endereco), }, // Passa uma cópia para evitar mutação direta
       },
       closeOnBackdropClick: false, // Impede que o diálogo feche ao clicar fora
       
@@ -272,7 +277,6 @@ export class EnderecoPesquisaComponent implements OnInit, OnDestroy {
     });
   }
 
-
   private showToast(message: string, title: string, status: 'success' | 'danger' | 'warning' | 'info'): void {
     this.toastrService.show(message, title, {
       status,
@@ -280,4 +284,23 @@ export class EnderecoPesquisaComponent implements OnInit, OnDestroy {
       duration: 3000
     });
   }
+
+  formatarCnpj(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const cnpj = String(value)
+      .replace(/\D/g, '')
+      .padStart(14, '0');
+
+    if (cnpj.length !== 14) {
+      return String(value);
+    }
+
+    return cnpj.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      '$1.$2.$3/$4-$5',
+    );
+  } 
 }

@@ -9,6 +9,7 @@ import { PessoaIn,  } from '../../shared/models/pessoaIn';
 import { PessoaOut } from '../../shared/models/pessoaOut';
 import { TipoPessoa } from '../../shared/models/tipoPessoa';
 import { Filters } from '../../shared/filters/filters';
+import { EstabelecimentoSelect } from '../../shared/models/estabelecimento-select';
 
 export class PessoaFilters {
   pagina = 0;
@@ -151,6 +152,27 @@ export class PessoaService extends BaseResourceService<PessoaOut> {
 
   public deletePessoa(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiPath}/${id}`);
+  }
+
+  getEstabelecimentos(
+  pessoaId: number
+  ): Promise<EstabelecimentoSelect[]> {
+
+    return this.getPessoaById(pessoaId)
+      .then((pessoa: any) => {
+
+        return (pessoa?.dadosPessoasJuridicas ?? [])
+          .map((item: any) =>
+            EstabelecimentoSelect.fromJson({
+              id: item.id,
+              nome: item.nome,
+              cnpj: item.cnpj,
+              nomeFantasia: item.nomeFantasia,
+            })
+          );
+
+      });
+
   }
 
 }

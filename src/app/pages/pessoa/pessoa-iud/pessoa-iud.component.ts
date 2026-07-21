@@ -23,6 +23,7 @@ export class PessoaIudComponent implements OnInit, OnDestroy {
   
   menuItems: NbMenuItem[] = [
     { title: 'Perfil', icon: 'person-outline', link: './perfil', home: true },
+     { title: 'CNPJ(S)', icon: 'briefcase-outline', link: './estabelecimentos' },
     { title: 'Endereços', icon: 'pin-outline', link: './enderecos' },
     { title: 'Contatos', icon: 'phone-outline', link: './contatos' },
     { title: 'Documentos', icon: 'file-text-outline', link: './documentos' },

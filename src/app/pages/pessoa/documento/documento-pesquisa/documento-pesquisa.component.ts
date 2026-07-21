@@ -1,33 +1,53 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core'; // Adicionado OnDestroy
-import { ActivatedRoute, Router, NavigationEnd, Navigation } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { takeUntil } from 'rxjs/operators'; 
-import { NbGlobalPhysicalPosition, NbToastrService, } from '@nebular/theme';
-import { Subject } from 'rxjs'; 
+import {
+  Component,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 
-import { PessoaContextService } from '../../../../services/pessoa-context.service';
-import { ConfirmDeleteComponent } from '../../../components/base-resource-confirmation-delete/confirm-delete-modal.component';
+import {
+  ActivatedRoute
+} from '@angular/router';
+
+import {
+  NbDialogService,
+  NbGlobalPhysicalPosition,
+  NbToastrService
+} from '@nebular/theme';
+
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
 import { DocumentoOut } from '../../../../shared/models/documentoOut';
 import { DocumentoService } from '../documento.service';
+import { PessoaContextService } from '../../../../services/pessoa-context.service';
 import { DocumentoIudComponent } from '../documento-iud/documento-iud.component';
-
+import { ConfirmDeleteComponent } from '../../../components/base-resource-confirmation-delete/confirm-delete-modal.component';
 
 interface DocumentoDisplay {
+
   id: number;
-  tipoDocumento?: number; 
-  tipoDocumentoDescricao?: string,
-  numeroDocumento: string;
+
+  tipoDocumento?: number;
+  tipoDocumentoDescricao?: string;
+
+  numeroDocumento?: string;
   dataDocumento?: Date;
-  dataExpedicao?: Date;  
+  dataExpedicao?: Date;
   documentoOrigem?: string;
   orgaoExpedidor?: string;
   dataPrimeiraCnh?: Date;
   dataValidade?: Date;
-  pessoaNome?: string;
   categoriaCnh?: string;
-  zona?: number; 
-  secao?: number; 
+  zona?: number;
+  secao?: number;
   observacao?: string;
+
+  pessoaNome?: string;
+  pessoaId?: number;
+
+  dadosPessoaJuridicaId?: number | null;
+  estabelecimentoNome?: string;
+  estabelecimentoCnpj?: string;
 
   originalApiData?: DocumentoOut;
 }
@@ -37,180 +57,409 @@ interface DocumentoDisplay {
   templateUrl: './documento-pesquisa.component.html',
   styleUrls: ['./documento-pesquisa.component.scss']
 })
+export class DocumentoPesquisaComponent
+  implements OnInit, OnDestroy {
 
-export class DocumentoPesquisaComponent implements OnInit, OnDestroy {
-    pessoaId: number | null = null;
-    nomePessoaAtualParaDialog: string | null = null;
-    private destroy$ = new Subject<void>();
+  pessoaId: number | null = null;
+  nomePessoaAtualParaDialog: string | null = null;
 
-    documentos: DocumentoDisplay[] = [];
-    tipoDocumentoStr = '';
-    documentosParaExibir: DocumentoDisplay[] = [];
-    isLoadingDocumento = false;
+  documentos: DocumentoDisplay[] = [];
+  documentosParaExibir: DocumentoDisplay[] = [];
 
-    constructor(
-        private route: ActivatedRoute,
-        private pessoaContextService: PessoaContextService,
-        private documentoService: DocumentoService,
-        private toastrService: NbToastrService,
-        private dialogService: NbDialogService,
-        private router: Router,
-    ) {}
+  isLoadingDocumento = false;
 
+  private destroy$ = new Subject<void>();
 
-    ngOnInit(): void {
+  constructor(
+    private route: ActivatedRoute,
+    private pessoaContextService: PessoaContextService,
+    private documentoService: DocumentoService,
+    private toastrService: NbToastrService,
+    private dialogService: NbDialogService
+  ) {}
 
-        this.route.parent?.params.pipe(
-            takeUntil(this.destroy$)
-        ).subscribe(parentParams => {
-            if (parentParams['id']) {
-                this.pessoaId = +parentParams['id'];
-                this.carregarDocumentos(); // <<< CHAMAR AQUI
+  ngOnInit(): void {
+
+    this.route.parent?.params
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(parentParams => {
+
+        if (parentParams['id']) {
+
+          this.pessoaId =
+            Number(parentParams['id']);
+
+          this.carregarDocumentos();
+        }
+      });
+
+    this.pessoaContextService.pessoaNome$
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(nome => {
+
+        this.nomePessoaAtualParaDialog =
+          nome;
+      });
+  }
+
+  ngOnDestroy(): void {
+
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  carregarDocumentos(): void {
+
+    if (!this.pessoaId) {
+
+      this.documentosParaExibir = [];
+      return;
+    }
+
+    this.isLoadingDocumento = true;
+
+    this.documentoService
+      .getDocumentoByPessoaId(this.pessoaId)
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: apiDocumentos => {
+
+          const documentosMapeados =
+            apiDocumentos.map(
+              documento =>
+                this.mapApiDocumentoToDisplay(
+                  documento
+                )
+            );
+
+          this.atualizarDocumentosParaExibir(
+            documentosMapeados
+          );
+
+          this.isLoadingDocumento = false;
+        },
+
+        error: error => {
+
+          console.error(
+            'Erro ao carregar documentos:',
+            error
+          );
+
+          this.atualizarDocumentosParaExibir(
+            null
+          );
+
+          this.isLoadingDocumento = false;
+
+          const errorMessage =
+            error?.error?.message ||
+            error?.message ||
+            'Falha ao carregar os documentos.';
+
+          this.showToast(
+            errorMessage,
+            'Erro',
+            'danger'
+          );
+        }
+      });
+  }
+
+  private mapApiDocumentoToDisplay(
+    apiDocumento: DocumentoOut
+  ): DocumentoDisplay {
+
+    return {
+      id: apiDocumento.id!,
+
+      tipoDocumento:
+        apiDocumento.tipoDocumento,
+
+      tipoDocumentoDescricao:
+        apiDocumento.tipoDocumentoDescricao,
+
+      numeroDocumento:
+        apiDocumento.numeroDocumento ?? '',
+
+      dataDocumento:
+        apiDocumento.dataDocumento,
+
+      dataExpedicao:
+        apiDocumento.dataExpedicao,
+
+      documentoOrigem:
+        apiDocumento.documentoOrigem ?? '',
+
+      orgaoExpedidor:
+        apiDocumento.orgaoExpedidor ?? '',
+
+      dataPrimeiraCnh:
+        apiDocumento.dataPrimeiraCnh,
+
+      dataValidade:
+        apiDocumento.dataValidade,
+
+      categoriaCnh:
+        apiDocumento.categoriaCnh ?? '',
+
+      zona:
+        apiDocumento.zona,
+
+      secao:
+        apiDocumento.secao,
+
+      observacao:
+        apiDocumento.observacao ?? '',
+
+      pessoaNome:
+        apiDocumento.pessoaNome,
+
+      pessoaId:
+        apiDocumento.pessoaId,
+
+      dadosPessoaJuridicaId:
+        apiDocumento.dadosPessoaJuridicaId ??
+        null,
+
+      estabelecimentoNome:
+        apiDocumento.estabelecimentoNome ??
+        '',
+
+      estabelecimentoCnpj:
+        apiDocumento.estabelecimentoCnpj ??
+        '',
+
+      originalApiData:
+        apiDocumento
+    };
+  }
+
+  private atualizarDocumentosParaExibir(
+    documentosApiMapeados?:
+      DocumentoDisplay[] | null
+  ): void {
+
+    if (
+      this.pessoaId &&
+      documentosApiMapeados
+    ) {
+
+      this.documentosParaExibir =
+        documentosApiMapeados;
+
+    } else {
+
+      this.documentosParaExibir = [];
+    }
+  }
+
+  adicionarNovoDocumento(): void {
+
+    this.dialogService
+      .open(
+        DocumentoIudComponent,
+        {
+          context: {
+            pessoaId:
+              this.pessoaId,
+
+            nomePessoa:
+              this.nomePessoaAtualParaDialog
+          },
+
+          closeOnBackdropClick: false
+        }
+      )
+      .onClose
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(documentoSalvo => {
+
+        if (documentoSalvo) {
+          this.carregarDocumentos();
+        }
+      });
+  }
+
+  editarDocumento(
+    documento: DocumentoDisplay
+  ): void {
+
+    this.dialogService
+      .open(
+        DocumentoIudComponent,
+        {
+          context: {
+            pessoaId:
+              this.pessoaId,
+
+            nomePessoa:
+              this.nomePessoaAtualParaDialog,
+
+            documentoParaEdicao: {
+              ...(
+                documento.originalApiData ??
+                documento
+              )
             }
-        });
+          },
 
-        this.pessoaContextService.pessoaNome$.pipe(
-            takeUntil(this.destroy$)
-        ).subscribe(nome => {
-            this.nomePessoaAtualParaDialog = nome;
-        });
+          closeOnBackdropClick: false
+        }
+      )
+      .onClose
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(documentoAtualizado => {
+
+        if (documentoAtualizado) {
+          this.carregarDocumentos();
+        }
+      });
+  }
+
+  excluirDocumentoWrapper(
+    documento: DocumentoDisplay
+  ): void {
+
+    let documentoDescricao =
+      documento.tipoDocumentoDescricao ??
+      'Documento';
+
+    if (
+      documento.numeroDocumento &&
+      documento.numeroDocumento !== 'N/I'
+    ) {
+
+      documentoDescricao +=
+        ` ${documento.numeroDocumento}`;
     }
 
-    ngOnDestroy(): void {
-        this.destroy$.next();
-        this.destroy$.complete();
+    if (
+      documento.dadosPessoaJuridicaId &&
+      documento.estabelecimentoNome
+    ) {
+
+      documentoDescricao +=
+        ` do estabelecimento ${documento.estabelecimentoNome}`;
     }
 
-    carregarDocumentos(): void {
+    this.dialogService
+      .open(
+        ConfirmDeleteComponent,
+        {
+          context: {
+            title:
+              'Excluir Documento',
+
+            message:
+              `Tem certeza que deseja excluir o documento "${documentoDescricao}"?`
+          }
+        }
+      )
+      .onClose
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(confirmed => {
+
+        if (!confirmed) {
+          return;
+        }
 
         this.isLoadingDocumento = true;
-        this.documentoService.getDocumentoByPessoaId(this.pessoaId) // Usando a versão com Promise
-            .toPromise()
-            .then(apiDocumento => {
-                const documentosMapeados = apiDocumento.map(apiEnd => this.mapApiDocumentoToDisplay(apiEnd));
-                this.atualizarDocumentosParaExibir(documentosMapeados);
-            })
-            .catch(error => {
-                console.error('Erro ao carregar Documentos:', error);
-                this.atualizarDocumentosParaExibir(null); // Limpa a lista em caso de erro
-            })
-            .finally(() => {
-                this.isLoadingDocumento = false;
-        });
-    }
 
-    private mapApiDocumentoToDisplay(apiDocumento: DocumentoOut): DocumentoDisplay {
+        this.documentoService
+          .delete(documento.id)
+          .pipe(
+            takeUntil(this.destroy$)
+          )
+          .subscribe({
+            next: () => {
 
-        return {
-            id: apiDocumento.id!, // '!' assume que o ID sempre existirá após vir da API
-            tipoDocumento: apiDocumento.tipoDocumento,
-            tipoDocumentoDescricao: apiDocumento.tipoDocumentoDescricao,
-             dataExpedicao: apiDocumento.dataExpedicao,
-            
-            numeroDocumento: apiDocumento.numeroDocumento,
-            dataDocumento: apiDocumento.dataDocumento,
-            documentoOrigem: apiDocumento.documentoOrigem || null,
-            orgaoExpedidor: apiDocumento.orgaoExpedidor,
-            dataPrimeiraCnh: apiDocumento.dataPrimeiraCnh || null,
-            dataValidade: apiDocumento.dataValidade,
-            pessoaNome: apiDocumento.pessoaNome,
+              this.showToast(
+                'Documento excluído com sucesso!',
+                'Sucesso',
+                'success'
+              );
 
-            categoriaCnh: apiDocumento.categoriaCnh || null,
-            zona: apiDocumento.zona || null, 
-            secao: apiDocumento.secao || null,
-
-            observacao: apiDocumento.observacao || '',
-
-            originalApiData: apiDocumento // Guardar o objeto original pode ser útil
-        };
-    }
-
-    atualizarDocumentosParaExibir(documentosApiMapeados?: DocumentoDisplay[] | null): void {
-        if (this.pessoaId && documentosApiMapeados) {
-            // Se tem ID e dados da API foram carregados e mapeados, usa eles
-            this.documentosParaExibir = documentosApiMapeados;
-        } else {
-            this.documentosParaExibir = [];
-        }
-    }
-
-    adicionarNovoDocumento(): void {
-
-        this.dialogService.open(DocumentoIudComponent, {
-            context: {
-                pessoaId: this.pessoaId,
-                nomePessoa: this.nomePessoaAtualParaDialog
+              this.carregarDocumentos();
             },
-        }).onClose.subscribe(documentoSalvo => {
-            if (documentoSalvo) {
-                console.log('Novo Documento retornado pelo modal:', documentoSalvo);
-                if (this.pessoaId) {
-                } else {
-                    this.documentos.push({ ...documentoSalvo, id: Math.floor(Math.random() * 1000) + 200 }); 
-                }
-                this.carregarDocumentos();
+
+            error: err => {
+
+              console.error(
+                'Erro ao excluir documento:',
+                err
+              );
+
+              const errorMessage =
+                err?.error?.message ||
+                err?.message ||
+                'Falha ao excluir o documento. Tente novamente.';
+
+              this.showToast(
+                errorMessage,
+                'Erro',
+                'danger'
+              );
+
+              this.isLoadingDocumento = false;
             }
-        });
+          });
+      });
+  }
+
+  formatarCnpj(value: any): string {
+
+    if (!value) {
+      return '';
     }
 
-    editarDocumento(documento: any): void {
-        console.log('Editando documento : ', documento, ' ', this.nomePessoaAtualParaDialog);
-        this.dialogService.open(DocumentoIudComponent, {
-            context: {
-                pessoaId: this.pessoaId,
-                nomePessoa: this.nomePessoaAtualParaDialog,
-                documentoParaEdicao: { ...documento }, // Passa uma cópia para evitar mutação direta
-            }
-        }).onClose.subscribe(documentoAtualizado => {
-            if (documentoAtualizado) {
-                // Atualizar na lista correta (real ou exemplo)
-                const atualizarArray = (arr: any[]) => {
-                    const index = arr.findIndex(e => e.id === documentoAtualizado.id);
-                    if (index > -1) {
-                        arr[index] = documentoAtualizado;
-                    }
-                };
-                this.carregarDocumentos();
-            }
-        });
+    const cnpj =
+      String(value).replace(
+        /\D/g,
+        ''
+      );
+
+    if (cnpj.length !== 14) {
+      return String(value);
     }
 
-    excluirDocumentoWrapper(documento: DocumentoDisplay): void {
+    return cnpj.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      '$1.$2.$3/$4-$5'
+    );
+  }
 
-        let documentoDescricao = `${ documento.tipoDocumentoDescricao } ${ documento.numeroDocumento }`;
-        if (documento.observacao && documento.observacao !== 'S/N') {
-            documentoDescricao += `, ${documento.observacao}`;
-        }
+  private showToast(
+    message: string,
+    title: string,
+    status:
+      'success' |
+      'danger' |
+      'warning' |
+      'info'
+  ): void {
 
-        this.dialogService.open(ConfirmDeleteComponent, {
-            context: {
-                title: 'Excluir Documento',
-                message: `Tem certeza que deseja excluir o documento "${documentoDescricao}"?`,
-            },
-        }).onClose.subscribe(confirmed => { // 'confirmed' será true ou false/undefined
-            if (confirmed) { // Se o usuário confirmou (retornou true)
-                this.isLoadingDocumento = true;
-                this.documentoService.delete(documento.id).subscribe({ 
-                    next: () => {
-                        this.showToast('Documento excluído com sucesso!', 'Sucesso', 'success');
-                        this.carregarDocumentos();
-                    },
-                    error: (err) => {
-                        console.error('Erro ao excluir documento:', err);
-                        const errorMessage = err.error?.message || err.message || 'Falha ao excluir o documento. Tente novamente.';
-                        this.showToast(errorMessage, 'Erro', 'danger');
-                        this.isLoadingDocumento = false;
-                    }
-                });
-            }
-        });
-    }
-
-    private showToast(message: string, title: string, status: 'success' | 'danger' | 'warning' | 'info'): void {
-        this.toastrService.show(message, title, {
-            status,
-            position: NbGlobalPhysicalPosition.TOP_RIGHT,
-            duration: 3000
-        });
-    }
+    this.toastrService.show(
+      message,
+      title,
+      {
+        status,
+        position:
+          NbGlobalPhysicalPosition.TOP_RIGHT,
+        duration: 3000
+      }
+    );
+  }
 }

@@ -1,59 +1,419 @@
 <nb-card>
-  <nb-card-header class="d-flex justify-content-between align-items-center">
+
+  <nb-card-header
+    class="d-flex justify-content-between align-items-center"
+  >
+
     <span>Meus documentos</span>
-    <button nbButton status="primary" size="small" (click)="adicionarNovoDocumento()">
-      <nb-icon icon="plus-outline"></nb-icon> Inserir novo documento
+
+    <button
+      nbButton
+      status="primary"
+      size="small"
+      type="button"
+      (click)="adicionarNovoDocumento()"
+    >
+
+      <nb-icon icon="plus-outline"></nb-icon>
+
+      Inserir novo documento
+
     </button>
+
   </nb-card-header>
 
   <nb-card-body>
-    <div>
-      <div *ngIf="isLoadingDocumento" class="text-center my-3">
-        <nb-spinner status="primary"></nb-spinner>
-        <p>Carregando documentos...</p>
-      </div> 
 
-      <div *ngIf="!isLoadingDocumento">
-        <div *ngIf="documentosParaExibir.length > 0">
-          <div *ngFor="let documento of documentosParaExibir" class="documento-item mb-3 p-3 border rounded">
-            <div class="documento-header d-flex justify-content-between align-items-start">
-              <div>
-                <span class="nome-documento font-weight-bold d-block">{{''}}</span>
-              </div>
-              <div class="acoes-documento">
-                  <button nbButton ghost status="info" size="tiny" class="mr-1" (click)="editarDocumento(documento)">
-                    <nb-icon icon="edit-outline"></nb-icon> Editar
-                  </button>
-                  <button nbButton ghost status="danger" size="tiny" (click)="excluirDocumentoWrapper(documento)">
-                    <nb-icon icon="trash-2-outline"></nb-icon> Excluir
-                  </button>
-              </div>
-            </div>
-            <hr class="my-2">
+    <!-- ===================================================== -->
+    <!-- CARREGANDO                                            -->
+    <!-- ===================================================== -->
 
-            <div class="detalhes-documento small">
-              <p class="mb-1">
-                <span *ngIf="documento.tipoDocumento && documento.numeroDocumento!== 'N/I'"></span>
-                  {{ documento.tipoDocumentoDescricao }} {{ documento.numeroDocumento }}
-                  {{ documento.complemento ? ' - ' + documento.complemento : '' }}
-              </p>
-            </div>
-            
-          </div>
-        </div>
+    <div
+      *ngIf="isLoadingDocumento"
+      class="text-center my-3"
+    >
 
-        <div *ngIf="documentosParaExibir.length === 0">
-          <div *ngIf="pessoaId" class="text-center my-3 p-4 border rounded bg-light">
-            <nb-icon icon="pin-outline" pack="eva" style="font-size: 3rem; opacity: 0.5;"></nb-icon>
-            <p class="mt-2 mb-1">Nenhum documento cadastrado para esta pessoa.</p>
-            <p class="text-muted small">Clique em "Inserir novo documento" para começar.</p>
-          </div>
-          <div *ngIf="!pessoaId" class="alert alert-info text-center" role="alert">
-            <nb-icon icon="alert-circle-outline" pack="eva" class="mr-1"></nb-icon>
-            Para gerenciar os documentos, primeiro salve os dados da pessoa.
-          </div>
-        </div>
-      </div>
+      <nb-spinner status="primary"></nb-spinner>
+
+      <p>Carregando documentos...</p>
+
     </div>
+
+    <!-- ===================================================== -->
+    <!-- CONTEÚDO                                              -->
+    <!-- ===================================================== -->
+
+    <div *ngIf="!isLoadingDocumento">
+
+      <!-- =================================================== -->
+      <!-- LISTA DE DOCUMENTOS                                -->
+      <!-- =================================================== -->
+
+      <div *ngIf="documentosParaExibir.length > 0">
+
+        <div
+          *ngFor="let documento of documentosParaExibir"
+          class="documento-item mb-3 p-3 border rounded"
+        >
+
+          <!-- ================================================= -->
+          <!-- CABEÇALHO                                         -->
+          <!-- ================================================= -->
+
+          <div
+            class="
+              documento-header
+              d-flex
+              justify-content-between
+              align-items-start
+            "
+          >
+
+            <div></div>
+
+            <div class="acoes-documento">
+
+              <button
+                nbButton
+                ghost
+                status="info"
+                size="tiny"
+                type="button"
+                class="mr-1"
+                (click)="editarDocumento(documento)"
+              >
+
+                <nb-icon icon="edit-outline"></nb-icon>
+
+                Editar
+
+              </button>
+
+              <button
+                nbButton
+                ghost
+                status="danger"
+                size="tiny"
+                type="button"
+                (click)="excluirDocumentoWrapper(documento)"
+              >
+
+                <nb-icon icon="trash-2-outline"></nb-icon>
+
+                Excluir
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <hr class="my-2">
+
+          <!-- ================================================= -->
+          <!-- DADOS PRINCIPAIS                                  -->
+          <!-- ================================================= -->
+
+          <div class="detalhes-documento small">
+
+            <p class="mb-1">
+
+              <strong>
+                {{ documento.tipoDocumentoDescricao || 'Documento' }}
+              </strong>
+
+              <span
+                *ngIf="
+                  documento.numeroDocumento &&
+                  documento.numeroDocumento !== 'N/I'
+                "
+              >
+
+                :
+
+                <strong>
+                  {{ documento.numeroDocumento }}
+                </strong>
+
+              </span>
+
+            </p>
+
+            <p
+              *ngIf="documento.orgaoExpedidor"
+              class="mb-1"
+            >
+
+              <strong>Órgão expedidor:</strong>
+
+              {{ documento.orgaoExpedidor }}
+
+            </p>
+
+            <p
+              *ngIf="documento.documentoOrigem"
+              class="mb-1"
+            >
+
+              <strong>Origem:</strong>
+
+              {{ documento.documentoOrigem }}
+
+            </p>
+
+            <p
+              *ngIf="documento.categoriaCnh"
+              class="mb-1"
+            >
+
+              <strong>Categoria CNH:</strong>
+
+              {{ documento.categoriaCnh }}
+
+            </p>
+
+            <p
+              *ngIf="
+                documento.zona !== null &&
+                documento.zona !== undefined
+              "
+              class="mb-1"
+            >
+
+              <strong>Zona:</strong>
+
+              {{ documento.zona }}
+
+              <span
+                *ngIf="
+                  documento.secao !== null &&
+                  documento.secao !== undefined
+                "
+              >
+
+                &nbsp;&nbsp;
+
+                <strong>Seção:</strong>
+
+                {{ documento.secao }}
+
+              </span>
+
+            </p>
+
+            <p
+              *ngIf="
+                (
+                  documento.zona === null ||
+                  documento.zona === undefined
+                ) &&
+                documento.secao !== null &&
+                documento.secao !== undefined
+              "
+              class="mb-1"
+            >
+
+              <strong>Seção:</strong>
+
+              {{ documento.secao }}
+
+            </p>
+
+            <p
+              *ngIf="documento.dataDocumento"
+              class="mb-1"
+            >
+
+              <strong>Data do documento:</strong>
+
+              {{ documento.dataDocumento | date:'dd/MM/yyyy' }}
+
+            </p>
+
+            <p
+              *ngIf="documento.dataExpedicao"
+              class="mb-1"
+            >
+
+              <strong>Data de expedição:</strong>
+
+              {{ documento.dataExpedicao | date:'dd/MM/yyyy' }}
+
+            </p>
+
+            <p
+              *ngIf="documento.dataValidade"
+              class="mb-1"
+            >
+
+              <strong>Data de validade:</strong>
+
+              {{ documento.dataValidade | date:'dd/MM/yyyy' }}
+
+            </p>
+
+            <p
+              *ngIf="documento.dataPrimeiraCnh"
+              class="mb-1"
+            >
+
+              <strong>Data da primeira CNH:</strong>
+
+              {{ documento.dataPrimeiraCnh | date:'dd/MM/yyyy' }}
+
+            </p>
+
+            <p
+              *ngIf="documento.observacao"
+              class="mb-1"
+            >
+
+              <strong>Observação:</strong>
+
+              {{ documento.observacao }}
+
+            </p>
+
+          </div>
+
+          <!-- ================================================= -->
+          <!-- IDENTIFICAÇÃO DO TITULAR                           -->
+          <!-- ================================================= -->
+
+          <div
+            class="
+              documento-conteudo-inferior
+              d-flex
+              justify-content-between
+              align-items-center
+              flex-wrap
+              mt-2
+            "
+          >
+
+            <div
+              class="
+                d-flex
+                align-items-center
+                flex-wrap
+                titular-container
+              "
+            >
+
+              <button
+                nbButton
+                size="tiny"
+                appearance="outline"
+                type="button"
+                tabindex="-1"
+                class="tipo-documento-display"
+                [status]="
+                  documento.dadosPessoaJuridicaId
+                    ? 'success'
+                    : 'info'
+                "
+              >
+
+                {{
+                  documento.dadosPessoaJuridicaId
+                    ? 'ESTABELECIMENTO'
+                    : 'PESSOA FÍSICA'
+                }}
+
+              </button>
+
+              <span
+                *ngIf="documento.dadosPessoaJuridicaId"
+                class="estabelecimento-identificacao ml-2"
+              >
+
+                <strong>
+                  {{ documento.estabelecimentoNome }}
+                </strong>
+
+                <span *ngIf="documento.estabelecimentoCnpj">
+
+                  —
+
+                  {{
+                    formatarCnpj(
+                      documento.estabelecimentoCnpj
+                    )
+                  }}
+
+                </span>
+
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- =================================================== -->
+      <!-- NENHUM DOCUMENTO                                   -->
+      <!-- =================================================== -->
+
+      <div *ngIf="documentosParaExibir.length === 0">
+
+        <div
+          *ngIf="pessoaId"
+          class="
+            text-center
+            my-3
+            p-4
+            border
+            rounded
+            bg-light
+          "
+        >
+
+          <nb-icon
+            icon="file-text-outline"
+            pack="eva"
+            style="font-size: 3rem; opacity: 0.5;"
+          >
+          </nb-icon>
+
+          <p class="mt-2 mb-1">
+
+            Nenhum documento cadastrado para esta pessoa.
+
+          </p>
+
+          <p class="text-muted small">
+
+            Clique em "Inserir novo documento" para começar.
+
+          </p>
+
+        </div>
+
+        <div
+          *ngIf="!pessoaId"
+          class="alert alert-info text-center"
+          role="alert"
+        >
+
+          <nb-icon
+            icon="alert-circle-outline"
+            pack="eva"
+            class="mr-1"
+          >
+          </nb-icon>
+
+          Para gerenciar os documentos, primeiro salve os dados da
+          pessoa.
+
+        </div>
+
+      </div>
+
+    </div>
+
   </nb-card-body>
+
 </nb-card>

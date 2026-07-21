@@ -13,6 +13,8 @@ import { ContatoIudComponent } from './contato/contato-iud/contato-iud.component
 import { DocumentoPesquisaComponent } from './documento/documento-pesquisa/documento-pesquisa.component';
 import { DocumentoIudComponent } from './documento/documento-iud/documento-iud.component';
 import { OrigemPesquisaComponent } from './origem/origem-pesquisa/origem-pesquisa.component';
+import { EstabelecimentoPesquisaComponent } from './estabelecimento/estabelecimento-pesquisa/estabelecimento-pesquisa.component';
+import { EstabelecimentoIudComponent } from './estabelecimento/estabelecimento-iud/estabelecimento-iud.component';
 
 const routes: Routes = [{
   path: '',
@@ -33,6 +35,7 @@ const routes: Routes = [{
       component: PessoaIudComponent,
       children: [
         { path: '', redirectTo: 'perfil', pathMatch: 'full' },
+        { path: 'estabelecimentos', component: EstabelecimentoPesquisaComponent },
         { path: 'perfil', component: PessoaPerfilFormComponent },
         { path: 'enderecos', component: EnderecoPesquisaComponent },
         { path: 'contatos', component: ContatoPesquisaComponent },
@@ -47,6 +50,7 @@ const routes: Routes = [{
       children: [
         { path: '', redirectTo: 'perfil', pathMatch: 'full' },
         { path: 'perfil', component: PessoaPerfilFormComponent },
+        { path: 'estabelecimentos', component: EstabelecimentoPesquisaComponent },
         { path: 'enderecos', component: EnderecoPesquisaComponent },
         { path: 'contatos', component: ContatoPesquisaComponent },
         { path: 'documentos', component: DocumentoPesquisaComponent },
@@ -79,5 +83,7 @@ export const pessoaRoutedComponents = [
   ContatoIudComponent,
   DocumentoPesquisaComponent,
   DocumentoIudComponent,
-  OrigemPesquisaComponent
+  OrigemPesquisaComponent,
+  EstabelecimentoPesquisaComponent,
+  EstabelecimentoIudComponent,
 ];
