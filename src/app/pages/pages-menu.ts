@@ -79,10 +79,10 @@ export const MENU_ITEMS: NbMenuItem[] = [
             title: 'Pessoas',
             icon: 'people-outline',
             children: [
-              {
+              /*{
                 title: 'CPF NO NOME',
                 link: '/pages/unificacao/pessoas/cpf-no-nome',
-              },
+              },*/
               {
                 title: 'CPF ÚNICO',
                 link: '/pages/unificacao/pessoas/pes-pessoa',
@@ -91,14 +91,14 @@ export const MENU_ITEMS: NbMenuItem[] = [
                 title: 'CPF DUPLICADO',
                 link: '/pages/unificacao/pessoas/cpf-duplicado',
               },
-              {
+              /*{
                 title: 'CNPJ ÚNICO',
                 link: '/pages/unificacao/pessoas/cnpj-unico',
-              },
-              {
+              },*/
+              /*{
                 title: 'CNPJ DUPLICADO',
                 link: '/pages/unificacao/pessoas/cnpj-duplicado',
-              },
+              },*/
             ],
           },
 
@@ -127,10 +127,10 @@ export const MENU_ITEMS: NbMenuItem[] = [
                 title: 'CPF DUPLICADO',
                 link: '/pages/unificacao/saneamento/sane-cpf-duplicado',
               },
-              {
+              /*{
                 title: 'CNPJ ÚNICO',
                 link: '/pages/unificacao/saneamento/sane-cnpj-unico',
-              },
+              },*/
             ],
           },
 

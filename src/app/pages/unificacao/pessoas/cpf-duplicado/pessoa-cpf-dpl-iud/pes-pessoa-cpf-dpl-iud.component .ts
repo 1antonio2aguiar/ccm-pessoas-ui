@@ -1,9 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NbToastrService } from '@nebular/theme';
+import { NbDialogService, NbToastrService, } from '@nebular/theme';
 
 import { PesPessoaCpfDplService, PessoaFilters } from '../pes-pessoa-cpf-dpl.service';
+import {
+  ConfirmarUnificacaoDialogComponent,
+} from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
 
 @Component({
   selector: 'ngx-pes-pessoa-cpf-dpl-iud',
@@ -70,7 +73,7 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
         filterFunction: (_cell?: any, _search?: string) => true,
       },
 
-      cgcCpf: {
+      cnpjCpf: {
         title: 'CPF',
         type: 'string',
         width: '200px',
@@ -103,6 +106,7 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
   constructor(
     private service: PesPessoaCpfDplService,
     private toastrService: NbToastrService,
+    private dialogService: NbDialogService,
   ) {}
 
   ngOnInit(): void {
@@ -125,66 +129,404 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
     this.execSearch(this.buildBaseParams());
   }
 
-  onEditarLinha(event: any): void {
-    const pessoaId = event?.data?.pessoa;
+  async onEditarLinha(
+    event: any
+  ): Promise<void> {
+
+    const pessoa = event?.data;
+    const pessoaId = pessoa?.pessoa;
+
+    const cpf =
+      pessoa?.cnpjCpfDigits ||
+      String(
+        pessoa?.cnpjCpf ?? ''
+      ).replace(/\D/g, '');
+
+    const fisicaJuridica =
+      pessoa?.fisicaJuridica || 'F';
 
     if (!pessoaId) {
-      this.toastrService.danger('Código da pessoa não encontrado.', 'Erro');
+      this.toastrService.danger(
+        'Código da pessoa não encontrado.',
+        'Erro'
+      );
       return;
     }
 
-    this.service.processarPessoaCpfDpl(pessoaId)
-      .then(() => {
-        this.toastrService.success('Processado com sucesso', 'Sucesso');
-        this.listar();
-      })
-      .catch((e) => {
-        console.error(e);
-        this.toastrService.danger('Erro ao processar', 'Erro');
-    });
-  }
-
-  async onCreateConfirm(_event: any): Promise<void> {
-  if (this.processandoLote) {
-    return;
-  }
-
-  this.mensagemErro = '';
-  this.progressoLote = 0;
-
-  const gruposUnicos = this.getGruposUnicosParaLote();
-
-  if (!gruposUnicos.length) {
-    this.toastrService.warning('Nenhum registro disponível para processar.', 'Aviso');
-    return;
-  }
-
-  this.processandoLote = true;
-
-  let processados = 0;
-
-  try {
-    for (const item of gruposUnicos) {
-      await this.service.processarPessoaCpfDpl(item.pessoa);
-
-      processados++;
-      this.progressoLote = Math.round((processados / gruposUnicos.length) * 100);
+    if (!cpf) {
+      this.toastrService.danger(
+        'CPF não encontrado para validação.',
+        'Erro'
+      );
+      return;
     }
 
-    this.toastrService.success(
-      `${processados} grupo(s) processado(s) com sucesso.`,
-      'Sucesso',
-    );
+    this.isLoading = true;
 
-    this.listar();
-  } catch (e: any) {
-    console.error(e);
-    this.mensagemErro = 'Erro ao processar o lote.';
-    this.toastrService.danger(this.mensagemErro, 'Erro');
-  } finally {
-    this.processandoLote = false;
+    try {
+
+      const resultado =
+        await this.service
+          .existeCpfCnpjNoCadUnico(
+            cpf,
+            fisicaJuridica
+          );
+
+      /*
+      * CPF não existe no Cadastro Único:
+      * cria normalmente a pessoa consolidada.
+      */
+      if (!resultado?.existe) {
+
+        const mensagem =
+          await this.service
+            .processarPessoaCpfDpl(
+              pessoaId
+            );
+
+        this.toastrService.success(
+          mensagem ||
+          'Grupo processado com sucesso.',
+          'Sucesso'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * O CPF existe. Agora compara os nomes.
+      */
+      const nomeOrigem =
+        this.normalizeTextKey(
+          pessoa?.nome
+        );
+
+      const nomeCadUnico =
+        this.normalizeTextKey(
+          resultado?.nome
+        );
+
+      const nomesIguais =
+        nomeOrigem.length > 0 &&
+        nomeCadUnico.length > 0 &&
+        nomeOrigem === nomeCadUnico;
+
+      /*
+      * CPF e nome iguais:
+      *
+      * considera "Já existe no Cadastro Único"
+      * e vincula diretamente, sem abrir o modal.
+      */
+      if (nomesIguais) {
+
+        const mensagem =
+          await this.service
+            .processarPessoaCpfDplJaExiste(
+              pessoaId
+            );
+
+        this.toastrService.success(
+          mensagem ||
+          'Grupo vinculado ao Cadastro Único com sucesso.',
+          'Já existe no Cadastro Único'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * CPF igual e nome diferente:
+      *
+      * mostra os dois cadastros para o usuário
+      * decidir se representam a mesma pessoa.
+      */
+      const confirmou =
+        await this.dialogService
+          .open(
+            ConfirmarUnificacaoDialogComponent,
+            {
+              closeOnBackdropClick: false,
+
+              context: {
+                tituloOrigem:
+                  'Cadastro de Pessoas — CPF duplicado',
+
+                pessoaOrigem: {
+                  nome:
+                    pessoa?.nome ?? null,
+
+                  cpfCnpj:
+                    pessoa?.cnpjCpf ?? cpf,
+
+                  dataNascimento:
+                    pessoa?.dataNascimento ?? null,
+                },
+
+                pessoaCadUnico:
+                  resultado,
+              },
+            }
+          )
+          .onClose
+          .toPromise();
+
+      /*
+      * Usuário respondeu "Não":
+      * nenhuma alteração é realizada.
+      */
+      if (!confirmou) {
+        return;
+      }
+
+      /*
+      * Usuário confirmou que os nomes diferentes
+      * representam a mesma pessoa.
+      */
+      const mensagem =
+        await this.service
+          .processarPessoaCpfDplJaExiste(
+            pessoaId
+          );
+
+      this.toastrService.success(
+        mensagem ||
+        'Grupo vinculado ao Cadastro Único com sucesso.',
+        'Sucesso'
+      );
+
+      this.listar();
+
+    } catch (e: any) {
+
+      console.error(
+        `Erro ao processar o grupo da pessoa ${pessoaId}`,
+        e
+      );
+
+      const detalhe =
+        typeof e?.error === 'string' &&
+          e.error.trim()
+          ? e.error.trim()
+          : e?.message ||
+          'Não foi possível processar o grupo.';
+
+      this.toastrService.danger(
+        detalhe,
+        'Erro'
+      );
+
+    } finally {
+      this.isLoading = false;
+    }
   }
-}
+
+  async onCreateConfirm(
+    _event: any
+  ): Promise<void> {
+
+    if (this.processandoLote) {
+      this.toastrService.warning(
+        'Já existe um processamento em andamento.',
+        'Aviso'
+      );
+      return;
+    }
+
+    this.mensagemErro = '';
+    this.progressoLote = 0;
+
+    const gruposUnicos =
+      this.getGruposUnicosParaLote();
+
+    if (!gruposUnicos.length) {
+      this.toastrService.warning(
+        'Nenhum grupo disponível para processar.',
+        'Aviso'
+      );
+      return;
+    }
+
+    this.processandoLote = true;
+    this.isLoading = true;
+
+    let processados = 0;
+    let vinculados = 0;
+    let ignorados = 0;
+    let erros = 0;
+    let concluidos = 0;
+
+    try {
+
+      for (const item of gruposUnicos) {
+
+        const pessoaId =
+          item?.pessoa;
+
+        const cpf =
+          item?.cnpjCpfDigits ||
+          String(
+            item?.cnpjCpf ?? ''
+          ).replace(/\D/g, '');
+
+        const fisicaJuridica =
+          item?.fisicaJuridica || 'F';
+
+        try {
+
+          if (!pessoaId) {
+            throw new Error(
+              'Código da pessoa não encontrado.'
+            );
+          }
+
+          if (!cpf) {
+            throw new Error(
+              `CPF não encontrado para a pessoa ${pessoaId}.`
+            );
+          }
+
+          const resultado =
+            await this.service
+              .existeCpfCnpjNoCadUnico(
+                cpf,
+                fisicaJuridica
+              );
+
+          /*
+          * CPF ainda não existe:
+          * cria normalmente a pessoa consolidada.
+          */
+          if (!resultado?.existe) {
+
+            await this.service
+              .processarPessoaCpfDpl(
+                pessoaId
+              );
+
+            processados++;
+            continue;
+          }
+
+          /*
+          * CPF já existe:
+          * compara os nomes normalizados.
+          */
+          const nomeOrigem =
+            this.normalizeTextKey(
+              item?.nome
+            );
+
+          const nomeCadUnico =
+            this.normalizeTextKey(
+              resultado?.nome
+            );
+
+          const nomesIguais =
+            nomeOrigem.length > 0 &&
+            nomeCadUnico.length > 0 &&
+            nomeOrigem === nomeCadUnico;
+
+          /*
+          * CPF e nome iguais:
+          * vincula automaticamente todo o grupo.
+          */
+          if (nomesIguais) {
+
+            await this.service
+              .processarPessoaCpfDplJaExiste(
+                pessoaId
+              );
+
+            vinculados++;
+            continue;
+          }
+
+          /*
+          * CPF igual e nome diferente:
+          * no individual abriria o modal.
+          * No lote apenas ignora.
+          */
+          ignorados++;
+
+        } catch (e: any) {
+
+          erros++;
+
+          console.error(
+            `Erro ao processar o grupo da pessoa ${pessoaId}`,
+            e
+          );
+
+          const detalhe =
+            typeof e?.error === 'string' &&
+            e.error.trim()
+              ? e.error.trim()
+              : e?.message ||
+                'Não foi possível processar o grupo.';
+
+          this.mensagemErro =
+            `Pessoa ${
+              pessoaId ?? 'não identificada'
+            }: ${detalhe}`;
+
+        } finally {
+
+          concluidos++;
+
+          this.progressoLote =
+            Math.round(
+              (
+                concluidos /
+                gruposUnicos.length
+              ) * 100
+            );
+        }
+      }
+
+      const resumo =
+        `Lote finalizado. ` +
+        `Novos: ${processados}. ` +
+        `Vinculados: ${vinculados}. ` +
+        `Ignorados: ${ignorados}. ` +
+        `Erros: ${erros}.`;
+
+      if (erros > 0) {
+
+        this.toastrService.warning(
+          resumo,
+          'Finalizado com erros'
+        );
+
+      } else {
+
+        this.toastrService.success(
+          resumo,
+          'Sucesso'
+        );
+      }
+
+      this.listar();
+
+    } catch (e) {
+
+      console.error(e);
+
+      this.mensagemErro =
+        'Erro ao executar o processamento em lote.';
+
+      this.toastrService.danger(
+        this.mensagemErro,
+        'Erro'
+      );
+
+    } finally {
+
+      this.processandoLote = false;
+      this.isLoading = false;
+    }
+  }
 
   private buildBaseParams(): HttpParams {
     return new HttpParams()
@@ -201,7 +543,7 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
 
     const pessoaFilter = filtersArray.find((f: any) => f.field === 'pessoa');
     const nomeFilter = filtersArray.find((f: any) => f.field === 'nome');
-    const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cgcCpf');
+    const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cnpjCpf');
     const nascimentoFilter = filtersArray.find((f: any) => f.field === 'dataNascimento');
 
     const pessoa = String(pessoaFilter?.search ?? '').trim();
@@ -246,31 +588,6 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
 
     this.execSearch(params);
   }
-
-  /*private execSearch(params: HttpParams): void {
-    this.filtro.pagina = 0;
-    this.filtro.itensPorPagina = 1000;
-    this.filtro.params = params;
-
-    this.isLoading = true;
-
-    this.service.pesquisar({ ...this.filtro, params } as any)
-      .then(({ pesPessoas, total }) => {
-        this.filtro.totalRegistros = total ?? 0;
-
-        const lista = (pesPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
-        //console.log('LISTA ' , lista)
-        this.source.load(lista);
-      })
-      .catch((e) => {
-        console.error(e);
-        this.source.load([]);
-        this.toastrService.danger('Erro ao carregar a lista.', 'Erro');
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
-  }*/
 
   private execSearch(params: HttpParams): void {
     this.filtro.pagina = 0;
@@ -317,9 +634,19 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
     return Array.from(mapa.values());
   }
 
-  private buildCpfDuplicadoKey(row: any): string {
-    const cpf = String(row?.cgcCpfDigits ?? '').trim();
-    const nome = this.normalizeTextKey(row?.nome);
+  private buildCpfDuplicadoKey(
+    row: any
+    ): string {
+
+    const cpf =
+      String(
+        row?.cnpjCpfDigits ?? ''
+      ).trim();
+
+    const nome =
+      this.normalizeTextKey(
+        row?.nome
+      );
 
     if (!cpf || !nome) {
       return '';
@@ -337,52 +664,72 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
       .toUpperCase();
   }
 
-  private normalizePessoaRow(p: any): any {
-    const digits = String(
-      p?.cgcCpf ??
-      p?.cpf ??
-      p?.cnpj ??
-      p?.dadosPessoaFisica?.cpf ??
-      p?.dadosPessoaJuridica?.cnpj ??
-      ''
-    ).replace(/\D/g, '');
+  private normalizePessoaRow(
+    p: any
+  ): any {
 
-    let cgcCpf = '';
+    const digits =
+      String(
+        p?.cnpjCpf ??
+        p?.cpf ??
+        p?.dadosPessoaFisica?.cpf ??
+        ''
+      ).replace(/\D/g, '');
+
+    let cnpjCpf = '';
 
     if (digits.length === 11) {
-      cgcCpf = this.formatCpf(digits);
-    } else if (digits.length === 14) {
-      cgcCpf = this.formatCnpj(digits);
+
+      cnpjCpf =
+        this.formatCpf(
+          digits
+        );
+
     } else {
-      cgcCpf = String(
-        p?.cgcCpf ??
-        p?.cpf ??
-        p?.cnpj ??
-        ''
-      );
+
+      cnpjCpf =
+        String(
+          p?.cnpjCpf ??
+          p?.cpf ??
+          ''
+        );
     }
 
-    const dnRaw =
+    const dataNascimentoOrigem =
       p?.dataNascimento ??
       p?.dadosPessoaFisica?.dataNascimento ??
       '';
 
     let dataNascimento = '';
-    if (dnRaw) {
-      const s = String(dnRaw).substring(0, 10);
-      const parts = s.split('-');
 
-      if (parts.length === 3) {
-        dataNascimento = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    if (dataNascimentoOrigem) {
+
+      const texto =
+        String(
+          dataNascimentoOrigem
+        ).substring(0, 10);
+
+      const partes =
+        texto.split('-');
+
+      if (partes.length === 3) {
+
+        dataNascimento =
+          `${partes[2]}/${partes[1]}/${partes[0]}`;
+
       } else {
-        dataNascimento = String(dnRaw);
+
+        dataNascimento =
+          String(
+            dataNascimentoOrigem
+          );
       }
     }
 
     return {
       ...p,
-      cgcCpfDigits: digits,
-      cgcCpf,
+      cnpjCpfDigits: digits,
+      cnpjCpf,
       dataNascimento,
     };
   }

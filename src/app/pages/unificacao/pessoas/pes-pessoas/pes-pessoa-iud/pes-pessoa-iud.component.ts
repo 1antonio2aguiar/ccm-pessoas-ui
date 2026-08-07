@@ -1,9 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NbToastrService } from '@nebular/theme';
+import {  NbDialogService,   NbToastrService, } from '@nebular/theme';
 import { HttpParams } from '@angular/common/http';
 
 import { PesPessoaService, PessoaFilters } from '../pes-pessoa.service';
+import {
+  ConfirmarUnificacaoDialogComponent,
+} from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
 
 @Component({
   selector: 'ngx-pes-pessoa-iud',
@@ -22,6 +25,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   statusCarga = '';
   totalProcessado = 0;
   totalErros = 0;
+  private ultimaPesquisaId = 0;
   mensagemErro = '';
 
   settings = {
@@ -72,7 +76,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         filterFunction: (_cell?: any, _search?: string) => true,
       },
 
-      cgcCpf: {
+      cnpjCpf: {
         title: 'CPF',
         type: 'string',
         width: '200px',
@@ -100,12 +104,13 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         valuePrepareFunction: (_: any, row: any) => row?.dataNascimento ?? '',
         filterFunction: (_cell?: any, _search?: string) => true,
       },
-    },
+    }, 
   };
 
   constructor(
     private pesPessoaService: PesPessoaService,
     private toastrService: NbToastrService,
+    private dialogService: NbDialogService,
   ) { }
 
   ngOnInit(): void {
@@ -153,107 +158,293 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   onTableFilter(change: any): void {
-    let params = this.buildBaseParams();
+  let params = this.buildBaseParams();
 
-    const filtersArray = change?.filters ?? [];
+  const filtersArray = change?.filters ?? [];
 
-    const pessoaFilter = filtersArray.find((f: any) => f.field === 'pessoa');
-    const nomeFilter = filtersArray.find((f: any) => f.field === 'nome');
-    const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cgcCpf');
-    const nascimentoFilter = filtersArray.find((f: any) => f.field === 'dataNascimento');
+  const pessoaFilter = filtersArray.find((f: any) => f.field === 'pessoa');
+  const nomeFilter = filtersArray.find((f: any) => f.field === 'nome');
+  const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cnpjCpf');
+  const nascimentoFilter = filtersArray.find(
+    (f: any) => f.field === 'dataNascimento'
+  );
 
-    const pessoa = String(pessoaFilter?.search ?? '').trim();
-    const nome = String(nomeFilter?.search ?? '').trim();
+  const pessoa = String(pessoaFilter?.search ?? '').trim();
+  const nome = String(nomeFilter?.search ?? '').trim();
 
-    const cpfCnpjRaw = String(cpfCnpjFilter?.search ?? '').trim();
-    const cpfCnpjDigits = cpfCnpjRaw.replace(/\D/g, '');
+  const cpfCnpjRaw = String(cpfCnpjFilter?.search ?? '').trim();
+  const cpfCnpjDigits = cpfCnpjRaw.replace(/\D/g, '');
 
-    const nascRaw = String(nascimentoFilter?.search ?? '').trim();
+  const nascRaw = String(nascimentoFilter?.search ?? '').trim();
 
-    if (cpfCnpjDigits.length >= 6) {
-      if (cpfCnpjDigits.length <= 11) {
-        params = params.set('cpf', cpfCnpjDigits);
-      } else {
-        params = params.set('cnpj', cpfCnpjDigits);
-      }
+  /*
+   * DATA DE NASCIMENTO:
+   * Se começou a digitar, somente pesquisa quando estiver completa.
+   */
+  if (nascRaw.length > 0) {
+    const dataCompleta = nascRaw.match(
+      /^(\d{2})\/(\d{2})\/(\d{4})$/
+    );
 
-      this.execSearch(params);
+    if (!dataCompleta) {
       return;
     }
 
-    const m = nascRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (m) {
-      const yyyyMMdd = `${m[3]}-${m[2]}-${m[1]}`;
-      params = params.set('dataNascimento', yyyyMMdd);
+    const dia = Number(dataCompleta[1]);
+    const mes = Number(dataCompleta[2]);
+    const ano = Number(dataCompleta[3]);
 
-      this.execSearch(params);
+    const dataValida =
+      dia >= 1 &&
+      dia <= 31 &&
+      mes >= 1 &&
+      mes <= 12 &&
+      ano >= 1900;
+
+    if (!dataValida) {
       return;
     }
 
-    if (pessoa.length > 0) {
-      params = params.set('pessoa', pessoa);
-      this.execSearch(params);
-      return;
-    }
+    const yyyyMMdd =
+      `${dataCompleta[3]}-${dataCompleta[2]}-${dataCompleta[1]}`;
 
-    if (nome.length > 0) {
-      params = params.set('nome', nome);
-      this.execSearch(params);
-      return;
+    params = params.set('dataNascimento', yyyyMMdd);
+
+    this.execSearch(params);
+    return;
+  }
+
+  if (cpfCnpjDigits.length >= 6) {
+    if (cpfCnpjDigits.length <= 11) {
+      params = params.set('cpf', cpfCnpjDigits);
+    } else {
+      params = params.set('cnpj', cpfCnpjDigits);
     }
 
     this.execSearch(params);
+    return;
   }
+
+  if (pessoa.length > 0) {
+    params = params.set('pessoa', pessoa);
+    this.execSearch(params);
+    return;
+  }
+
+  if (nome.length > 0) {
+    params = params.set('nome', nome);
+    this.execSearch(params);
+    return;
+  }
+
+  /*
+   * Só volta para a lista inicial quando todos os filtros
+   * estiverem realmente vazios.
+   */
+  const todosVazios =
+    !pessoa &&
+    !nome &&
+    !cpfCnpjRaw &&
+    !nascRaw;
+
+  if (todosVazios) {
+    this.execSearch(params);
+  }
+}
 
   private execSearch(params: HttpParams): void {
     this.filtro.params = params;
 
+    /*
+    * Cada pesquisa recebe um número.
+    * Uma resposta antiga não poderá sobrescrever a mais recente.
+    */
+    const pesquisaId = ++this.ultimaPesquisaId;
+
     this.isLoading = true;
-    this.pesPessoaService.pesquisar({ ...this.filtro, params } as any)
+
+    this.pesPessoaService
+      .pesquisar({ ...this.filtro, params } as any)
       .then(({ pesPessoas, total }) => {
-        this.filtro.totalRegistros = total ?? 0;
 
-        const lista = (pesPessoas ?? []).map((p: any) => this.normalizePessoaRow(p));
-        //console.log('LISTA', lista);
-        this.source.load(lista);
-      })
-      .catch((e) => {
-        console.error(e);
-        this.source.load([]);
-        this.toastrService.danger('Erro ao carregar a lista.', 'Erro');
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
-  }
-
-  private processarPessoaLinha(pessoa: any): void {
-    const pessoaId = pessoa?.pessoa;
-    const cpfCnpj = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
-    const fisicaJuridica = pessoa?.fisicaJuridica || 'F';
-
-    if (!cpfCnpj) {
-      this.toastrService.danger('CPF/CNPJ não encontrado para validação.', 'Erro');
-      return;
-    }
-
-    this.pesPessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
-      .then((existe) => {
-        if (existe) {
-          this.toastrService.warning(
-            'CPF/CNPJ já existe no Cadastro Único. Use a rotina de EXISTE NO CAD. ÚNICO.',
-            'Atenção'
-          );
+        if (pesquisaId !== this.ultimaPesquisaId) {
           return;
         }
 
-        this.pesPessoaService.processarPessoaUnica(pessoaId)
-          .then((msg) => {
-            this.toastrService.success(msg, 'Sucesso');
-            this.listar();
-          });
-    });
+        this.filtro.totalRegistros = total ?? 0;
+
+        const lista = (pesPessoas ?? []).map(
+          (p: any) => this.normalizePessoaRow(p)
+        );
+
+        this.source.load(lista);
+      })
+      .catch((e) => {
+
+        if (pesquisaId !== this.ultimaPesquisaId) {
+          return;
+        }
+
+        console.error(e);
+        this.source.load([]);
+        this.toastrService.danger(
+          'Erro ao carregar a lista.',
+          'Erro'
+        );
+      })
+      .finally(() => {
+
+        if (pesquisaId === this.ultimaPesquisaId) {
+          this.isLoading = false;
+        }
+      });
   }
+
+  private async processarPessoaLinha(
+  pessoa: any
+): Promise<void> {
+
+  const pessoaId =
+    pessoa?.pessoa;
+
+  const cpfCnpj =
+    pessoa?.cnpjCpfDigits ||
+    String(
+      pessoa?.cnpjCpf ?? ''
+    ).replace(/\D/g, '');
+
+  const fisicaJuridica =
+    pessoa?.fisicaJuridica || 'F';
+
+  if (!pessoaId) {
+    this.toastrService.danger(
+      'Código da pessoa não encontrado.',
+      'Erro'
+    );
+    return;
+  }
+
+  if (!cpfCnpj) {
+    this.toastrService.danger(
+      'CPF não encontrado para validação.',
+      'Erro'
+    );
+    return;
+  }
+
+  this.isLoading = true;
+
+  try {
+
+    const resultado =
+      await this.pesPessoaService
+        .existeCpfCnpjNoCadUnico(
+          cpfCnpj,
+          fisicaJuridica
+        );
+
+    /*
+     * CPF ainda não existe:
+     * segue o processamento normal.
+     */
+    if (!resultado?.existe) {
+
+      const mensagem =
+        await this.pesPessoaService
+          .processarPessoaUnica(
+            pessoaId
+          );
+
+      this.toastrService.success(
+        mensagem,
+        'Sucesso'
+      );
+
+      this.listar();
+      return;
+    }
+
+    /*
+     * CPF já existe:
+     * solicita a confirmação do usuário.
+     */
+    const confirmou =
+      await this.dialogService
+        .open(
+          ConfirmarUnificacaoDialogComponent,
+          {
+            closeOnBackdropClick: false,
+
+            context: {
+              tituloOrigem:
+                'Cadastro de Pessoas',
+
+              pessoaOrigem: {
+                nome:
+                  pessoa?.nome ?? null,
+
+                cpfCnpj:
+                  pessoa?.cnpjCpf ?? cpfCnpj,
+
+                dataNascimento:
+                  pessoa?.dataNascimento ?? null,
+              },
+
+              pessoaCadUnico:
+                resultado,
+            },
+          }
+        )
+        .onClose
+        .toPromise();
+
+    /*
+     * Cancelou: não realiza nenhuma alteração.
+     */
+    if (!confirmou) {
+      return;
+    }
+
+    /*
+     * Confirmou: chama o endpoint específico
+     * para vincular ao cadastro já existente.
+     */
+    const mensagem =
+      await this.pesPessoaService
+        .processarPessoaJaExisteCadUnico(
+          pessoaId
+        );
+
+    this.toastrService.success(
+      mensagem ||
+        'Pessoa vinculada ao Cadastro Único com sucesso.',
+      'Sucesso'
+    );
+
+    this.listar();
+
+  } catch (e: any) {
+
+    console.error(
+      `Erro ao processar a pessoa ${pessoaId}`,
+      e
+    );
+
+    const detalhe =
+      typeof e?.error === 'string' &&
+      e.error.trim()
+        ? e.error.trim()
+        : 'Não foi possível concluir o processamento.';
+
+    this.toastrService.danger(
+      detalhe,
+      'Erro'
+    );
+
+  } finally {
+    this.isLoading = false;
+  }
+}
 
   private async processarLoteTela(): Promise<void> {
     if (this.processandoLote) {
@@ -304,13 +495,34 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         }
 
         try {
-          //await this.processarPessoaLinhaLote(pessoaId);
-          await this.processarPessoaLinhaLote(item);
-          this.totalProcessado++;
-        } catch (e) {
-          console.error(`Erro ao processar a pessoa ${pessoaId}`, e);
+          const processado =
+            await this.processarPessoaLinhaLote(
+              item
+            );
+
+          if (processado) {
+            this.totalProcessado++;
+          }
+        } catch (e: any) {
+          console.error(
+            `Erro ao processar a pessoa ${pessoaId}`,
+            e
+          );
+
           this.totalErros++;
-          this.mensagemErro = `Erro ao processar a pessoa ${pessoaId}.`;
+
+          const detalhe =
+            typeof e?.error === 'string' && e.error.trim()
+              ? e.error.trim()
+              : 'Não foi possível concluir o processamento.';
+
+          this.mensagemErro =
+            `Pessoa ${pessoaId}: ${detalhe}`;
+
+          this.toastrService.danger(
+            this.mensagemErro,
+            'Erro no processamento'
+          );
         } finally {
           concluidos++;
           this.progressoLote = Math.round((concluidos / totalItens) * 100);
@@ -319,10 +531,20 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
 
       this.statusCarga = 'FINALIZADO';
 
-      this.toastrService.success(
-        `Lote finalizado. Processados: ${this.totalProcessado}. Erros: ${this.totalErros}.`,
-        'Sucesso'
-      );
+      const resumo =
+        `Lote finalizado. Processados: ${this.totalProcessado}. Erros: ${this.totalErros}.`;
+
+      if (this.totalErros > 0) {
+        this.toastrService.warning(
+          resumo,
+          'Finalizado com erros'
+        );
+      } else {
+        this.toastrService.success(
+          resumo,
+          'Sucesso'
+        );
+      }
 
       this.listar();
 
@@ -337,32 +559,65 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async processarPessoaLinhaLote(pessoa: any): Promise<void> {
-    const pessoaId = pessoa?.pessoa;
-    const cpfCnpj = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
-    const fisicaJuridica = pessoa?.fisicaJuridica || 'F';
+  private async processarPessoaLinhaLote(
+    pessoa: any
+  ): Promise<boolean> {
+
+    const pessoaId =
+      pessoa?.pessoa;
+
+    const cpfCnpj =
+      pessoa?.cnpjCpfDigits ||
+      String(
+        pessoa?.cnpjCpf ?? ''
+      ).replace(/\D/g, '');
+
+    const fisicaJuridica =
+      pessoa?.fisicaJuridica || 'F';
 
     if (!pessoaId) {
-      throw new Error('Código da pessoa não encontrado.');
+      throw new Error(
+        'Código da pessoa não encontrado.'
+      );
     }
 
     if (!cpfCnpj) {
-      throw new Error(`CPF/CNPJ não encontrado para a pessoa ${pessoaId}.`);
+      throw new Error(
+        `CPF não encontrado para a pessoa ${pessoaId}.`
+      );
     }
 
-    const existe = await this.pesPessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica);
+    const resultado =
+      await this.pesPessoaService
+        .existeCpfCnpjNoCadUnico(
+          cpfCnpj,
+          fisicaJuridica
+        );
 
-    if (existe) {
-      throw new Error(`CPF/CNPJ já existe no Cadastro Único para a pessoa ${pessoaId}.`);
+    /*
+    * No lote, se o CPF já existir:
+    *
+    * - não abre modal;
+    * - não chama o processamento confirmado;
+    * - não gera erro;
+    * - apenas ignora o registro.
+    */
+    if (resultado?.existe) {
+      return false;
     }
 
-    await this.pesPessoaService.processarPessoaUnica(pessoaId);
+    await this.pesPessoaService
+      .processarPessoaUnica(
+        pessoaId
+      );
+
+    return true;
   }
 
   private normalizePessoaRow(p: any): any {
     const digits =
       String(
-        p?.cgcCpf ??
+        p?.cnpjCpf ??
         p?.cpf ??
         p?.cnpj ??
         p?.dadosPessoaFisica?.cpf ??
@@ -370,14 +625,14 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         ''
       ).replace(/\D/g, '');
 
-    let cgcCpf = '';
+    let cnpjCpf = '';
 
     if (digits.length === 11) {
-      cgcCpf = this.formatCpf(digits);
+      cnpjCpf = this.formatCpf(digits);
     } else if (digits.length === 14) {
-      cgcCpf = this.formatCnpj(digits);
+      cnpjCpf = this.formatCnpj(digits);
     } else {
-      cgcCpf = String(p?.cgcCpf ?? '');
+      cnpjCpf = String(p?.cnpjCpf ?? '');
     }
 
     const dnRaw =
@@ -398,8 +653,8 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
 
     return {
       ...p,
-      cgcCpfDigits: digits,
-      cgcCpf,
+      cnpjCpfDigits: digits,
+      cnpjCpf,
       dataNascimento,
     };
   }

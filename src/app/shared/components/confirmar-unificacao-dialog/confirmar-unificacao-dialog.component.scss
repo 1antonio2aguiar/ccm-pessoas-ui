@@ -1,0 +1,41 @@
+.modal-unificacao {
+  width: 760px;
+  max-width: 95vw;
+}
+
+.mensagem,
+.pergunta {
+  margin-bottom: 1.25rem;
+}
+
+.comparacao {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.pessoa {
+  padding: 1rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 0.5rem;
+}
+
+.pessoa h6 {
+  margin-bottom: 1rem;
+}
+
+.pessoa div {
+  margin-bottom: 0.5rem;
+}
+
+nb-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 650px) {
+  .comparacao {
+    grid-template-columns: 1fr;
+  }
+}

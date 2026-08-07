@@ -7,6 +7,13 @@ import { FiltroPaginado } from '../../../../shared/filters/filtro-paginado';
 
 import { PesPessoas } from '../../../../shared/models/unificacao/pes-pessoas';
 
+export interface PessoaCpfCnpjCadUnicoDTO {
+  existe: boolean;
+  pessoaId: number | null;
+  nome: string | null;
+  cpfCnpj: string | null;
+  dataNascimento: string | null;
+}
 export class PessoaFilters {
   pagina = 0;
   itensPorPagina = 8;
@@ -25,12 +32,22 @@ export class PessoaFilters {
 export class PesPessoaCpfDplService extends BaseResourceService<PesPessoas> {
 
   private pesPessoasEventHendlerId: EventEmitter<PesPessoas>;
-  private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cpf-duplicado';
-  private listaApiPath = environment.apiUrl + 'pes-pessoas/cpf-duplicado-nao-migradas';
+
+  private cargaApiPath =
+    environment.apiUrl + 'pessoa/pes-pessoas/cpf-duplicado';
+
+  private listaApiPath =
+    environment.apiUrl + 'pessoa/pes-pessoas/cpf-duplicado-nao-migradas';
 
   constructor(protected injector: Injector) {
-    super(environment.apiUrl + 'pes-pessoas', injector, PesPessoas.fromJson);
-    this.pesPessoasEventHendlerId = new EventEmitter<PesPessoas>();
+    super(
+      environment.apiUrl + 'pessoa/pes-pessoas',
+      injector,
+      PesPessoas.fromJson
+    );
+
+    this.pesPessoasEventHendlerId =
+      new EventEmitter<PesPessoas>();
   }
 
   pesquisar(filtro: FiltroPaginado): Promise<any> {
@@ -61,15 +78,51 @@ export class PesPessoaCpfDplService extends BaseResourceService<PesPessoas> {
       });
   }
 
-  processarPessoaUnica(pessoaId: number): Promise<string> {
+  /*processarPessoaUnica(pessoaId: number): Promise<string> {
+    return this.http
+      .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
+  }*/
+
+  processarPessoaCpfDpl(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
       .toPromise();
   }
 
-  processarPessoaCpfDpl(pessoaId: number): Promise<string> {
+  processarPessoaCpfDplJaExiste(
+    pessoaId: number
+  ): Promise<string> {
+
     return this.http
-      .post(`${this.cargaApiPath}/processar/${pessoaId}`, {}, { responseType: 'text' })
+      .post(
+        `${this.cargaApiPath}/processar-ja-existe/${pessoaId}`,
+        {},
+        { responseType: 'text' }
+      )
+      .toPromise();
+  }
+
+  existeCpfCnpjNoCadUnico(
+    cpfCnpj: string | number,
+    fisicaJuridica: string
+  ): Promise<PessoaCpfCnpjCadUnicoDTO> {
+
+    const params = new HttpParams()
+      .set(
+        'cpfCnpj',
+        String(cpfCnpj).replace(/\D/g, '')
+      )
+      .set(
+        'fisicaJuridica',
+        fisicaJuridica
+      );
+
+    return this.http
+      .get<PessoaCpfCnpjCadUnicoDTO>(
+        `${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`,
+        { params }
+      )
       .toPromise();
   }
 }

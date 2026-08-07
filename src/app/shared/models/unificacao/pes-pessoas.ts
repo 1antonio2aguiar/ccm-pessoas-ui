@@ -6,7 +6,7 @@ export class PesPessoas extends BaseResourceModel {
     public nome?: string,
     public fisicaJuridica?: string,
     public dataCadastro?: string,
-    public cgcCpf?: number,
+    public cnpjCpf?: string,
 
     public tipoPessoa?: number,
     public tipoPessoaDescricao?: string,
@@ -55,7 +55,7 @@ export class PesPessoas extends BaseResourceModel {
       nome: jsonData.nome,
       fisicaJuridica: jsonData.fisicaJuridica,
       dataCadastro: jsonData.dataCadastro,
-      cgcCpf: jsonData.cgcCpf,
+      cnpjCpf: jsonData.cnpjCpf,
 
       tipoPessoa: jsonData.tipoPessoa,
       tipoPessoaDescricao: jsonData.tipoPessoaDescricao,
@@ -103,7 +103,7 @@ export class PesPessoas extends BaseResourceModel {
       nome: pesPessoa.nome,
       fisicaJuridica: pesPessoa.fisicaJuridica,
       dataCadastro: pesPessoa.dataCadastro,
-      cgcCpf: pesPessoa.cgcCpf,
+      cnpjpf: pesPessoa.cnpjCpf,
 
       tipoPessoa: pesPessoa.tipoPessoa,
 

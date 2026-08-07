@@ -20,6 +20,14 @@ export class RhPessoaFilters {
   params = new HttpParams();
 }
 
+export interface PessoaCpfCnpjCadUnicoDTO {
+  existe: boolean;
+  pessoaId: number | null;
+  nome: string | null;
+  cpfCnpj: string | null;
+  dataNascimento: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RhPessoaService extends BaseResourceService<any> {
 
@@ -46,14 +54,27 @@ export class RhPessoaService extends BaseResourceService<any> {
       });
   }
 
-  existeCpfCnpjNoCadUnico(cpfCnpj: string | number, fisicaJuridica: string): Promise<boolean> {
-    const params = new HttpParams()
-      .set('cpfCnpj', String(cpfCnpj).replace(/\D/g, ''))
-      .set('fisicaJuridica', fisicaJuridica);
+  existeCpfCnpjNoCadUnico(
+  cpfCnpj: string | number,
+  fisicaJuridica: string
+): Promise<PessoaCpfCnpjCadUnicoDTO> {
 
-    return this.http
-      .get<boolean>(`${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`, { params })
-      .toPromise();
+  const params = new HttpParams()
+    .set(
+      'cpfCnpj',
+      String(cpfCnpj).replace(/\D/g, '')
+    )
+    .set(
+      'fisicaJuridica',
+      fisicaJuridica
+    );
+
+  return this.http
+    .get<PessoaCpfCnpjCadUnicoDTO>(
+      `${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`,
+      { params }
+    )
+    .toPromise();
   }
 
   processarCpfUnico(pessoaId: number): Promise<string> {

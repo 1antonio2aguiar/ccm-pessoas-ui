@@ -1,0 +1,87 @@
+<nb-card class="modal-unificacao">
+
+  <nb-card-header>
+    Confirmar unificação
+  </nb-card-header>
+
+  <nb-card-body> 
+ 
+    <p class="mensagem">
+      O CPF informado já existe no Cadastro Único.
+      Confira os dados antes de confirmar a unificação.
+    </p>
+
+    <div class="comparacao">
+
+      <div class="pessoa">
+
+        <h6> Cadastro Único </h6>
+
+        <div>
+          <strong>Nome:</strong>
+          {{ pessoaCadUnico?.nome || '-' }}
+        </div>
+
+        <div>
+          <strong>CPF:</strong>
+          {{ formatarCpf(pessoaCadUnico?.cpfCnpj) }}
+        </div>
+
+        <div>
+          <strong>Data de nascimento:</strong>
+          {{ formatarData(pessoaCadUnico?.dataNascimento) || '-' }}
+        </div>
+
+      </div>
+
+      <div class="pessoa">
+
+        <h6>{{ tituloOrigem }}</h6>
+
+        <div>
+          <strong>Nome:</strong>
+          {{ pessoaOrigem?.nome || '-' }}
+        </div>
+
+        <div>
+          <strong>CPF:</strong>
+          {{ formatarCpf(pessoaOrigem?.cpfCnpj) }}
+        </div>
+
+        <div>
+          <strong>Data de nascimento:</strong>
+          {{ pessoaOrigem?.dataNascimento || '-' }}
+        </div>
+
+      </div>
+
+    </div>
+
+    <p class="pergunta">
+      Deseja unificar esta pessoa com o registro existente
+      no Cadastro Único?
+    </p>
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="cancelar()">
+      Não
+    </button>
+
+    <button
+      nbButton
+      status="primary"
+      type="button"
+      (click)="confirmar()">
+      Sim, unificar
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>

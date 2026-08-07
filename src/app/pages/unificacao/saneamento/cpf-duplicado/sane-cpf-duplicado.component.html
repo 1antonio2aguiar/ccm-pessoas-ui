@@ -1,28 +1,86 @@
 <nb-card>
+
   <nb-card-header>
     CPF Duplicado - Saneamento
   </nb-card-header>
 
   <nb-card-body>
 
-    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+    <div
+      *ngIf="processandoLote"
+      class="lote-progress-wrapper">
+
       <div class="lote-progress-text">
-        <strong>Processando lote...</strong> {{ progressoLote }}%
+
+        <strong>
+          {{ etapaLote }}
+        </strong>
+
+        <div class="mt-2">
+          {{ detalheLote }}
+        </div>
+
       </div>
 
-      <nb-progress-bar
-        [value]="progressoLote"
-        status="primary">
-      </nb-progress-bar>
+      <div
+        *ngIf="carregandoRegistrosLote"
+        class="text-center my-3">
+
+        <p class="mt-2">
+          Buscando os grupos de CPF duplicado...
+        </p>
+
+      </div>
+
+      <ng-container
+        *ngIf="!carregandoRegistrosLote">
+
+        <nb-progress-bar
+          [value]="progressoLote"
+          status="primary">
+        </nb-progress-bar>
+
+        <div class="lote-progress-text mt-2">
+
+          <span>
+            Novos: {{ totalProcessados }}
+          </span>
+
+          <span>
+            | Vinculados: {{ totalVinculados }}
+          </span>
+
+          <span>
+            | Ignorados: {{ totalIgnorados }}
+          </span>
+
+          <span>
+            | Erros: {{ totalErros }}
+          </span>
+
+        </div>
+
+      </ng-container>
+
     </div>
 
-    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
-      <strong>Erro:</strong> {{ mensagemErro }}
+    <div
+      *ngIf="mensagemErro && !processandoLote"
+      class="lote-erro">
+
+      <strong>Erro:</strong>
+      {{ mensagemErro }}
+
     </div>
 
-    <div *ngIf="isLoading" class="text-center my-3">
-      <nb-spinner status="primary"></nb-spinner>
-      <p>Carregando pessoas do saneamento...</p>
+    <div
+      *ngIf="isLoading && !processandoLote"
+      class="text-center my-3">
+
+      <p class="mt-2">
+        Carregando pessoas do saneamento...
+      </p>
+
     </div>
 
     <ng2-smart-table
@@ -33,4 +91,5 @@
     </ng2-smart-table>
 
   </nb-card-body>
+
 </nb-card>

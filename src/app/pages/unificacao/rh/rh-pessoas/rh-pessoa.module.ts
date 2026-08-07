@@ -4,6 +4,10 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../../../@theme/theme.module';
 
 import { FormsModule as ngFormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  ConfirmarUnificacaoDialogModule,
+} from '../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.module';
+
 
 import {
   NbActionsModule,
@@ -11,6 +15,7 @@ import {
   NbCardModule,
   NbCheckboxModule,
   NbDatepickerModule,
+  NbDialogModule,
   NbTreeGridModule,
   NbIconModule,
   NbInputModule,
@@ -20,6 +25,7 @@ import {
   NbToastrModule,
   NbButtonGroupModule,
   NbProgressBarModule,
+  
 } from '@nebular/theme';
 
 import { rhPessoaRoutedComponents } from './rh-pessoa-routing.module';
@@ -27,7 +33,7 @@ import { RhPessoaRoutingModule } from './rh-pessoa-routing.module';
 
 @NgModule({
   declarations: [
-    ...rhPessoaRoutedComponents,
+    ...rhPessoaRoutedComponents
   ],
   imports: [
     CommonModule,
@@ -53,6 +59,7 @@ import { RhPessoaRoutingModule } from './rh-pessoa-routing.module';
     NbInputModule,
 
     RhPessoaRoutingModule,
+    ConfirmarUnificacaoDialogModule,
   ],
 })
 export class RhPessoaModule {}

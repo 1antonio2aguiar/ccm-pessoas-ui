@@ -25,7 +25,7 @@ export class CnpjUnicoService extends BaseResourceService<PesPessoas> {
 
   private pesPessoasEventHendlerId: EventEmitter<PesPessoas>;
   private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cnpj-unico';
-  private listaApiPath = environment.apiUrl + 'pes-pessoas/cnpj-unico-nao-migradas';
+  private listaApiPath = environment.apiUrl + 'pessoa/pes-pessoas/cnpj-unico-nao-migradas';
 
   constructor(protected injector: Injector) {
     super(environment.apiUrl + 'pes-pessoas', injector, PesPessoas.fromJson);

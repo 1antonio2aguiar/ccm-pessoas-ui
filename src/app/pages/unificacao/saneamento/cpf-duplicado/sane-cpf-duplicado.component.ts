@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NbToastrService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { HttpParams } from '@angular/common/http';
 
 import { SanePessoaFilters, SanePessoaService } from '../sane-pessoa.service';
+import {
+  ConfirmarUnificacaoDialogComponent,
+} from '../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
 
 @Component({
   selector: 'ngx-sane-cpf-duplicado',
@@ -18,6 +21,18 @@ export class SaneCpfDuplicadoComponent implements OnInit {
 
   processandoLote = false;
   mensagemErro = '';
+
+  progressoLote = 0;
+  totalProcessados = 0;
+  totalVinculados = 0;
+  totalIgnorados = 0;
+  totalErros = 0;
+  totalGruposLote = 0;
+  grupoAtualLote = 0;
+  pessoaAtualLote: number | null = null;
+  etapaLote = '';
+  detalheLote = '';
+  carregandoRegistrosLote = false;
 
   filtro: SanePessoaFilters = new SanePessoaFilters();
 
@@ -126,6 +141,7 @@ export class SaneCpfDuplicadoComponent implements OnInit {
   constructor(
     private service: SanePessoaService,
     private toastrService: NbToastrService,
+    private dialogService: NbDialogService,
   ) { }
 
   ngOnInit(): void {
@@ -262,111 +278,434 @@ export class SaneCpfDuplicadoComponent implements OnInit {
   }
 
   onCreateConfirm(_event: any): void {
-    // Processamento em lote será implementado depois.
-    // this.processarLoteTela();
-
-    this.toastrService.info(
-      'Processamento em lote de CPF duplicado do saneamento será implementado na próxima etapa.',
-      'Aviso'
-    );
+    this.processarLote();
   }
 
-  onEditarLinha(event: any): void {
+  async onEditarLinha(event: any): Promise<void> {
     const pessoa = event?.data;
-    const status = pessoa?.statusCadastro;
+    const pessoaId = Number(pessoa?.pessoa);
+    const cpf = this.obterCpf(pessoa);
 
-    if (!pessoa?.pessoa) {
-      this.toastrService.danger('Código da pessoa não encontrado.', 'Erro');
+    if (!pessoaId) {
+      this.toastrService.danger(
+        'Código da pessoa não encontrado.',
+        'Erro'
+      );
       return;
     }
 
-    if (status === 'EXISTE NO CAD. ÚNICO') {
-      this.processarJaExisteCadUnicoLinha(pessoa.pessoa);
+    if (!cpf) {
+      this.toastrService.danger(
+        'CPF não encontrado para validação.',
+        'Erro'
+      );
       return;
     }
 
-    this.processarPessoaLinha(pessoa);
-  }
-
-  private processarJaExisteCadUnicoLinha(pessoaId: number): void {
     this.isLoading = true;
 
-    this.service.processarJaExisteCadUnico(pessoaId)
-      .then((msg) => {
+    try {
+      const resultado =
+        await this.service.existeCpfCnpjNoCadUnico(cpf, 'F');
+
+      /*
+       * CPF ainda não existe:
+       * cria uma nova pessoa para todo o grupo duplicado.
+       */
+      if (!resultado?.existe) {
+        const mensagem =
+          await this.service.processarCpfDuplicado(pessoaId);
+
         this.toastrService.success(
-          msg || `Pessoa ${pessoaId} vinculada ao Cadastro Único com sucesso.`,
+          mensagem || 'Grupo de CPF duplicado processado com sucesso.',
           'Sucesso'
         );
 
         this.listar();
-      })
-      .catch((e) => {
-        console.error(e);
+        return;
+      }
 
-        const msgErro =
-          e?.error ||
-          e?.message ||
-          `Erro ao vincular a pessoa ${pessoaId} ao Cadastro Único.`;
+      const nomeSaneamento =
+        this.normalizeTextKey(pessoa?.nome);
 
-        this.toastrService.danger(msgErro, 'Erro');
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+      const nomeCadUnico =
+        this.normalizeTextKey(resultado?.nome);
+
+      const nomesIguais =
+        nomeSaneamento.length > 0 &&
+        nomeCadUnico.length > 0 &&
+        nomeSaneamento === nomeCadUnico;
+
+      /*
+       * CPF e nome iguais:
+       * vincula diretamente, sem abrir o modal.
+       */
+      if (nomesIguais) {
+        const mensagem =
+          await this.service.processarCpfDuplicadoJaExiste(pessoaId);
+
+        this.toastrService.success(
+          mensagem || 'Grupo vinculado ao Cadastro Único com sucesso.',
+          'Já existe no Cadastro Único'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+       * CPF igual e nome diferente:
+       * solicita confirmação do usuário.
+       */
+      const confirmou =
+        await this.dialogService
+          .open(
+            ConfirmarUnificacaoDialogComponent,
+            {
+              closeOnBackdropClick: false,
+              context: {
+                tituloOrigem: 'Saneamento — CPF duplicado',
+                pessoaOrigem: {
+                  nome: pessoa?.nome ?? null,
+                  cpfCnpj: pessoa?.cgcCpf ?? cpf,
+                  dataNascimento: pessoa?.dataNascimento ?? null,
+                },
+                pessoaCadUnico: resultado,
+              },
+            }
+          )
+          .onClose
+          .toPromise();
+
+      if (!confirmou) {
+        return;
+      }
+
+      const mensagem =
+        await this.service.processarCpfDuplicadoJaExiste(pessoaId);
+
+      this.toastrService.success(
+        mensagem || 'Grupo vinculado ao Cadastro Único com sucesso.',
+        'Sucesso'
+      );
+
+      this.listar();
+
+    } catch (e: any) {
+      console.error(
+        `Erro ao processar o grupo SANE da pessoa ${pessoaId}`,
+        e
+      );
+
+      this.toastrService.danger(
+        this.obterMensagemErro(
+          e,
+          `Erro ao processar o grupo da pessoa ${pessoaId}.`
+        ),
+        'Erro'
+      );
+
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  private processarPessoaLinha(pessoa: any): void {
-    const pessoaId = pessoa?.pessoa;
-    const cpf = pessoa?.cgcCpfDigits || String(pessoa?.cgcCpf ?? '').replace(/\D/g, '');
-
-    if (!cpf) {
-      this.toastrService.danger('CPF não encontrado para validação.', 'Erro');
+  private async processarLote(): Promise<void> {
+    if (this.processandoLote) {
+      this.toastrService.warning(
+        'Já existe um processamento em andamento.',
+        'Aviso'
+      );
       return;
     }
 
+    this.processandoLote = true;
     this.isLoading = true;
+    this.carregandoRegistrosLote = true;
 
-    this.service.existeCpfCnpjNoCadUnico(cpf, 'F')
-      .then((existe) => {
-        if (existe) {
-          this.toastrService.warning(
-            'CPF já existe no Cadastro Único. Use a rotina de EXISTE NO CAD. ÚNICO.',
-            'Atenção'
-          );
-          return;
-        }
+    this.progressoLote = 0;
+    this.totalProcessados = 0;
+    this.totalVinculados = 0;
+    this.totalIgnorados = 0;
+    this.totalErros = 0;
+    this.totalGruposLote = 0;
+    this.grupoAtualLote = 0;
+    this.pessoaAtualLote = null;
+    this.mensagemErro = '';
+    this.etapaLote = 'Carregando lote...';
+    this.detalheLote = 'Buscando os grupos no backend.';
 
-        return this.service.processarCpfDuplicado(pessoaId)
-          .then((msg) => {
-            this.toastrService.success(
-              msg || `Pessoa ${pessoaId} processada com sucesso.`,
-              'Sucesso'
+    try {
+      const tamanhoLote = 100;
+      const parametrosBase =
+        this.filtro.params || this.buildBaseParams();
+
+      /*
+       * Uma única consulta por clique.
+       * Não existe while nem busca automática do próximo lote.
+       */
+      const params = parametrosBase
+        .set('page', '0')
+        .set('size', String(tamanhoLote))
+        .set('sort', 'pessoa');
+
+      const filtroLote = new SanePessoaFilters();
+      filtroLote.pagina = 0;
+      filtroLote.itensPorPagina = tamanhoLote;
+      filtroLote.params = params;
+
+      const resposta =
+        await this.service.pesquisarCpfDuplicado(filtroLote as any);
+
+      const registros =
+        (resposta?.sanePessoas ?? [])
+          .map((pessoa: any) => this.normalizePessoaRow(pessoa));
+
+      /*
+       * A lista possui uma linha para cada pessoa da origem.
+       * O backend processa todo o grupo do CPF de uma vez.
+       * Portanto, mantemos somente uma pessoa representativa por CPF.
+       */
+      const grupos = this.obterGruposUnicos(registros);
+
+      this.carregandoRegistrosLote = false;
+      this.totalGruposLote = grupos.length;
+
+      if (!grupos.length) {
+        this.etapaLote = 'Nenhum grupo encontrado.';
+        this.detalheLote =
+          'Não há grupos de CPF duplicado disponíveis para processamento.';
+
+        this.toastrService.warning(
+          'Não há grupos para processar.',
+          'Aviso'
+        );
+        return;
+      }
+
+      this.etapaLote = 'Processando lote...';
+      this.detalheLote =
+        `Foram encontrados ${grupos.length} grupos neste lote.`;
+
+      for (let indice = 0; indice < grupos.length; indice++) {
+        const pessoa = grupos[indice];
+        const pessoaId = Number(pessoa?.pessoa);
+        const cpf = this.obterCpf(pessoa);
+
+        this.grupoAtualLote = indice + 1;
+        this.pessoaAtualLote = pessoaId || null;
+        this.progressoLote = Math.round(
+          (this.grupoAtualLote / this.totalGruposLote) * 100
+        );
+
+        this.detalheLote =
+          `Grupo ${this.grupoAtualLote} de ${this.totalGruposLote}. ` +
+          `Pessoa representativa: ${pessoaId || 'não identificada'}.`;
+
+        try {
+          if (!pessoaId) {
+            throw new Error('Código da pessoa não encontrado.');
+          }
+
+          if (!cpf) {
+            throw new Error(
+              `CPF não encontrado para a pessoa ${pessoaId}.`
             );
+          }
 
-            this.listar();
-          });
-      })
-      .catch((e) => {
-        console.error(e);
+          const resultado =
+            await this.service.existeCpfCnpjNoCadUnico(cpf, 'F');
 
-        const msgErro =
-          e?.error ||
-          e?.message ||
-          `Erro ao processar a pessoa ${pessoaId}.`;
+          /*
+           * CPF não existe:
+           * processa normalmente o grupo duplicado.
+           */
+          if (!resultado?.existe) {
+            await this.service.processarCpfDuplicado(pessoaId);
+            this.totalProcessados++;
+            continue;
+          }
 
-        this.toastrService.danger(msgErro, 'Erro');
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+          const nomeSaneamento =
+            this.normalizeTextKey(pessoa?.nome);
+
+          const nomeCadUnico =
+            this.normalizeTextKey(resultado?.nome);
+
+          const nomesIguais =
+            nomeSaneamento.length > 0 &&
+            nomeCadUnico.length > 0 &&
+            nomeSaneamento === nomeCadUnico;
+
+          /*
+           * CPF e nome iguais:
+           * vincula automaticamente, sem modal.
+           */
+          if (nomesIguais) {
+            await this.service.processarCpfDuplicadoJaExiste(pessoaId);
+            this.totalVinculados++;
+            continue;
+          }
+
+          /*
+           * CPF igual e nome diferente:
+           * no individual abriria o modal;
+           * no lote é apenas ignorado.
+           */
+          this.totalIgnorados++;
+
+        } catch (e: any) {
+          this.totalErros++;
+
+          console.error(
+            `Erro ao processar o grupo SANE da pessoa ${pessoaId}`,
+            e
+          );
+
+          this.mensagemErro =
+            `Pessoa ${pessoaId || 'não identificada'}: ` +
+            this.obterMensagemErro(
+              e,
+              'Não foi possível processar o grupo.'
+            );
+        }
+      }
+
+      this.progressoLote = 100;
+      this.etapaLote = 'Lote finalizado.';
+      this.detalheLote =
+        `Grupos analisados: ${this.totalGruposLote}. ` +
+        `Novos: ${this.totalProcessados}. ` +
+        `Vinculados: ${this.totalVinculados}. ` +
+        `Ignorados: ${this.totalIgnorados}. ` +
+        `Erros: ${this.totalErros}.`;
+
+      const resumo =
+        `Lote finalizado. Novos: ${this.totalProcessados}. ` +
+        `Vinculados: ${this.totalVinculados}. ` +
+        `Ignorados: ${this.totalIgnorados}. ` +
+        `Erros: ${this.totalErros}.`;
+
+      if (this.totalErros > 0) {
+        this.toastrService.warning(
+          resumo,
+          'Finalizado com erros'
+        );
+      } else {
+        this.toastrService.success(
+          resumo,
+          'Sucesso'
+        );
+      }
+
+      this.listar();
+
+    } catch (e: any) {
+      console.error(
+        'Erro ao executar o lote de CPF duplicado do Saneamento.',
+        e
+      );
+
+      const detalhe = this.obterMensagemErro(
+        e,
+        'Erro ao executar o processamento em lote.'
+      );
+
+      this.mensagemErro = detalhe;
+      this.etapaLote = 'Erro no processamento.';
+      this.detalheLote = detalhe;
+
+      this.toastrService.danger(
+        detalhe,
+        'Erro'
+      );
+
+    } finally {
+      this.processandoLote = false;
+      this.isLoading = false;
+      this.carregandoRegistrosLote = false;
+      this.pessoaAtualLote = null;
+    }
   }
 
-  private processarPessoaLinhaLote(_pessoaId: number): Promise<void> {
-    // Backend ainda não implementado.
-    return Promise.resolve();
+private obterGruposUnicos(
+    registros: any[]
+  ): any[] {
+
+    const grupos = new Map<string, any>();
+
+    for (const pessoa of registros ?? []) {
+
+      const cpf =
+        this.obterCpf(
+          pessoa
+        );
+
+      const nome =
+        this.normalizeTextKey(
+          pessoa?.nome
+        );
+
+      if (!cpf || !nome) {
+        continue;
+      }
+
+      /*
+      * No Saneamento, um grupo duplicado é definido por:
+      *
+      * CPF igual + nome normalizado igual.
+      */
+      const chaveGrupo =
+        `${cpf}::${nome}`;
+
+      if (!grupos.has(chaveGrupo)) {
+        grupos.set(
+          chaveGrupo,
+          pessoa
+        );
+      }
+    }
+
+    return Array.from(
+      grupos.values()
+    );
   }
 
-  private async processarLoteTela(): Promise<void> {
-    // Implementar depois que o backend de carga CPF único SANE estiver pronto.
+  private obterCpf(pessoa: any): string {
+    return String(
+      pessoa?.cgcCpfDigits ??
+      pessoa?.cgcCpf ??
+      ''
+    ).replace(/\D/g, '');
+  }
+
+  private normalizeTextKey(value: any): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  private obterMensagemErro(
+    erro: any,
+    mensagemPadrao: string
+  ): string {
+    if (
+      typeof erro?.error === 'string' &&
+      erro.error.trim()
+    ) {
+      return erro.error.trim();
+    }
+
+    if (
+      typeof erro?.message === 'string' &&
+      erro.message.trim()
+    ) {
+      return erro.message.trim();
+    }
+
+    return mensagemPadrao;
   }
 }

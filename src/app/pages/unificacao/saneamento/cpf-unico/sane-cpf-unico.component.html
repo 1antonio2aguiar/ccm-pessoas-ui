@@ -6,29 +6,65 @@
   <nb-card-body>
 
     <div *ngIf="processandoLote" class="lote-progress-wrapper">
+
       <div class="lote-progress-text">
-        <strong>Processando lote...</strong> {{ progressoLote }}%
+
+        <strong>
+          {{ etapaLote }}
+        </strong>
+
+        <div class="mt-2">
+          {{ detalheLote }}
+        </div>
+
       </div>
 
-      <nb-progress-bar
-        [value]="progressoLote"
-        status="primary">
-      </nb-progress-bar>
+      <!-- Durante a recuperação das páginas -->
+      <div *ngIf="carregandoRegistrosLote" class="text-center my-3">
+        
+      </div>
+
+      <!-- Durante o processamento -->
+      <ng-container *ngIf="!carregandoRegistrosLote">
+
+        <nb-progress-bar [value]="progressoLote" status="primary">
+        </nb-progress-bar>
+
+        <div class="lote-progress-text mt-2">
+
+          <span>
+            Novos: {{ totalProcessados }}
+          </span>
+
+          <span>
+            | Vinculados: {{ totalVinculados }}
+          </span>
+
+          <span>
+            | Ignorados: {{ totalIgnorados }}
+          </span>
+
+          <span>
+            | Erros: {{ totalErros }}
+          </span>
+
+        </div>
+
+      </ng-container>
+
     </div>
 
     <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
       <strong>Erro:</strong> {{ mensagemErro }}
     </div>
 
-    <div *ngIf="isLoading" class="text-center my-3">
-      <nb-spinner status="primary"></nb-spinner>
+    <div
+    *ngIf="isLoading && !processandoLote" class="text-center my-3">
+      
       <p>Carregando pessoas do saneamento...</p>
     </div>
 
-    <ng2-smart-table
-      [settings]="settings"
-      [source]="source"
-      (create)="onCreateConfirm($event)"
+    <ng2-smart-table [settings]="settings" [source]="source" (create)="onCreateConfirm($event)"
       (edit)="onEditarLinha($event)">
     </ng2-smart-table>
 

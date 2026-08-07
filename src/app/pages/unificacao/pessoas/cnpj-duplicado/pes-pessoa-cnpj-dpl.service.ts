@@ -23,7 +23,7 @@ export class PesPessoaCnpjDplService extends BaseResourceService<PesPessoas> {
 
   private pesPessoasEventHendlerId: EventEmitter<PesPessoas>;
   private cargaApiPath = environment.apiUrl + 'pes-carga-pessoas-cnpj-duplicado';
-  private listaApiPath = environment.apiUrl + 'pes-pessoas/cnpj-duplicado-nao-migradas';
+  private listaApiPath = environment.apiUrl + 'pessoa/pes-pessoas/cnpj-duplicado-nao-migradas';
 
   constructor(protected injector: Injector) {
     super(environment.apiUrl + 'pes-pessoas', injector, PesPessoas.fromJson);

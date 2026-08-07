@@ -24,6 +24,9 @@ import {
 
 import { pesPessoaRoutedComponents } from './pes-pessoa-routing.module';
 import { PesPessoaRoutingModule } from './pes-pessoa-routing.module';
+import {
+  ConfirmarUnificacaoDialogModule,
+} from '../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.module';
 
 @NgModule({
   declarations: [
@@ -53,6 +56,7 @@ import { PesPessoaRoutingModule } from './pes-pessoa-routing.module';
     NbInputModule,
 
     PesPessoaRoutingModule,
+    ConfirmarUnificacaoDialogModule,
   ],
 })
 export class PesPessoaModule {}

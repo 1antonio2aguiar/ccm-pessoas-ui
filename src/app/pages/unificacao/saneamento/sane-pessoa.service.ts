@@ -5,6 +5,13 @@ import { environment } from '../../../../environments/environment';
 import { BaseResourceService } from '../../../shared/services/base-resource.service';
 import { FiltroPaginado } from '../../../shared/filters/filtro-paginado';
 
+export interface PessoaCpfCnpjCadUnicoDTO {
+  existe: boolean;
+  pessoaId: number | null;
+  nome: string | null;
+  cpfCnpj: string | null;
+  dataNascimento: string | null;
+}
 export class SanePessoaFilters {
   pagina = 0;
   itensPorPagina = 8;
@@ -76,13 +83,26 @@ export class SanePessoaService extends BaseResourceService<any> {
       .toPromise();
   }
 
-  existeCpfCnpjNoCadUnico(cpfCnpj: string | number, fisicaJuridica: string): Promise<boolean> {
+  existeCpfCnpjNoCadUnico(
+    cpfCnpj: string | number,
+    fisicaJuridica: string
+  ): Promise<PessoaCpfCnpjCadUnicoDTO> {
+
     const params = new HttpParams()
-      .set('cpfCnpj', String(cpfCnpj).replace(/\D/g, ''))
-      .set('fisicaJuridica', fisicaJuridica);
+      .set(
+        'cpfCnpj',
+        String(cpfCnpj).replace(/\D/g, '')
+      )
+      .set(
+        'fisicaJuridica',
+        fisicaJuridica
+      );
 
     return this.http
-      .get<boolean>(`${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`, { params })
+      .get<PessoaCpfCnpjCadUnicoDTO>(
+        `${environment.apiUrl}pessoas/existe-cpf-cnpj-cad-unico`,
+        { params }
+      )
       .toPromise();
   }
 
@@ -109,6 +129,18 @@ export class SanePessoaService extends BaseResourceService<any> {
   processarCnpjJaExisteCadUnico(pessoaId: number): Promise<string> {
     return this.http
       .post(`${this.listaApiPath}/processar-cnpj-ja-existe-cad-unico/${pessoaId}`, {}, { responseType: 'text' })
+      .toPromise();
+  }
+
+  processarCpfDuplicadoJaExiste(pessoaId: number): Promise<string> {
+    return this.http
+      .post(
+        `${this.listaApiPath}/processar-cpf-duplicado-ja-existe/${pessoaId}`,
+        {},
+        {
+          responseType: 'text',
+        }
+      )
       .toPromise();
   }
 } 

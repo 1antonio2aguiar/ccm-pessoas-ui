@@ -4,6 +4,9 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../../@theme/theme.module';
 
 import { FormsModule as ngFormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  ConfirmarUnificacaoDialogModule,
+} from '../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.module';
 
 import {
   NbActionsModule,
@@ -53,6 +56,7 @@ import { SanePessoaRoutingModule } from './sane-pessoa-routing.module';
     NbInputModule,
 
     SanePessoaRoutingModule,
+    ConfirmarUnificacaoDialogModule,
   ],
 })
 export class SanePessoaModule {}
