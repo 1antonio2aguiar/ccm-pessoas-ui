@@ -36,6 +36,26 @@ export class EnderecoService extends BaseResourceService<EnderecoOut>{
         );
     }
 
+    getEnderecoByEstabelecimentoId(
+        dadosPessoaJuridicaId: number,
+        ): Observable<EnderecoOut[]> {
+
+        const url =
+            `${this.apiPath}/por-estabelecimento/${dadosPessoaJuridicaId}`;
+
+        return this.http
+            .get<any[]>(url)
+            .pipe(
+            map(responseArray => {
+
+                return (responseArray ?? []).map(
+                item => this.jsonDataToResource(item),
+                );
+            }),
+            catchError(this.handleError),
+            );
+    }
+
     create(enderecoData: EnderecoIn): Observable<EnderecoOut> {
 
         const url = `${this.apiPath}`;

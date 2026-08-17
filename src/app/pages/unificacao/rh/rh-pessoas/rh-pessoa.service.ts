@@ -100,4 +100,19 @@ export class RhPessoaService extends BaseResourceService<any> {
       .post(`${this.cargaApiPath}/processar-cnpj-unico/${pessoaId}`, {}, { responseType: 'text' })
       .toPromise();
   }
+
+  registrarGrupoCpfDuplicadoNaoMigrar(
+    pessoaId: number
+  ): Promise<string> {
+
+    return this.http
+      .post(
+        `${this.listaApiPath}/cpf-duplicado/nao-migrar/${pessoaId}`,
+        {},
+        {
+          responseType: 'text',
+        }
+      )
+      .toPromise();
+  }
 }

@@ -7,6 +7,9 @@ import { SanePessoaFilters, SanePessoaService } from '../sane-pessoa.service';
 import {
   ConfirmarUnificacaoDialogComponent,
 } from '../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import {
+  UnificacaoAutomaticaService,
+} from '../../../../shared/services/unificacao-automatica.service';
 
 @Component({
   selector: 'ngx-sane-cpf-duplicado',
@@ -142,6 +145,7 @@ export class SaneCpfDuplicadoComponent implements OnInit {
     private service: SanePessoaService,
     private toastrService: NbToastrService,
     private dialogService: NbDialogService,
+    private unificacaoAutomaticaService: UnificacaoAutomaticaService,
   ) { }
 
   ngOnInit(): void {
@@ -325,34 +329,74 @@ export class SaneCpfDuplicadoComponent implements OnInit {
         return;
       }
 
-      const nomeSaneamento =
-        this.normalizeTextKey(pessoa?.nome);
+      const avaliacao =
+        this.unificacaoAutomaticaService
+          .avaliar(
+            {
+              nome:
+                pessoa?.nome ?? null,
 
-      const nomeCadUnico =
-        this.normalizeTextKey(resultado?.nome);
+              cpfCnpj:
+                cpf,
 
-      const nomesIguais =
-        nomeSaneamento.length > 0 &&
-        nomeCadUnico.length > 0 &&
-        nomeSaneamento === nomeCadUnico;
+              dataNascimento:
+                pessoa?.dataNascimento ?? null,
+            },
+            {
+              nome:
+                resultado?.nome ?? null,
+
+              cpfCnpj:
+                resultado?.cpfCnpj ?? cpf,
+
+              dataNascimento:
+                resultado?.dataNascimento ?? null,
+            }
+          );
 
       /*
-       * CPF e nome iguais:
-       * vincula diretamente, sem abrir o modal.
+       * Dados incompatíveis:
+       * não processa e não abre o modal.
        */
-      if (nomesIguais) {
+      if (
+        avaliacao.decisao ===
+        'INVALIDA'
+      ) {
+        this.toastrService.danger(
+          avaliacao.motivo,
+          'Dados incompatíveis'
+        );
+
+        return;
+      }
+
+      /*
+       * O motor considerou a unificação segura:
+       *
+       * - nomes iguais;
+       * - uma letra diferente e datas iguais;
+       * - diferença causada por ESPÓLIO;
+       * - diferença somente por partículas de ligação.
+       */
+      if (
+        avaliacao.decisao ===
+        'AUTOMATICA'
+      ) {
         const mensagem =
-          await this.service.processarCpfDuplicadoJaExiste(pessoaId);
+          await this.service
+            .processarCpfDuplicadoJaExiste(
+              pessoaId
+            );
 
         this.toastrService.success(
-          mensagem || 'Grupo vinculado ao Cadastro Único com sucesso.',
-          'Já existe no Cadastro Único'
+          mensagem ||
+          'Grupo vinculado automaticamente ao Cadastro Único.',
+          'Unificação automática'
         );
 
         this.listar();
         return;
       }
-
       /*
        * CPF igual e nome diferente:
        * solicita confirmação do usuário.
@@ -377,7 +421,35 @@ export class SaneCpfDuplicadoComponent implements OnInit {
           .onClose
           .toPromise();
 
-      if (!confirmou) {
+      /*
+      * O usuário clicou especificamente em "NÃO".
+      *
+      * O backend recupera e marca todos os integrantes
+      * do grupo duplicado do Saneamento.
+      */
+      if (confirmou === false) {
+
+        const mensagem =
+          await this.service
+            .registrarGrupoCpfDuplicadoNaoMigrar(
+              pessoaId
+            );
+
+        this.toastrService.info(
+          mensagem ||
+            'Grupo retirado da lista de migração.',
+          'Não unificar'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * Se o modal for encerrado sem resposta explícita,
+      * não registra nenhuma decisão.
+      */
+      if (confirmou !== true) {
         return;
       }
 
@@ -526,31 +598,56 @@ export class SaneCpfDuplicadoComponent implements OnInit {
             continue;
           }
 
-          const nomeSaneamento =
-            this.normalizeTextKey(pessoa?.nome);
+          const avaliacao =
+            this.unificacaoAutomaticaService
+              .avaliar(
+                {
+                  nome:
+                    pessoa?.nome ?? null,
 
-          const nomeCadUnico =
-            this.normalizeTextKey(resultado?.nome);
+                  cpfCnpj:
+                    cpf,
 
-          const nomesIguais =
-            nomeSaneamento.length > 0 &&
-            nomeCadUnico.length > 0 &&
-            nomeSaneamento === nomeCadUnico;
+                  dataNascimento:
+                    pessoa?.dataNascimento ?? null,
+                },
+                {
+                  nome:
+                    resultado?.nome ?? null,
+
+                  cpfCnpj:
+                    resultado?.cpfCnpj ?? cpf,
+
+                  dataNascimento:
+                    resultado?.dataNascimento ?? null,
+                }
+              );
 
           /*
-           * CPF e nome iguais:
-           * vincula automaticamente, sem modal.
+           * No lote nunca abre modal.
+           *
+           * Quando o motor considerar a unificação
+           * segura, vincula todo o grupo duplicado.
            */
-          if (nomesIguais) {
-            await this.service.processarCpfDuplicadoJaExiste(pessoaId);
+          if (
+            avaliacao.decisao ===
+            'AUTOMATICA'
+          ) {
+            await this.service
+              .processarCpfDuplicadoJaExiste(
+                pessoaId
+              );
+
             this.totalVinculados++;
             continue;
           }
 
           /*
-           * CPF igual e nome diferente:
-           * no individual abriria o modal;
-           * no lote é apenas ignorado.
+           * EXIGIR_CONFIRMACAO ou INVALIDA:
+           *
+           * Não processa automaticamente.
+           * O grupo permanece disponível para
+           * tratamento individual.
            */
           this.totalIgnorados++;
 
@@ -628,7 +725,7 @@ export class SaneCpfDuplicadoComponent implements OnInit {
     }
   }
 
-private obterGruposUnicos(
+  private obterGruposUnicos(
     registros: any[]
   ): any[] {
 

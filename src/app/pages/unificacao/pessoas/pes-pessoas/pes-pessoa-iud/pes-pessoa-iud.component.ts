@@ -1,12 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import {  NbDialogService,   NbToastrService, } from '@nebular/theme';
+import { NbDialogService, NbToastrService, } from '@nebular/theme';
 import { HttpParams } from '@angular/common/http';
 
 import { PesPessoaService, PessoaFilters } from '../pes-pessoa.service';
 import {
   ConfirmarUnificacaoDialogComponent,
 } from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import {
+  UnificacaoAutomaticaService,
+} from '../../../../../shared/services/unificacao-automatica.service';
+import {
+  ControleMigracaoPessoaService,
+} from '../../../../../shared/services/controle-migracao-pessoa.service';
 
 @Component({
   selector: 'ngx-pes-pessoa-iud',
@@ -104,13 +110,15 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
         valuePrepareFunction: (_: any, row: any) => row?.dataNascimento ?? '',
         filterFunction: (_cell?: any, _search?: string) => true,
       },
-    }, 
+    },
   };
 
   constructor(
     private pesPessoaService: PesPessoaService,
     private toastrService: NbToastrService,
     private dialogService: NbDialogService,
+    private unificacaoAutomaticaService: UnificacaoAutomaticaService,
+    private controleMigracaoPessoaService: ControleMigracaoPessoaService,
   ) { }
 
   ngOnInit(): void {
@@ -158,99 +166,99 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
   }
 
   onTableFilter(change: any): void {
-  let params = this.buildBaseParams();
+    let params = this.buildBaseParams();
 
-  const filtersArray = change?.filters ?? [];
+    const filtersArray = change?.filters ?? [];
 
-  const pessoaFilter = filtersArray.find((f: any) => f.field === 'pessoa');
-  const nomeFilter = filtersArray.find((f: any) => f.field === 'nome');
-  const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cnpjCpf');
-  const nascimentoFilter = filtersArray.find(
-    (f: any) => f.field === 'dataNascimento'
-  );
-
-  const pessoa = String(pessoaFilter?.search ?? '').trim();
-  const nome = String(nomeFilter?.search ?? '').trim();
-
-  const cpfCnpjRaw = String(cpfCnpjFilter?.search ?? '').trim();
-  const cpfCnpjDigits = cpfCnpjRaw.replace(/\D/g, '');
-
-  const nascRaw = String(nascimentoFilter?.search ?? '').trim();
-
-  /*
-   * DATA DE NASCIMENTO:
-   * Se começou a digitar, somente pesquisa quando estiver completa.
-   */
-  if (nascRaw.length > 0) {
-    const dataCompleta = nascRaw.match(
-      /^(\d{2})\/(\d{2})\/(\d{4})$/
+    const pessoaFilter = filtersArray.find((f: any) => f.field === 'pessoa');
+    const nomeFilter = filtersArray.find((f: any) => f.field === 'nome');
+    const cpfCnpjFilter = filtersArray.find((f: any) => f.field === 'cnpjCpf');
+    const nascimentoFilter = filtersArray.find(
+      (f: any) => f.field === 'dataNascimento'
     );
 
-    if (!dataCompleta) {
+    const pessoa = String(pessoaFilter?.search ?? '').trim();
+    const nome = String(nomeFilter?.search ?? '').trim();
+
+    const cpfCnpjRaw = String(cpfCnpjFilter?.search ?? '').trim();
+    const cpfCnpjDigits = cpfCnpjRaw.replace(/\D/g, '');
+
+    const nascRaw = String(nascimentoFilter?.search ?? '').trim();
+
+    /*
+     * DATA DE NASCIMENTO:
+     * Se começou a digitar, somente pesquisa quando estiver completa.
+     */
+    if (nascRaw.length > 0) {
+      const dataCompleta = nascRaw.match(
+        /^(\d{2})\/(\d{2})\/(\d{4})$/
+      );
+
+      if (!dataCompleta) {
+        return;
+      }
+
+      const dia = Number(dataCompleta[1]);
+      const mes = Number(dataCompleta[2]);
+      const ano = Number(dataCompleta[3]);
+
+      const dataValida =
+        dia >= 1 &&
+        dia <= 31 &&
+        mes >= 1 &&
+        mes <= 12 &&
+        ano >= 1900;
+
+      if (!dataValida) {
+        return;
+      }
+
+      const yyyyMMdd =
+        `${dataCompleta[3]}-${dataCompleta[2]}-${dataCompleta[1]}`;
+
+      params = params.set('dataNascimento', yyyyMMdd);
+
+      this.execSearch(params);
       return;
     }
 
-    const dia = Number(dataCompleta[1]);
-    const mes = Number(dataCompleta[2]);
-    const ano = Number(dataCompleta[3]);
+    if (cpfCnpjDigits.length >= 6) {
+      if (cpfCnpjDigits.length <= 11) {
+        params = params.set('cpf', cpfCnpjDigits);
+      } else {
+        params = params.set('cnpj', cpfCnpjDigits);
+      }
 
-    const dataValida =
-      dia >= 1 &&
-      dia <= 31 &&
-      mes >= 1 &&
-      mes <= 12 &&
-      ano >= 1900;
-
-    if (!dataValida) {
+      this.execSearch(params);
       return;
     }
 
-    const yyyyMMdd =
-      `${dataCompleta[3]}-${dataCompleta[2]}-${dataCompleta[1]}`;
-
-    params = params.set('dataNascimento', yyyyMMdd);
-
-    this.execSearch(params);
-    return;
-  }
-
-  if (cpfCnpjDigits.length >= 6) {
-    if (cpfCnpjDigits.length <= 11) {
-      params = params.set('cpf', cpfCnpjDigits);
-    } else {
-      params = params.set('cnpj', cpfCnpjDigits);
+    if (pessoa.length > 0) {
+      params = params.set('pessoa', pessoa);
+      this.execSearch(params);
+      return;
     }
 
-    this.execSearch(params);
-    return;
-  }
+    if (nome.length > 0) {
+      params = params.set('nome', nome);
+      this.execSearch(params);
+      return;
+    }
 
-  if (pessoa.length > 0) {
-    params = params.set('pessoa', pessoa);
-    this.execSearch(params);
-    return;
-  }
+    /*
+     * Só volta para a lista inicial quando todos os filtros
+     * estiverem realmente vazios.
+     */
+    const todosVazios =
+      !pessoa &&
+      !nome &&
+      !cpfCnpjRaw &&
+      !nascRaw;
 
-  if (nome.length > 0) {
-    params = params.set('nome', nome);
-    this.execSearch(params);
-    return;
+    if (todosVazios) {
+      this.execSearch(params);
+    }
   }
-
-  /*
-   * Só volta para a lista inicial quando todos os filtros
-   * estiverem realmente vazios.
-   */
-  const todosVazios =
-    !pessoa &&
-    !nome &&
-    !cpfCnpjRaw &&
-    !nascRaw;
-
-  if (todosVazios) {
-    this.execSearch(params);
-  }
-}
 
   private execSearch(params: HttpParams): void {
     this.filtro.params = params;
@@ -300,151 +308,245 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async processarPessoaLinha(
-  pessoa: any
-): Promise<void> {
+  private async processarPessoaLinha(pessoa: any): Promise<void> {
 
-  const pessoaId =
-    pessoa?.pessoa;
+    const pessoaId =
+      pessoa?.pessoa;
 
-  const cpfCnpj =
-    pessoa?.cnpjCpfDigits ||
-    String(
-      pessoa?.cnpjCpf ?? ''
-    ).replace(/\D/g, '');
+    const cpfCnpj =
+      pessoa?.cnpjCpfDigits ||
+      String(
+        pessoa?.cnpjCpf ?? ''
+      ).replace(/\D/g, '');
 
-  const fisicaJuridica =
-    pessoa?.fisicaJuridica || 'F';
+    const fisicaJuridica =
+      pessoa?.fisicaJuridica || 'F';
 
-  if (!pessoaId) {
-    this.toastrService.danger(
-      'Código da pessoa não encontrado.',
-      'Erro'
-    );
-    return;
-  }
+    if (!pessoaId) {
+      this.toastrService.danger(
+        'Código da pessoa não encontrado.',
+        'Erro'
+      );
+      return;
+    }
 
-  if (!cpfCnpj) {
-    this.toastrService.danger(
-      'CPF não encontrado para validação.',
-      'Erro'
-    );
-    return;
-  }
+    if (!cpfCnpj) {
+      this.toastrService.danger(
+        'CPF não encontrado para validação.',
+        'Erro'
+      );
+      return;
+    }
 
-  this.isLoading = true;
+    this.isLoading = true;
 
-  try {
+    try {
 
-    const resultado =
-      await this.pesPessoaService
-        .existeCpfCnpjNoCadUnico(
-          cpfCnpj,
-          fisicaJuridica
+      const resultado =
+        await this.pesPessoaService
+          .existeCpfCnpjNoCadUnico(
+            cpfCnpj,
+            fisicaJuridica
+          );
+
+      /*
+       * CPF ainda não existe:
+       * segue o processamento normal.
+       */
+      if (!resultado?.existe) {
+
+        const mensagem =
+          await this.pesPessoaService
+            .processarPessoaUnica(
+              pessoaId
+            );
+
+        this.toastrService.success(
+          mensagem,
+          'Sucesso'
         );
 
-    /*
-     * CPF ainda não existe:
-     * segue o processamento normal.
-     */
-    if (!resultado?.existe) {
+        this.listar();
+        return;
+      }
 
+      const avaliacao =
+        this.unificacaoAutomaticaService
+          .avaliar(
+            {
+              nome:
+                pessoa?.nome ?? null,
+
+              cpfCnpj:
+                cpfCnpj,
+
+              dataNascimento:
+                pessoa?.dataNascimento ?? null,
+            },
+            {
+              nome:
+                resultado?.nome ?? null,
+
+              cpfCnpj:
+                resultado?.cpfCnpj ?? cpfCnpj,
+
+              dataNascimento:
+                resultado?.dataNascimento ?? null,
+            }
+          );
+
+      /*
+      * Os dados não permitem uma unificação segura.
+      * Não processa e não abre o modal.
+      */
+      if (
+        avaliacao.decisao ===
+        'INVALIDA'
+      ) {
+        this.toastrService.danger(
+          avaliacao.motivo,
+          'Dados incompatíveis'
+        );
+
+        return;
+      }
+
+      /*
+      * O motor aprovou a unificação automática.
+      *
+      * Isso contempla as regras já implantadas:
+      *
+      * - nomes normalizados iguais;
+      * - diferença de uma letra com datas iguais;
+      * - diferença causada por ESPÓLIO;
+      * - diferença apenas por partículas de ligação.
+      */
+      if (
+        avaliacao.decisao ===
+        'AUTOMATICA'
+      ) {
+        const mensagem =
+          await this.pesPessoaService
+            .processarPessoaJaExisteCadUnico(
+              pessoaId
+            );
+
+        this.toastrService.success(
+          mensagem ||
+            'Pessoa vinculada automaticamente ao Cadastro Único.',
+          'Unificação automática'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+       * CPF já existe:
+       * solicita a confirmação do usuário.
+       */
+      const confirmou =
+        await this.dialogService
+          .open(
+            ConfirmarUnificacaoDialogComponent,
+            {
+              closeOnBackdropClick: false,
+
+              context: {
+                tituloOrigem:
+                  'Cadastro de Pessoas',
+
+                pessoaOrigem: {
+                  nome:
+                    pessoa?.nome ?? null,
+
+                  cpfCnpj:
+                    pessoa?.cnpjCpf ?? cpfCnpj,
+
+                  dataNascimento:
+                    pessoa?.dataNascimento ?? null,
+                },
+
+                pessoaCadUnico:
+                  resultado,
+              },
+            }
+          )
+          .onClose
+          .toPromise();
+
+      /*
+      * O usuário clicou especificamente em "NÃO".
+      *
+      * Registra a decisão e atualiza a lista.
+      */
+      if (confirmou === false) {
+
+        await this.controleMigracaoPessoaService
+          .registrarNaoMigrar(
+            'PESSOAS',
+            pessoaId
+          );
+
+        this.toastrService.info(
+          'Pessoa retirada da lista de migração.',
+          'Não unificar'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * Proteção para algum encerramento inesperado
+      * do modal sem uma resposta explícita.
+      *
+      * Nesse caso não grava nenhuma decisão.
+      */
+      if (confirmou !== true) {
+        return;
+      }
+
+      /*
+       * Confirmou: chama o endpoint específico
+       * para vincular ao cadastro já existente.
+       */
       const mensagem =
         await this.pesPessoaService
-          .processarPessoaUnica(
+          .processarPessoaJaExisteCadUnico(
             pessoaId
           );
 
       this.toastrService.success(
-        mensagem,
+        mensagem ||
+        'Pessoa vinculada ao Cadastro Único com sucesso.',
         'Sucesso'
       );
 
       this.listar();
-      return;
+
+    } catch (e: any) {
+
+      console.error(
+        `Erro ao processar a pessoa ${pessoaId}`,
+        e
+      );
+
+      const detalhe =
+        typeof e?.error === 'string' &&
+          e.error.trim()
+          ? e.error.trim()
+          : 'Não foi possível concluir o processamento.';
+
+      this.toastrService.danger(
+        detalhe,
+        'Erro'
+      );
+
+    } finally {
+      this.isLoading = false;
     }
-
-    /*
-     * CPF já existe:
-     * solicita a confirmação do usuário.
-     */
-    const confirmou =
-      await this.dialogService
-        .open(
-          ConfirmarUnificacaoDialogComponent,
-          {
-            closeOnBackdropClick: false,
-
-            context: {
-              tituloOrigem:
-                'Cadastro de Pessoas',
-
-              pessoaOrigem: {
-                nome:
-                  pessoa?.nome ?? null,
-
-                cpfCnpj:
-                  pessoa?.cnpjCpf ?? cpfCnpj,
-
-                dataNascimento:
-                  pessoa?.dataNascimento ?? null,
-              },
-
-              pessoaCadUnico:
-                resultado,
-            },
-          }
-        )
-        .onClose
-        .toPromise();
-
-    /*
-     * Cancelou: não realiza nenhuma alteração.
-     */
-    if (!confirmou) {
-      return;
-    }
-
-    /*
-     * Confirmou: chama o endpoint específico
-     * para vincular ao cadastro já existente.
-     */
-    const mensagem =
-      await this.pesPessoaService
-        .processarPessoaJaExisteCadUnico(
-          pessoaId
-        );
-
-    this.toastrService.success(
-      mensagem ||
-        'Pessoa vinculada ao Cadastro Único com sucesso.',
-      'Sucesso'
-    );
-
-    this.listar();
-
-  } catch (e: any) {
-
-    console.error(
-      `Erro ao processar a pessoa ${pessoaId}`,
-      e
-    );
-
-    const detalhe =
-      typeof e?.error === 'string' &&
-      e.error.trim()
-        ? e.error.trim()
-        : 'Não foi possível concluir o processamento.';
-
-    this.toastrService.danger(
-      detalhe,
-      'Erro'
-    );
-
-  } finally {
-    this.isLoading = false;
   }
-}
 
   private async processarLoteTela(): Promise<void> {
     if (this.processandoLote) {
@@ -452,7 +554,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.processandoLote = true; 
+    this.processandoLote = true;
     this.isLoading = true;
     this.statusCarga = 'PROCESSANDO';
     this.totalProcessado = 0;
@@ -559,9 +661,7 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async processarPessoaLinhaLote(
-    pessoa: any
-  ): Promise<boolean> {
+  private async processarPessoaLinhaLote(pessoa: any): Promise<boolean> {
 
     const pessoaId =
       pessoa?.pessoa;
@@ -602,9 +702,65 @@ export class PesPessoaIudComponent implements OnInit, OnDestroy {
     * - não gera erro;
     * - apenas ignora o registro.
     */
+
+    /*
+    * No lote nunca abre modal.
+    *
+    * Se o CPF existir, consulta o motor para
+    * decidir se pode vincular automaticamente.
+    */
     if (resultado?.existe) {
+
+      const avaliacao =
+        this.unificacaoAutomaticaService
+          .avaliar(
+            {
+              nome:
+                pessoa?.nome ?? null,
+
+              cpfCnpj:
+                cpfCnpj,
+
+              dataNascimento:
+                pessoa?.dataNascimento ?? null,
+            },
+            {
+              nome:
+                resultado?.nome ?? null,
+
+              cpfCnpj:
+                resultado?.cpfCnpj ?? cpfCnpj,
+
+              dataNascimento:
+                resultado?.dataNascimento ?? null,
+            }
+          );
+
+      /*
+      * O motor aprovou:
+      * vincula automaticamente ao Cadastro Único.
+      */
+      if (
+        avaliacao.decisao ===
+        'AUTOMATICA'
+      ) {
+        await this.pesPessoaService
+          .processarPessoaJaExisteCadUnico(
+            pessoaId
+          );
+
+        return true;
+      }
+
+      /*
+      * EXIGIR_CONFIRMACAO ou INVALIDA:
+      *
+      * O lote não abre modal.
+      * Mantém a pessoa para tratamento individual.
+      */
       return false;
     }
+    
 
     await this.pesPessoaService
       .processarPessoaUnica(

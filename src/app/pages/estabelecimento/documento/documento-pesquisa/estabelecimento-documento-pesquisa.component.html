@@ -1,0 +1,138 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>Documentos do Estabelecimento</span>
+
+    <button
+      nbButton
+      status="primary"
+      size="small"
+      type="button"
+      (click)="adicionarNovoDocumento()">
+      <nb-icon icon="plus-outline"></nb-icon>
+      Inserir novo documento
+    </button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div *ngIf="isLoadingDocumento" class="text-center my-3">
+      <nb-spinner status="primary"></nb-spinner>
+      <p>Carregando documentos...</p>
+    </div>
+
+    <div *ngIf="!isLoadingDocumento">
+      <div
+        *ngFor="let documento of documentos"
+        class="documento-item mb-3 p-3 border rounded">
+
+        <div class="documento-header d-flex justify-content-between align-items-start">
+          <div></div>
+
+          <div class="acoes-documento">
+            <button
+              nbButton
+              ghost
+              status="info"
+              size="tiny"
+              type="button"
+              (click)="editarDocumento(documento)">
+              <nb-icon icon="edit-outline"></nb-icon>
+              Editar
+            </button>
+
+            <button
+              nbButton
+              ghost
+              status="danger"
+              size="tiny"
+              type="button"
+              (click)="excluirDocumento(documento)">
+              <nb-icon icon="trash-2-outline"></nb-icon>
+              Excluir
+            </button>
+          </div>
+        </div>
+
+        <hr class="my-2">
+
+        <div class="detalhes-documento small">
+          <p class="mb-1">
+            <strong>{{ documento.tipoDocumentoDescricao || 'Documento' }}</strong>
+            <span *ngIf="documento.numeroDocumento">
+              : <strong>{{ documento.numeroDocumento }}</strong>
+            </span>
+          </p>
+
+          <p *ngIf="documento.orgaoExpedidor" class="mb-1">
+            <strong>Órgão expedidor:</strong> {{ documento.orgaoExpedidor }}
+          </p>
+
+          <p *ngIf="documento.documentoOrigem" class="mb-1">
+            <strong>Origem:</strong> {{ documento.documentoOrigem }}
+          </p>
+
+          <p *ngIf="documento.categoriaCnh" class="mb-1">
+            <strong>Categoria CNH:</strong> {{ documento.categoriaCnh }}
+          </p>
+
+          <p
+            *ngIf="documento.zona !== null && documento.zona !== undefined"
+            class="mb-1">
+            <strong>Zona:</strong> {{ documento.zona }}
+
+            <span *ngIf="documento.secao !== null && documento.secao !== undefined">
+              &nbsp;&nbsp;<strong>Seção:</strong> {{ documento.secao }}
+            </span>
+          </p>
+
+          <p
+            *ngIf="
+              (documento.zona === null || documento.zona === undefined) &&
+              documento.secao !== null &&
+              documento.secao !== undefined
+            "
+            class="mb-1">
+            <strong>Seção:</strong> {{ documento.secao }}
+          </p>
+
+          <p *ngIf="documento.dataDocumento" class="mb-1">
+            <strong>Data do documento:</strong>
+            {{ documento.dataDocumento | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p *ngIf="documento.dataExpedicao" class="mb-1">
+            <strong>Data de expedição:</strong>
+            {{ documento.dataExpedicao | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p *ngIf="documento.dataValidade" class="mb-1">
+            <strong>Data de validade:</strong>
+            {{ documento.dataValidade | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p *ngIf="documento.dataPrimeiraCnh" class="mb-1">
+            <strong>Data da primeira CNH:</strong>
+            {{ documento.dataPrimeiraCnh | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p *ngIf="documento.observacao" class="mb-1">
+            <strong>Observação:</strong> {{ documento.observacao }}
+          </p>
+        </div>
+      </div>
+
+      <div
+        *ngIf="documentos.length === 0"
+        class="sem-documentos text-center my-3 p-4 border rounded bg-light">
+        <nb-icon icon="file-text-outline" pack="eva"></nb-icon>
+
+        <p class="mt-2 mb-1">
+          Nenhum documento cadastrado para este estabelecimento.
+        </p>
+
+        <p class="text-muted small">
+          Utilize “Inserir novo documento” para começar.
+        </p>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

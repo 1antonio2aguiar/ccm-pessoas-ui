@@ -8,7 +8,7 @@ export class CpfNoNomeFilters {
   itensPorPagina = 1000;
   totalRegistros = 0;
   params = new HttpParams();
-}
+} 
 
 @Injectable({
   providedIn: 'root',

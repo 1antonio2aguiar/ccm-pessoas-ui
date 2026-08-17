@@ -1,0 +1,55 @@
+// endereco-iud.component.scss
+nb-card.dialog-card {
+    max-width: 950px; // Define uma largura máxima para o modal
+    width: 90vw; // Usa a largura da viewport, até o máximo
+
+    nb-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .close-button {
+            padding: 0.25rem; // Menor padding para o botão de fechar
+            margin-left: auto; // Empurra para a direita
+        }
+    }
+
+    nb-card-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .button-spinner {
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+}
+
+.radio-group-flex-container {
+  display: flex;
+  flex-wrap: wrap; // Permite que os itens quebrem para a próxima linha
+  gap: 10px; // Espaço entre os itens (ajuste conforme necessário)
+
+  .radio-flex-item {
+    // Para 4 colunas, cada item teria aproximadamente 25% da largura,
+    // menos o espaço do gap.
+    // Você pode ser mais preciso ou deixar o flex-grow cuidar disso.
+    flex-basis: calc(25% - 10px); // Exemplo: 25% para 4 colunas, ajustando pelo gap
+    min-width: 150px; // Um mínimo para não ficarem muito espremidos
+    // Ou use flex-grow e flex-shrink se preferir
+    // flex: 1 1 auto;
+  }
+}
+
+// Media queries para responsividade se necessário
+@media (max-width: 992px) { // Telas médias
+  .radio-group-flex-container .radio-flex-item {
+    flex-basis: calc(50% - 10px); // 2 colunas
+  }
+}
+
+@media (max-width: 576px) { // Telas pequenas
+  .radio-group-flex-container .radio-flex-item {
+    flex-basis: 100%; // 1 coluna
+  }
+}

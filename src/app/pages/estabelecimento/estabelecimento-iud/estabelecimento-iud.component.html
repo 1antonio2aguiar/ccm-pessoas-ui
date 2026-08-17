@@ -1,0 +1,49 @@
+<div class="page-container">
+
+  <div class="menu-column-container">
+
+    <nb-card class="menu-card">
+
+      <nb-card-body>
+
+        <div class="sidebar-header">
+
+          <h6 *ngIf="estabelecimentoId">
+            {{ estabelecimentoNome }}
+          </h6>
+
+          <span
+            class="identificador"
+            *ngIf="estabelecimentoId">
+
+            ID: {{ estabelecimentoId }}
+
+          </span>
+
+        </div>
+
+        <div
+          class="loading"
+          *ngIf="isLoading">
+
+          Carregando...
+
+        </div>
+
+        <nb-menu
+          [items]="menuItems">
+        </nb-menu>
+
+      </nb-card-body>
+
+    </nb-card>
+
+  </div>
+
+  <div class="content-column-container">
+
+    <router-outlet></router-outlet>
+
+  </div>
+
+</div>

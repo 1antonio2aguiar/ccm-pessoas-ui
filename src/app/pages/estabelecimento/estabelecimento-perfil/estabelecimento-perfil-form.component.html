@@ -1,0 +1,477 @@
+<nb-card
+  size="large"
+  class="perfil-card"
+  [nbSpinner]="isLoading || isLoadingDados"
+  nbSpinnerStatus="primary"
+  nbSpinnerSize="large">
+
+  <!-- ======================================================= -->
+  <!-- CABEÇALHO                                               -->
+  <!-- ======================================================= -->
+
+  <nb-card-header
+    class="d-flex justify-content-between align-items-center">
+
+    <span>
+      {{ cardHeaderTitle }}
+    </span>
+
+    <div class="form-header-buttons">
+
+      <button
+        nbButton
+        status="basic"
+        type="button"
+        size="small"
+        ghost
+        [disabled]="isLoading"
+        (click)="voltar()">
+
+        <nb-icon
+          icon="close-outline"
+          pack="eva">
+        </nb-icon>
+
+        CANCELAR
+
+      </button>
+
+      <button
+        nbButton
+        status="primary"
+        type="button"
+        size="small"
+        style="margin-left: 10px;"
+        [disabled]="
+          estabelecimentoForm.invalid ||
+          !pessoaId ||
+          isLoading ||
+          isLoadingDados
+        "
+        (click)="salvar()">
+
+        <nb-icon
+          icon="save-outline"
+          pack="eva"
+          *ngIf="!isLoading">
+        </nb-icon>
+
+        {{
+          modoEdicao
+            ? 'SALVAR ALTERAÇÕES'
+            : 'SALVAR CNPJ'
+        }}
+
+      </button>
+
+    </div>
+
+  </nb-card-header>
+
+  <!-- ======================================================= -->
+  <!-- CONTEÚDO                                                -->
+  <!-- ======================================================= -->
+
+  <nb-card-body>
+
+    <div class="perfil-form-wrapper">
+
+      <form
+        [formGroup]="estabelecimentoForm"
+        (ngSubmit)="salvar()">
+
+        <!-- Campos internos -->
+
+        <input
+          type="hidden"
+          formControlName="id">
+
+        <input
+          type="hidden"
+          formControlName="estabelecimento">
+
+        <!-- ================================================= -->
+        <!-- DADOS DO PROPRIETÁRIO                            -->
+        <!-- ================================================= -->
+
+        <div class="dados-bloco">
+
+          <h6>
+            Dados do Proprietário
+          </h6>
+
+          <div class="row">
+
+            <!-- NOME: INCLUSÃO -->
+
+            <div
+              class="col-md-8 form-group"
+              *ngIf="!modoEdicao">
+
+              <label class="label">
+                Nome Completo
+              </label>
+
+              <input
+                nbInput
+                fullWidth
+                type="text"
+                autocomplete="off"
+                placeholder="Digite o nome do proprietário"
+                [formControl]="proprietarioCtrl">
+
+            </div>
+
+            <!-- NOME: EDIÇÃO -->
+
+            <div
+              class="col-md-8 form-group"
+              *ngIf="modoEdicao">
+
+              <label class="label">
+                Nome Completo
+              </label>
+
+              <input
+                *ngIf="modoEdicao"
+                nbInput
+                fullWidth
+                type="text"
+                readonly
+                class="readonly-field"
+                [value]="pessoaNome || ''">
+
+            </div>
+
+            <!-- CPF: INCLUSÃO -->
+
+            <div
+              class="col-md-4 form-group"
+              *ngIf="!modoEdicao">
+
+              <label class="label">
+                CPF
+              </label>
+
+              <input
+                #proprietarioCpfInput
+                nbInput
+                fullWidth
+                type="text"
+                autocomplete="off"
+                maxlength="14"
+                placeholder="000.000.000-00"
+                [formControl]="proprietarioCpfCtrl"
+                (input)="onCpfProprietarioInput($event)">
+
+            </div>
+
+            <!-- CPF: EDIÇÃO -->
+
+            <div
+              class="col-md-4 form-group"
+              *ngIf="modoEdicao">
+
+              <label class="label">
+                CPF
+              </label>
+
+              <input
+                nbInput
+                fullWidth
+                type="text"
+                readonly
+                class="readonly-field"
+                [value]="formatarCpf(pessoaCpf)">
+
+            </div>
+
+          </div>
+
+          <!-- PESQUISANDO -->
+
+          <small
+            class="pesquisando"
+            *ngIf="
+              !modoEdicao &&
+              pesquisandoProprietarios
+            ">
+
+            Pesquisando proprietário...
+
+          </small>
+
+          <!-- RESULTADOS DA PESQUISA -->
+
+          <div
+            class="proprietario-resultados"
+            *ngIf="
+              !modoEdicao &&
+              mostrarSugestoesProprietarios
+            ">
+
+            <button
+              type="button"
+              class="proprietario-resultado"
+              *ngFor="
+                let proprietario
+                of sugestoesProprietarios
+              "
+              (click)="
+                selecionarProprietario(
+                  proprietario
+                )
+              ">
+
+              <span class="proprietario-nome">
+                {{ proprietario.nome }}
+              </span>
+
+              <span class="proprietario-documento">
+
+                CPF:
+                {{ formatarCpf(proprietario.cpf) }}
+
+              </span>
+
+            </button>
+
+          </div>
+
+          <!-- PROPRIETÁRIO SELECIONADO -->
+
+          <div
+            class="proprietario-selecionado"
+            *ngIf="
+              !modoEdicao &&
+              pessoaId
+            ">
+
+            <nb-icon
+              icon="checkmark-circle-2-outline"
+              status="success">
+            </nb-icon>
+
+            Proprietário selecionado:
+
+            <strong>
+              {{ proprietarioCtrl.value }}
+            </strong>
+
+            —
+
+            CPF:
+            {{ formatarCpf(pessoaCpf) }}
+
+          </div>
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- DADOS DO ESTABELECIMENTO                         -->
+        <!-- ================================================= -->
+
+        <div class="dados-bloco estabelecimento-bloco">
+
+          <h6>
+            Dados do Estabelecimento
+          </h6>
+
+          <!-- CNPJ / TIPO / MICROEMPRESA -->
+
+          <div class="row">
+
+            <!-- CNPJ -->
+
+            <div class="col-md-4 form-group">
+
+              <label class="label">
+                CNPJ
+              </label>
+
+              <input
+                #cnpjInput
+                nbInput
+                fullWidth
+                type="text"
+                maxlength="18"
+                autocomplete="off"
+                placeholder="00.000.000/0000-00"
+                formControlName="cnpj"
+                (input)="onCnpjInput($event)"
+                [readonly]="modoEdicao"
+                [class.readonly-field]="modoEdicao"
+                [status]="
+                  campoInvalido('cnpj')
+                    ? 'danger'
+                    : 'basic'
+                ">
+
+              <small
+                class="erro"
+                *ngIf="campoInvalido('cnpj')">
+
+                Informe um CNPJ com 14 dígitos.
+
+              </small>
+
+            </div>
+
+            <!-- TIPO DA EMPRESA -->
+
+            <div class="col-md-4 form-group">
+
+              <label class="label">
+                Tipo de Empresa
+              </label>
+
+              <nb-select
+                fullWidth
+                placeholder="Selecione o Tipo"
+                formControlName="tipoEmpresa">
+
+                <nb-option [value]="0">
+                  LTDA
+                </nb-option>
+
+                <nb-option [value]="1">
+                  S.A.
+                </nb-option>
+
+                <nb-option [value]="2">
+                  MEI
+                </nb-option>
+
+                <nb-option [value]="3">
+                  EIRELI
+                </nb-option>
+
+                <nb-option [value]="4">
+                  Outro
+                </nb-option>
+
+              </nb-select>
+
+            </div>
+
+            <!-- MICROEMPRESA -->
+
+            <div class="col-md-4 form-group">
+
+              <label class="label">
+                Micro Empresa?
+              </label>
+
+              <nb-radio-group
+                formControlName="microEmpresa"
+                class="radio-group-inline
+                       d-flex
+                       align-items-center">
+
+                <nb-radio
+                  value="S"
+                  class="mr-3">
+
+                  SIM
+
+                </nb-radio>
+
+                <nb-radio value="N">
+                  NÃO
+                </nb-radio>
+
+              </nb-radio-group>
+
+            </div>
+
+          </div>
+
+          <!-- NOME / RAZÃO SOCIAL -->
+
+          <div class="row">
+
+            <div class="col-md-12 form-group">
+
+              <label class="label">
+                Nome / Razão Social
+              </label>
+
+              <input
+                nbInput
+                fullWidth
+                type="text"
+                maxlength="120"
+                placeholder="Nome ou razão social"
+                formControlName="nome"
+                [status]="
+                  campoInvalido('nome')
+                    ? 'danger'
+                    : 'basic'
+                ">
+
+              <small
+                class="erro"
+                *ngIf="campoInvalido('nome')">
+
+                O nome/razão social é obrigatório.
+
+              </small>
+
+            </div>
+
+          </div>
+
+          <!-- NOME FANTASIA -->
+
+          <div class="row">
+
+            <div class="col-md-12 form-group">
+
+              <label class="label">
+                Nome Fantasia
+              </label>
+
+              <input
+                nbInput
+                fullWidth
+                type="text"
+                maxlength="255"
+                placeholder="Nome fantasia"
+                formControlName="nomeFantasia">
+
+            </div>
+
+          </div>
+
+          <!-- OBJETO SOCIAL -->
+
+          <div class="row">
+
+            <div class="col-md-12 form-group">
+
+              <label class="label">
+                Objeto Social
+              </label>
+
+              <textarea
+                nbInput
+                fullWidth
+                rows="2"
+                maxlength="1000"
+                placeholder="Objeto social"
+                formControlName="objetoSocial">
+              </textarea>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </nb-card-body>
+
+</nb-card>

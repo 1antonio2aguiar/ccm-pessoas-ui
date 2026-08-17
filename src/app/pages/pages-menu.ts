@@ -50,6 +50,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
         link: '/pages/pessoa/pessoa-pesquisa',
       },
       {
+        title: 'Estabelecimentos',
+        icon: 'briefcase-outline',
+        link: '/pages/estabelecimento/estabelecimento-pesquisa',
+      },
+      {
         title: 'Tipos Logradouros',
         link: '/pages/tipo-logradouro/tipo-logradouro-iud',
       },

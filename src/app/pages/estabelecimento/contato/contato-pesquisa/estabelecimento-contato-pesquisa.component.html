@@ -1,0 +1,109 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>Contatos do Estabelecimento</span>
+
+    <button
+      nbButton
+      status="primary"
+      size="small"
+      type="button"
+      (click)="adicionarNovoContato()">
+      <nb-icon icon="plus-outline"></nb-icon>
+      Inserir novo contato
+    </button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <div *ngIf="isLoadingContatos" class="text-center my-3">
+      <nb-spinner status="primary"></nb-spinner>
+      <p>Carregando contatos...</p>
+    </div>
+
+    <div *ngIf="!isLoadingContatos">
+      <div
+        *ngFor="let contato of contatos"
+        class="contato-item mb-3 p-3 border rounded">
+
+        <div class="contato-header d-flex justify-content-between align-items-start">
+          <div>
+            <span class="principal-badge" *ngIf="contato.principal">
+              PRINCIPAL
+            </span>
+          </div>
+
+          <div class="acoes-contato">
+            <button
+              nbButton
+              ghost
+              status="info"
+              size="tiny"
+              type="button"
+              (click)="editarContato(contato)">
+              <nb-icon icon="edit-outline"></nb-icon>
+              Editar
+            </button>
+
+            <button
+              nbButton
+              ghost
+              status="danger"
+              size="tiny"
+              type="button"
+              *ngIf="!contato.principal"
+              (click)="excluirContato(contato)">
+              <nb-icon icon="trash-2-outline"></nb-icon>
+              Excluir
+            </button>
+          </div>
+        </div>
+
+        <hr class="my-2">
+
+        <div class="detalhes-contato small">
+          <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <p class="mb-0">
+              <strong>{{ contato.tipoContatoDescricao }}:</strong>
+
+              <ng-container *ngIf="contato.tipoContato !== 3; else contatoTexto">
+                <strong>{{ contato.contato | telefone: contato.tipoContato }}</strong>
+              </ng-container>
+
+              <ng-template #contatoTexto>
+                <strong>{{ contato.contato }}</strong>
+              </ng-template>
+
+              <span *ngIf="contato.complemento">
+                — {{ contato.complemento }}
+              </span>
+            </p>
+
+            <button
+              nbButton
+              outline
+              status="basic"
+              size="tiny"
+              type="button"
+              *ngIf="!contato.principal"
+              (click)="definirComoPrincipal(contato)">
+              Definir como principal
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngIf="contatos.length === 0"
+        class="sem-contatos text-center my-3 p-4 border rounded bg-light">
+        <nb-icon icon="phone-outline" pack="eva"></nb-icon>
+
+        <p class="mt-2 mb-1">
+          Nenhum contato cadastrado para este estabelecimento.
+        </p>
+
+        <p class="text-muted small">
+          Utilize “Inserir novo contato” para começar.
+        </p>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

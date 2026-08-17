@@ -1,0 +1,175 @@
+<nb-card>
+
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+
+    <span>
+      Endereços do Estabelecimento
+    </span>
+
+    <button nbButton status="primary" size="small" type="button" (click)="adicionarNovoEndereco()">
+
+      <nb-icon icon="plus-outline"></nb-icon>
+
+      Inserir novo endereço
+
+    </button>
+
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div *ngIf="isLoading" class="text-center my-3">
+
+      <nb-spinner status="primary"></nb-spinner>
+
+      <p>Carregando endereços...</p>
+
+    </div>
+
+    <div *ngIf="!isLoading">
+
+      <div *ngIf="enderecos.length > 0">
+
+        <div *ngFor="let endereco of enderecos" class="endereco-item mb-3 p-3 border rounded">
+
+          <div class="
+              endereco-header
+              d-flex
+              justify-content-between
+              align-items-start
+            ">
+
+            <div>
+
+              <button *ngIf="endereco.tipoEnderecoDescricao" nbButton size="tiny" type="button" tabindex="-1"
+                status="success" appearance="outline" class="tipo-endereco-display">
+
+                {{ endereco.tipoEnderecoDescricao }}
+
+              </button>
+
+              <span class="principal-badge" *ngIf="endereco.principal">
+
+                PRINCIPAL
+
+              </span>
+
+            </div>
+
+            <div class="acoes-endereco">
+
+              <button nbButton ghost status="info" size="tiny" type="button" (click)="editarEndereco(endereco)">
+
+                <nb-icon icon="edit-outline"></nb-icon>
+
+                Editar
+
+              </button>
+
+              <button nbButton ghost status="danger" size="tiny" type="button" *ngIf="!endereco.principal"
+                (click)="excluirEndereco(endereco)">
+
+                <nb-icon icon="trash-2-outline"></nb-icon>
+
+                Excluir
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <hr class="my-2">
+
+          <div class="detalhes-endereco small">
+
+            <p class="mb-1">
+
+              <span *ngIf="endereco.tipoLogradouro">
+                {{ endereco.tipoLogradouro }}
+              </span>
+
+              {{ endereco.logradouroNome }},
+
+              Nº: {{ endereco.numero }}
+
+              <span *ngIf="endereco.complemento">
+                — {{ endereco.complemento }}
+              </span>
+
+            </p>
+
+            <p class="mb-1">
+
+              Bairro: {{ endereco.bairroNome }}
+
+              <span *ngIf="endereco.cidadeNome">
+                , {{ endereco.cidadeNome }}
+              </span>
+
+              <span *ngIf="endereco.estadoUf">
+                - {{ endereco.estadoUf }}
+              </span>
+
+            </p>
+
+            <div class="
+    d-flex
+    justify-content-between
+    align-items-center
+    flex-wrap
+  ">
+
+              <p class="mb-0">
+
+                CEP: {{ endereco.cep | cep }}
+
+              </p>
+
+              <button nbButton outline status="basic" size="tiny" type="button" *ngIf="!endereco.principal"
+                (click)="definirComoPrincipal(endereco)">
+
+                Definir como principal
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div *ngIf="enderecos.length === 0" class="
+          sem-enderecos
+          text-center
+          my-3
+          p-4
+          border
+          rounded
+          bg-light
+        ">
+
+        <nb-icon icon="pin-outline" pack="eva">
+        </nb-icon>
+
+        <p class="mt-2 mb-1">
+
+          Nenhum endereço cadastrado para este estabelecimento.
+
+        </p>
+
+        <p class="text-muted small">
+
+          Utilize “Inserir novo endereço” para começar.
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </nb-card-body>
+
+</nb-card>

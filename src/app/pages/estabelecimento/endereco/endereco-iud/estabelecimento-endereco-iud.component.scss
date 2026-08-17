@@ -1,0 +1,79 @@
+// endereco-iud.component.scss
+nb-card.dialog-card {
+    max-width: 700px; // Define uma largura máxima para o modal
+    width: 90vw; // Usa a largura da viewport, até o máximo
+
+    nb-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .close-button {
+            padding: 0.25rem; // Menor padding para o botão de fechar
+            margin-left: auto; // Empurra para a direita
+        }
+    }
+
+    nb-card-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .button-spinner {
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+}
+
+.dialog-card {
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.loading-text {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+:host ::ng-deep nb-select[ng-reflect-disabled="true"] button {
+  background-color: #f7f9fc !important;
+  color: #8f9bb3 !important;
+  cursor: not-allowed !important;
+}
+
+/* Campos protegidos no modo edição */
+
+:host ::ng-deep input[disabled],
+:host ::ng-deep textarea[disabled] {
+  opacity: 1 !important;
+  color: #222b45 !important;
+  background-color: #f7f9fc !important;
+  -webkit-text-fill-color: #222b45 !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep nb-select button[disabled] {
+  opacity: 1 !important;
+  color: #222b45 !important;
+  background-color: #f7f9fc !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep nb-radio input:disabled + .native-input + .text {
+  opacity: 1 !important;
+  color: #52606d !important;
+}
+
+:host ::ng-deep nb-radio input:disabled + .native-input {
+  opacity: 1 !important;
+}

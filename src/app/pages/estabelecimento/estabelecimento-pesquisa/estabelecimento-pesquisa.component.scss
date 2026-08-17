@@ -1,0 +1,17 @@
+nb-card-header {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.loading {
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: #3366ff;
+}

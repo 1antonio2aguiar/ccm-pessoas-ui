@@ -143,4 +143,19 @@ export class SanePessoaService extends BaseResourceService<any> {
       )
       .toPromise();
   }
-} 
+
+  registrarGrupoCpfDuplicadoNaoMigrar(
+    pessoaId: number
+  ): Promise<string> {
+
+    return this.http
+      .post(
+        `${this.listaApiPath}/cpf-duplicado/nao-migrar/${pessoaId}`,
+        {},
+        {
+          responseType: 'text',
+        }
+      )
+      .toPromise();
+  }
+}  

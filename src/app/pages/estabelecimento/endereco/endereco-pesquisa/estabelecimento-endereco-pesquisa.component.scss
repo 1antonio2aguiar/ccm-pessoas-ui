@@ -1,0 +1,85 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+nb-card {
+  height: 100%;
+  margin: 0;
+}
+
+nb-card-header {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.endereco-item {
+  background: #ffffff;
+  border-color: #e4e9f2 !important;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #c5cee0 !important;
+    box-shadow: 0 0.25rem 0.75rem rgba(44, 51, 73, 0.08);
+  }
+}
+
+.endereco-header {
+  gap: 1rem;
+}
+
+.acoes-endereco {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tipo-endereco-display {
+  pointer-events: none;
+}
+
+.principal-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+
+  border-radius: 1rem;
+  background: #e3f9e5;
+
+  color: #008a00;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detalhes-endereco {
+  color: #2e3a59;
+
+  p {
+    line-height: 1.5;
+  }
+}
+
+.endereco-conteudo-inferior {
+  min-height: 2rem;
+}
+
+.sem-enderecos {
+  color: #8f9bb3;
+
+  nb-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+  }
+
+  p {
+    margin-bottom: 0;
+  }
+}
+
+nb-spinner {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}

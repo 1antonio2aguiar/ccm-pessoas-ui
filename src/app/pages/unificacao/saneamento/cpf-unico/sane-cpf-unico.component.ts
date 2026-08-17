@@ -1,12 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import {   NbDialogService,   NbToastrService, } from '@nebular/theme';
+import { NbDialogService, NbToastrService, } from '@nebular/theme';
 import { HttpParams } from '@angular/common/http';
 
 import { SanePessoaFilters, SanePessoaService } from '../sane-pessoa.service';
 import {
   ConfirmarUnificacaoDialogComponent,
 } from '../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import {
+  UnificacaoAutomaticaService,
+} from '../../../../shared/services/unificacao-automatica.service';
+import {
+  ControleMigracaoPessoaService,
+} from '../../../../shared/services/controle-migracao-pessoa.service';
 
 @Component({
   selector: 'ngx-sane-cpf-unico',
@@ -145,7 +151,9 @@ export class SaneCpfUnicoComponent implements OnInit {
     private service: SanePessoaService,
     private toastrService: NbToastrService,
     private dialogService: NbDialogService,
-  ) {}
+    private unificacaoAutomaticaService: UnificacaoAutomaticaService,
+    private controleMigracaoPessoaService: ControleMigracaoPessoaService,
+  ) { }
 
   ngOnInit(): void {
     this.listar();
@@ -341,7 +349,7 @@ export class SaneCpfUnicoComponent implements OnInit {
 
         this.toastrService.success(
           mensagem ||
-            `Pessoa ${pessoaId} processada com sucesso.`,
+          `Pessoa ${pessoaId} processada com sucesso.`,
           'Sucesso'
         );
 
@@ -349,30 +357,59 @@ export class SaneCpfUnicoComponent implements OnInit {
         return;
       }
 
+      const avaliacao =
+        this.unificacaoAutomaticaService
+          .avaliar(
+            {
+          nome:
+            pessoa?.nome ?? null,
+
+          cpfCnpj:
+            cpf,
+
+          dataNascimento:
+            pessoa?.dataNascimento ?? null,
+        },
+        {
+          nome:
+            resultado?.nome ?? null,
+
+          cpfCnpj:
+            resultado?.cpfCnpj ?? cpf,
+
+          dataNascimento:
+            resultado?.dataNascimento ?? null,
+        }
+      );
+
       /*
-      * CPF existe:
-      * compara os nomes normalizados.
+      * Dados incompatíveis:
+      * não processa e não abre o modal.
       */
-      const nomeSaneamento =
-        this.normalizeTextKey(
-          pessoa?.nome
+      if (
+        avaliacao.decisao ===
+        'INVALIDA'
+      ) {
+
+        this.toastrService.danger(
+          avaliacao.motivo,
+          'Dados incompatíveis'
         );
 
-      const nomeCadUnico =
-        this.normalizeTextKey(
-          resultado?.nome
-        );
-
-      const nomesIguais =
-        nomeSaneamento.length > 0 &&
-        nomeCadUnico.length > 0 &&
-        nomeSaneamento === nomeCadUnico;
+        return;
+      }
 
       /*
-      * CPF e nome iguais:
-      * vincula diretamente, sem modal.
+      * O motor aprovou a unificação:
+      *
+      * - nomes normalizados iguais; ou
+      * - CPF e nascimento iguais com diferença
+      *   de apenas uma letra no nome.
       */
-      if (nomesIguais) {
+      if (
+        avaliacao.decisao ===
+        'AUTOMATICA'
+      ) {
 
         const mensagem =
           await this.service
@@ -382,13 +419,14 @@ export class SaneCpfUnicoComponent implements OnInit {
 
         this.toastrService.success(
           mensagem ||
-            `Pessoa ${pessoaId} vinculada ao Cadastro Único.`,
-          'Já existe no Cadastro Único'
+          `Pessoa ${pessoaId} vinculada automaticamente ao Cadastro Único.`,
+          'Unificação automática'
         );
 
         this.listar();
         return;
       }
+
 
       /*
       * CPF igual e nome diferente:
@@ -425,10 +463,30 @@ export class SaneCpfUnicoComponent implements OnInit {
           .toPromise();
 
       /*
-      * Usuário cancelou:
-      * nenhuma alteração é realizada.
+      * O usuário clicou especificamente em "NÃO".
       */
-      if (!confirmou) {
+      if (confirmou === false) {
+
+        await this.controleMigracaoPessoaService
+          .registrarNaoMigrar(
+            'SANE',
+            pessoaId
+          );
+
+        this.toastrService.info(
+          'Pessoa retirada da lista de migração.',
+          'Não unificar'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * Encerramento sem resposta explícita:
+      * não registra nenhuma decisão.
+      */
+      if (confirmou !== true) {
         return;
       }
 
@@ -444,7 +502,7 @@ export class SaneCpfUnicoComponent implements OnInit {
 
       this.toastrService.success(
         mensagem ||
-          `Pessoa ${pessoaId} vinculada ao Cadastro Único.`,
+        `Pessoa ${pessoaId} vinculada ao Cadastro Único.`,
         'Sucesso'
       );
 
@@ -459,10 +517,10 @@ export class SaneCpfUnicoComponent implements OnInit {
 
       const mensagemErro =
         typeof e?.error === 'string' &&
-        e.error.trim()
+          e.error.trim()
           ? e.error.trim()
           : e?.message ||
-            `Erro ao processar a pessoa ${pessoaId}.`;
+          `Erro ao processar a pessoa ${pessoaId}.`;
 
       this.toastrService.danger(
         mensagemErro,
@@ -473,7 +531,7 @@ export class SaneCpfUnicoComponent implements OnInit {
       this.isLoading = false;
     }
   }
-  
+
   private normalizeTextKey(
     value: any
   ): string {
@@ -672,35 +730,69 @@ export class SaneCpfUnicoComponent implements OnInit {
           */
           if (status === 'ÚNICO') {
 
-            const resultado =
-              await this.service
-                .existeCpfCnpjNoCadUnico(
-                  cpf,
-                  'F'
+          const resultado =
+            await this.service
+              .existeCpfCnpjNoCadUnico(
+                cpf,
+                'F'
+              );
+
+          if (resultado?.existe) {
+
+            const avaliacao =
+              this.unificacaoAutomaticaService
+                .avaliar(
+                  {
+                    nome:
+                      pessoa?.nome ?? null,
+
+                    cpfCnpj:
+                      cpf,
+
+                    dataNascimento:
+                      pessoa?.dataNascimento ?? null,
+                  },
+                  {
+                    nome:
+                      resultado?.nome ?? null,
+
+                    cpfCnpj:
+                      resultado?.cpfCnpj ?? cpf,
+
+                    dataNascimento:
+                      resultado?.dataNascimento ?? null,
+                  }
                 );
 
-            /*
-            * O CPF existe com nome diferente.
-            *
-            * No processamento individual abriria
-            * o modal. No lote apenas ignora.
-            */
-            if (resultado?.existe) {
-              this.totalIgnorados++;
+            if (
+              avaliacao.decisao ===
+              'AUTOMATICA'
+            ) {
+
+              await this.service
+                .processarJaExisteCadUnico(
+                  pessoaId
+                );
+
+              this.totalVinculados++;
               continue;
             }
 
-            /*
-            * CPF realmente novo.
-            */
-            await this.service
-              .processarCpfUnico(
-                pessoaId
-              );
-
-            this.totalProcessados++;
+            this.totalIgnorados++;
             continue;
           }
+
+          /*
+          * CPF realmente novo.
+          */
+          await this.service
+            .processarCpfUnico(
+              pessoaId
+            );
+
+          this.totalProcessados++;
+          continue;
+        }
 
           throw new Error(
             `Status não reconhecido: ${status || 'não informado'

@@ -1,0 +1,101 @@
+<nb-card
+  [accent]="modoEdicao ? 'info' : 'success'"
+  class="dialog-card">
+
+  <nb-card-header>
+    {{ modoEdicao ? 'Editar Contato de: ' : 'Novo Contato para: ' }}
+    {{ nomeEstabelecimento }}
+
+    <button
+      nbButton
+      ghost
+      shape="round"
+      size="small"
+      type="button"
+      class="close-button"
+      (click)="cancelar()">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <form [formGroup]="contatoForm" (ngSubmit)="salvar()">
+      <div class="row">
+        <div class="col-md-12 form-group">
+          <label class="label">Tipo do Contato</label>
+
+          <nb-radio-group
+            formControlName="tipoContato"
+            class="d-flex align-items-center flex-wrap">
+            <nb-radio value="0" class="mr-3">TELEFONE FIXO</nb-radio>
+            <nb-radio value="1" class="mr-3">TELEFONE CELULAR</nb-radio>
+            <nb-radio value="2" class="mr-3">WHATSAPP</nb-radio>
+            <nb-radio value="3" class="mr-3">E-MAIL</nb-radio>
+            <nb-radio value="4" class="mr-3">PÁGINA WEB</nb-radio>
+            <nb-radio value="5">TELEFONE PARA RECADO</nb-radio>
+          </nb-radio-group>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 form-group">
+          <label for="contato" class="label">Contato</label>
+
+          <input
+            nbInput
+            fullWidth
+            id="contato"
+            placeholder="Contato..."
+            formControlName="contato"
+            (input)="onContatoInput($event)">
+        </div>
+
+        <div class="col-md-12 form-group">
+          <label for="complemento" class="label">Complemento</label>
+
+          <input
+            nbInput
+            fullWidth
+            id="complemento"
+            placeholder="Referência..."
+            formControlName="complemento">
+        </div>
+      </div>
+
+      <div class="row mt-2">
+        <div class="col-md-12 form-group">
+          <nb-checkbox formControlName="principal">
+            Definir como contato principal
+          </nb-checkbox>
+        </div>
+      </div>
+    </form>
+  </nb-card-body>
+
+  <nb-card-footer class="text-right">
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      class="mr-2"
+      [disabled]="isLoadingSalvar"
+      (click)="cancelar()">
+      Cancelar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      [disabled]="contatoForm.invalid || isLoadingSalvar"
+      (click)="salvar()">
+      <nb-spinner
+        *ngIf="isLoadingSalvar"
+        size="tiny"
+        class="button-spinner">
+      </nb-spinner>
+
+      {{ modoEdicao ? 'Salvar Alterações' : 'Enviar' }}
+    </button>
+  </nb-card-footer>
+</nb-card>

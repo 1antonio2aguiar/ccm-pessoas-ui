@@ -1,0 +1,32 @@
+.contato-item {
+  background-color: #ffffff;
+}
+
+.contato-header {
+  min-height: 2rem;
+}
+
+.acoes-contato {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.principal-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 1rem;
+  background: #e5f7df;
+  color: #008a00;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.detalhes-contato {
+  color: #222b45;
+}
+
+.sem-contatos nb-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}

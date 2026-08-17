@@ -21,6 +21,7 @@ export interface PessoaCadUnicoUnificacao {
   styleUrls: ['./confirmar-unificacao-dialog.component.scss',
   ],
 })
+
 export class ConfirmarUnificacaoDialogComponent {
 
   @Input()

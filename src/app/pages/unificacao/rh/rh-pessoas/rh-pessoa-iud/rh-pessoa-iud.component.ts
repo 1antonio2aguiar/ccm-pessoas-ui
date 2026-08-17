@@ -3,16 +3,18 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { HttpParams } from '@angular/common/http';
 
 import { RhPessoaService, RhPessoaFilters, PessoaCpfCnpjCadUnicoDTO } from '../rh-pessoa.service';
-import { NbDialogService,   NbToastrService, } from '@nebular/theme';
-import {
-  ConfirmarUnificacaoDialogComponent,
-} from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import { NbDialogService, NbToastrService, } from '@nebular/theme';
+
+import { ConfirmarUnificacaoDialogComponent, } from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import { UnificacaoAutomaticaService, } from '../../../../../shared/services/unificacao-automatica.service';
+import { ControleMigracaoPessoaService } from '../../../../../shared/services/controle-migracao-pessoa.service';
 
 @Component({
   selector: 'ngx-rh-pessoa-iud',
   templateUrl: './rh-pessoa-iud.component.html',
   styleUrls: ['./rh-pessoa-iud.component.scss'],
 })
+
 export class RhPessoaIudComponent implements OnInit, OnDestroy {
 
   source: LocalDataSource = new LocalDataSource();
@@ -144,6 +146,8 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
     private service: RhPessoaService,
     private toastrService: NbToastrService,
     private dialogService: NbDialogService,
+    private unificacaoAutomaticaService: UnificacaoAutomaticaService,
+    private controleMigracaoPessoaService: ControleMigracaoPessoaService,
   ) { }
 
   ngOnInit(): void {
@@ -394,26 +398,26 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
     }
 
     const podeProcessar = await this.validarDocumentoAntesProcessar(pessoa, false);
-      if (!podeProcessar) {
-        return 'IGNORADO';
-      }
+    if (!podeProcessar) {
+      return 'IGNORADO';
+    }
 
-      if (fisicaJuridica === 'F') {
-        if (statusCadastro === 'UNICO_RH') {
-          await this.service.processarCpfUnico(pessoaId);
-          return 'PROCESSADO';
-        }
-
-        if (statusCadastro === 'DUPLICADO_RH') {
-          await this.service.processarCpfDuplicado(pessoaId);
-          return 'PROCESSADO';
-        }
-      }
-
-      if (fisicaJuridica === 'J' && statusCadastro === 'UNICO_RH') {
-        await this.service.processarCnpjUnico(pessoaId);
+    if (fisicaJuridica === 'F') {
+      if (statusCadastro === 'UNICO_RH') {
+        await this.service.processarCpfUnico(pessoaId);
         return 'PROCESSADO';
       }
+
+      if (statusCadastro === 'DUPLICADO_RH') {
+        await this.service.processarCpfDuplicado(pessoaId);
+        return 'PROCESSADO';
+      }
+    }
+
+    if (fisicaJuridica === 'J' && statusCadastro === 'UNICO_RH') {
+      await this.service.processarCnpjUnico(pessoaId);
+      return 'PROCESSADO';
+    }
 
     return 'IGNORADO';
   }
@@ -499,11 +503,19 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
     mostrarMensagem = true
   ): Promise<boolean> {
 
-    const pessoaId = pessoa?.pessoa;
-    const fisicaJuridica = pessoa?.fisicaJuridica;
-    const documento = this.obterDocumentoDigits(pessoa);
+    const pessoaId =
+      pessoa?.pessoa;
+
+    const fisicaJuridica =
+      pessoa?.fisicaJuridica;
+
+    const documento =
+      this.obterDocumentoDigits(
+        pessoa
+      );
 
     if (!documento) {
+
       if (mostrarMensagem) {
         this.toastrService.danger(
           'CPF/CNPJ não encontrado para validação.',
@@ -518,6 +530,7 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
       fisicaJuridica !== 'F' &&
       fisicaJuridica !== 'J'
     ) {
+
       if (mostrarMensagem) {
         this.toastrService.warning(
           'Tipo de pessoa não suportado para validação.',
@@ -530,62 +543,244 @@ export class RhPessoaIudComponent implements OnInit, OnDestroy {
 
     const resultado:
       PessoaCpfCnpjCadUnicoDTO =
-        await this.service.existeCpfCnpjNoCadUnico(
+      await this.service
+        .existeCpfCnpjNoCadUnico(
           documento,
           fisicaJuridica
         );
 
+    /*
+    * Documento ainda não existe:
+    * permite continuar no processamento normal.
+    */
     if (!resultado?.existe) {
       return true;
     }
 
     /*
-    * No lote não abrimos modal.
-    * O registro será contabilizado como ignorado.
+    * Nesta primeira etapa, o lote permanece
+    * com o comportamento anterior.
+    *
+    * Depois aplicaremos o motor especificamente
+    * no processamento em lote.
     */
     if (!mostrarMensagem) {
       return false;
     }
 
+    /*
+    * Compara os dados da origem RH com os dados
+    * encontrados no Cadastro Único.
+    */
+    const avaliacao =
+      this.unificacaoAutomaticaService
+        .avaliar(
+          {
+            nome:
+              pessoa?.nome ?? null,
+
+            cpfCnpj:
+              documento,
+
+            dataNascimento:
+              pessoa?.dataNascimento ?? null,
+          },
+          {
+            nome:
+              resultado?.nome ?? null,
+
+            cpfCnpj:
+              resultado?.cpfCnpj ?? documento,
+
+            dataNascimento:
+              resultado?.dataNascimento ?? null,
+          }
+        );
+
+    /*
+    * Dados incompatíveis:
+    * não permite vincular nem abrir o modal.
+    */
+    if (
+      avaliacao.decisao ===
+      'INVALIDA'
+    ) {
+
+      this.toastrService.danger(
+        avaliacao.motivo,
+        'Dados incompatíveis'
+      );
+
+      return false;
+    }
+
+    /*
+    * O motor considerou a comparação segura:
+    *
+    * - nomes normalizados iguais; ou
+    * - documento e nascimento iguais,
+    *   com diferença de apenas uma letra.
+    *
+    * Vincula automaticamente, sem modal.
+    */
+    if (
+      avaliacao.decisao ===
+      'AUTOMATICA'
+    ) {
+
+      const mensagem =
+        await this.service
+          .processarJaExisteCadUnico(
+            pessoaId
+          );
+
+      this.toastrService.success(
+        mensagem ||
+        `Pessoa ${pessoaId} vinculada automaticamente ao Cadastro Único.`,
+        'Unificação automática'
+      );
+
+      this.execSearch(
+        this.filtro.params ||
+        this.buildBaseParams()
+      );
+
+      /*
+      * Retorna false porque a vinculação já foi
+      * realizada. O processamento de CPF único
+      * ou duplicado não deve continuar.
+      */
+      return false;
+    }
+
+    /*
+    * O documento existe, mas os dados não atendem
+    * à regra automática. O usuário precisa decidir.
+    */
     const confirmou =
       await this.dialogService
         .open(
           ConfirmarUnificacaoDialogComponent,
           {
             closeOnBackdropClick: false,
+
             context: {
-              tituloOrigem: 'Recursos Humanos',
+              tituloOrigem:
+                'Recursos Humanos',
 
               pessoaOrigem: {
-                nome: pessoa?.nome ?? null,
-                cpfCnpj: pessoa?.cgcCpf ?? null,
+                nome:
+                  pessoa?.nome ?? null,
+
+                cpfCnpj:
+                  documento,
+
                 dataNascimento:
                   pessoa?.dataNascimento ?? null,
               },
 
-              pessoaCadUnico: resultado,
+              pessoaCadUnico:
+                resultado,
             },
           }
         )
         .onClose
         .toPromise();
 
-    if (!confirmou) {
+    /*
+* O usuário clicou especificamente em "NÃO".
+*/
+    if (confirmou === false) {
+
+      const statusCadastro =
+        this.normalizarStatusCadastro(
+          pessoa?.statusCadastro
+        );
+
+    /*
+    * CPF duplicado:
+    * o backend recupera e marca todos os
+    * integrantes do grupo como não migrar.
+    */
+    if (
+      statusCadastro ===
+      'DUPLICADO_RH'
+    ) {
+
+      const mensagem =
+        await this.service
+          .registrarGrupoCpfDuplicadoNaoMigrar(
+            pessoaId
+          );
+
+      this.toastrService.info(
+        mensagem ||
+          'Grupo retirado da lista de migração.',
+        'Não unificar'
+      );
+
+      this.execSearch(
+        this.filtro.params ||
+        this.buildBaseParams()
+      );
+
+      return false;
+    }
+
+      /*
+      * CPF único:
+      * registra somente a pessoa selecionada.
+      */
+      await this.controleMigracaoPessoaService
+        .registrarNaoMigrar(
+          'RH',
+          pessoaId
+        );
+
+      this.toastrService.info(
+        'Pessoa retirada da lista de migração.',
+        'Não unificar'
+      );
+
+      this.execSearch(
+        this.filtro.params ||
+        this.buildBaseParams()
+      );
+
       return false;
     }
 
     /*
-    * Executa o fluxo que já existe para vincular
-    * a origem RH ao Cadastro Único.
-    */
-    this.processarJaExisteCadUnicoLinha(
-      pessoaId
-    );
-    
+     * Qualquer encerramento sem uma resposta
+     * explícita não grava decisão.
+     */
+    if (confirmou !== true) {
+      return false;
+    }
 
     /*
-    * Retorna false para impedir que o processamento
-    * de CPF único ou duplicado continue depois disso.
+    * O usuário confirmou manualmente.
+    */
+    const mensagem =
+      await this.service
+        .processarJaExisteCadUnico(
+          pessoaId
+        );
+
+    this.toastrService.success(
+      mensagem ||
+      `Pessoa ${pessoaId} vinculada ao Cadastro Único com sucesso.`,
+      'Sucesso'
+    );
+
+    this.execSearch(
+      this.filtro.params ||
+      this.buildBaseParams()
+    );
+
+    /*
+    * A vinculação já foi realizada.
+    * Impede que o processamento normal continue.
     */
     return false;
   }

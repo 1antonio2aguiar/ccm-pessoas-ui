@@ -125,4 +125,19 @@ export class PesPessoaCpfDplService extends BaseResourceService<PesPessoas> {
       )
       .toPromise();
   }
+
+  registrarGrupoNaoMigrar(
+    pessoaId: number
+  ): Promise<string> {
+
+    return this.http
+      .post(
+        `${this.cargaApiPath}/nao-migrar/${pessoaId}`,
+        {},
+        {
+          responseType: 'text',
+        }
+      )
+      .toPromise();
+  }
 }

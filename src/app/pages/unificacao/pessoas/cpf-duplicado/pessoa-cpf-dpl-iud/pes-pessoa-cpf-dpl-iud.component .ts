@@ -7,6 +7,9 @@ import { PesPessoaCpfDplService, PessoaFilters } from '../pes-pessoa-cpf-dpl.ser
 import {
   ConfirmarUnificacaoDialogComponent,
 } from '../../../../../shared/components/confirmar-unificacao-dialog/confirmar-unificacao-dialog.component';
+import {
+  UnificacaoAutomaticaService,
+} from '../../../../../shared/services/unificacao-automatica.service';
 
 @Component({
   selector: 'ngx-pes-pessoa-cpf-dpl-iud',
@@ -107,6 +110,7 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
     private service: PesPessoaCpfDplService,
     private toastrService: NbToastrService,
     private dialogService: NbDialogService,
+    private unificacaoAutomaticaService: UnificacaoAutomaticaService,
   ) {}
 
   ngOnInit(): void {
@@ -194,47 +198,70 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
         return;
       }
 
-      /*
-      * O CPF existe. Agora compara os nomes.
-      */
-      const nomeOrigem =
-        this.normalizeTextKey(
-          pessoa?.nome
+    const avaliacao =
+      this.unificacaoAutomaticaService
+        .avaliar(
+          {
+            nome:
+              pessoa?.nome ?? null,
+
+            cpfCnpj:
+              cpf,
+
+            dataNascimento:
+              pessoa?.dataNascimento ?? null,
+          },
+          {
+            nome:
+              resultado?.nome ?? null,
+
+            cpfCnpj:
+              resultado?.cpfCnpj ?? cpf,
+
+            dataNascimento:
+              resultado?.dataNascimento ?? null,
+          }
         );
 
-      const nomeCadUnico =
-        this.normalizeTextKey(
-          resultado?.nome
-        );
+    /*
+    * Dados incompatíveis:
+    * não processa e não abre o modal.
+    */
+    if (
+      avaliacao.decisao ===
+      'INVALIDA'
+    ) {
+      this.toastrService.danger(
+        avaliacao.motivo,
+        'Dados incompatíveis'
+      );
 
-      const nomesIguais =
-        nomeOrigem.length > 0 &&
-        nomeCadUnico.length > 0 &&
-        nomeOrigem === nomeCadUnico;
+      return;
+    }
 
-      /*
-      * CPF e nome iguais:
-      *
-      * considera "Já existe no Cadastro Único"
-      * e vincula diretamente, sem abrir o modal.
-      */
-      if (nomesIguais) {
+    /*
+    * O motor aprovou a vinculação automática
+    * de todo o grupo duplicado.
+    */
+    if (
+      avaliacao.decisao ===
+      'AUTOMATICA'
+    ) {
+      const mensagem =
+        await this.service
+          .processarPessoaCpfDplJaExiste(
+            pessoaId
+          );
 
-        const mensagem =
-          await this.service
-            .processarPessoaCpfDplJaExiste(
-              pessoaId
-            );
+      this.toastrService.success(
+        mensagem ||
+          'Grupo vinculado automaticamente ao Cadastro Único.',
+        'Unificação automática'
+      );
 
-        this.toastrService.success(
-          mensagem ||
-          'Grupo vinculado ao Cadastro Único com sucesso.',
-          'Já existe no Cadastro Único'
-        );
-
-        this.listar();
-        return;
-      }
+      this.listar();
+      return;
+    }
 
       /*
       * CPF igual e nome diferente:
@@ -273,10 +300,34 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
           .toPromise();
 
       /*
-      * Usuário respondeu "Não":
-      * nenhuma alteração é realizada.
+      * O usuário clicou especificamente em "NÃO".
+      *
+      * O backend recupera e marca todos os integrantes
+      * do grupo duplicado.
       */
-      if (!confirmou) {
+      if (confirmou === false) {
+
+        const mensagem =
+          await this.service
+            .registrarGrupoNaoMigrar(
+              pessoaId
+            );
+
+        this.toastrService.info(
+          mensagem ||
+            'Grupo retirado da lista de migração.',
+          'Não unificar'
+        );
+
+        this.listar();
+        return;
+      }
+
+      /*
+      * Se o modal for encerrado sem resposta explícita,
+      * não grava nenhuma decisão.
+      */
+      if (confirmou !== true) {
         return;
       }
 
@@ -409,46 +460,57 @@ export class PesPessoaCpfDplIudComponent implements OnInit, OnDestroy {
             continue;
           }
 
-          /*
-          * CPF já existe:
-          * compara os nomes normalizados.
-          */
-          const nomeOrigem =
-            this.normalizeTextKey(
-              item?.nome
+        const avaliacao =
+          this.unificacaoAutomaticaService
+            .avaliar(
+              {
+                nome:
+                  item?.nome ?? null,
+
+                cpfCnpj:
+                  cpf,
+
+                dataNascimento:
+                  item?.dataNascimento ?? null,
+              },
+              {
+                nome:
+                  resultado?.nome ?? null,
+
+                cpfCnpj:
+                  resultado?.cpfCnpj ?? cpf,
+
+                dataNascimento:
+                  resultado?.dataNascimento ?? null,
+              }
             );
 
-          const nomeCadUnico =
-            this.normalizeTextKey(
-              resultado?.nome
+        /*
+        * No lote não abre modal.
+        *
+        * Quando o motor aprovar, vincula todo
+        * o grupo duplicado ao Cadastro Único.
+        */
+        if (
+          avaliacao.decisao ===
+          'AUTOMATICA'
+        ) {
+          await this.service
+            .processarPessoaCpfDplJaExiste(
+              pessoaId
             );
 
-          const nomesIguais =
-            nomeOrigem.length > 0 &&
-            nomeCadUnico.length > 0 &&
-            nomeOrigem === nomeCadUnico;
+          processados++;
+          continue;
+        }
 
-          /*
-          * CPF e nome iguais:
-          * vincula automaticamente todo o grupo.
-          */
-          if (nomesIguais) {
-
-            await this.service
-              .processarPessoaCpfDplJaExiste(
-                pessoaId
-              );
-
-            vinculados++;
-            continue;
-          }
-
-          /*
-          * CPF igual e nome diferente:
-          * no individual abriria o modal.
-          * No lote apenas ignora.
-          */
-          ignorados++;
+        /*
+        * EXIGIR_CONFIRMACAO ou INVALIDA:
+        *
+        * não processa automaticamente e mantém
+        * o grupo para tratamento individual.
+        */
+        ignorados++;
 
         } catch (e: any) {
 

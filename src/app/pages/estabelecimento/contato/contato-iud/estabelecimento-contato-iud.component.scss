@@ -1,0 +1,26 @@
+// endereco-iud.component.scss
+nb-card.dialog-card {
+    max-width: 950px; // Define uma largura máxima para o modal
+    width: 90vw; // Usa a largura da viewport, até o máximo
+
+    nb-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .close-button {
+            padding: 0.25rem; // Menor padding para o botão de fechar
+            margin-left: auto; // Empurra para a direita
+        }
+    }
+
+    nb-card-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .button-spinner {
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+}
