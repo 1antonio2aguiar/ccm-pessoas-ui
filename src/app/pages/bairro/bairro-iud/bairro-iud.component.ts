@@ -117,7 +117,7 @@ export class BairroIudComponent {
       .catch((error) => console.error('Erro ao listar bairros:', error));
   }
 
-  onCreateConfirm(event) {
+  onCreateConfirm(event:any) {
     if (!event.newData.distritoId) {
       this.toastrService.show(
         'Selecione um distrito na lista para preencher corretamente.',
@@ -145,7 +145,7 @@ export class BairroIudComponent {
     });
   }
 
-  onSaveConfirm(event) {
+  onSaveConfirm(event:any) {
     // Nunca deixa alterar distrito no update
     event.newData.distritoId = event.data.distritoId;
     event.newData.nomeDistrito = event.data.nomeDistrito;
@@ -168,7 +168,7 @@ export class BairroIudComponent {
     });
   }
 
-  onDeleteConfirm(event): void {
+  onDeleteConfirm(event : any): void {
     const item = event.data;
 
     this.dialogService.open(ConfirmationDialogComponent, {
@@ -212,7 +212,7 @@ export class BairroIudComponent {
   onTableFilter(filters: any) {
     let params = new HttpParams();
 
-    const filtersArray = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
+    const filtersArray: any[] = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
     const idFilter = filtersArray.find(f => f.field === 'id');
     const cidadeFilter = filtersArray.find(f => f.field === 'nomeCidade');
     const nomeFilter = filtersArray.find(f => f.field === 'nome');

@@ -7,6 +7,7 @@ import { CidadeService } from '../cidade.service';
 import { FiltroPaginado } from '../../../shared/filters/filtro-paginado';
 import { EstadoNomeEditorComponent } from '../estado/EstadoNomeEditorComponent';
 import { ConfirmationDialogComponent } from '../../components/base-resource-confirmation-delete/confirmation-dialog/confirmation-dialog.component';
+import { CepEditorComponent } from '../../cep/cep-pesquisa/CepEditorComponent';
 
 @Component({
   selector: 'ngx-cidade-iud',
@@ -61,14 +62,7 @@ export class CidadeIudComponent {
         filter: true,
         width: '90px',
       },
-
-      nome: {
-        title: 'Nome',
-        type: 'string',
-        width: '600px',
-        filter: true,
-      },
-
+      
       estadoNome: {
         title: 'Estado',
         type: 'string',
@@ -80,11 +74,39 @@ export class CidadeIudComponent {
         },
       },
 
-     sigla: {
+      nome: {
+        title: 'Nome',
+        type: 'string',
+        width: '600px',
+        filter: true,
+      },
+
+      sigla: {
         title: 'Sigla',
         type: 'string',
         filter: false,
         width: '80px',
+      },
+      cep: {
+        title: 'CEP',
+        type: 'string',
+        filter: false,
+        width: '150px',
+
+        valuePrepareFunction: (valor: any) => {
+          const cep = String(valor ?? '').replace(/\D/g, '').substring(0, 8);
+
+          if (cep.length !== 8) {
+            return valor ?? '';
+          }
+
+          return `${cep.substring(0, 2)}.${cep.substring(2, 5)}-${cep.substring(5)}`;
+        },
+
+        editor: {
+          type: 'custom',
+          component: CepEditorComponent,
+        },
       },
     },
   };
@@ -116,7 +138,7 @@ export class CidadeIudComponent {
       });
   }
 
-  onCreateConfirm(event) {
+  onCreateConfirm(event: any) {
     if (!event.newData.estadoId) {
       this.toastrService.show(
         'Selecione um estado na lista para preencher corretamente.',
@@ -144,7 +166,7 @@ export class CidadeIudComponent {
     });
   }
 
-  onSaveConfirm(event) {
+  onSaveConfirm(event: any) {
     // Nunca deixa alterar pais no update
     event.newData.estadoId = event.data.estadoId;
     event.newData.estadoNome = event.data.estadoNome;
@@ -166,7 +188,7 @@ export class CidadeIudComponent {
     });
   }
 
-  onDeleteConfirm(event): void {
+  onDeleteConfirm(event : any): void {
     const item = event.data;
 
     this.dialogService.open(ConfirmationDialogComponent, {
@@ -213,7 +235,7 @@ export class CidadeIudComponent {
   onTableFilter(filters: any) {
       let params = new HttpParams();
   
-      const filtersArray = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
+      const filtersArray: any[] = (filters && filters.filters && Array.isArray(filters.filters)) ? filters.filters : [];
       const idFilter = filtersArray.find(f => f.field === 'id');
       const paisFilter = filtersArray.find(f => f.field === 'pais');
       const nomeFilter = filtersArray.find(f => f.field === 'nome');

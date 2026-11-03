@@ -10,6 +10,7 @@ export class Cidade extends BaseResourceModel {
 
       public estadoId?: number,
       public estado?: Estado,
+      public cep?: number,
 
     ) {
       super();

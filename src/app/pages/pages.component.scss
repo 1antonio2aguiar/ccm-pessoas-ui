@@ -1,7 +1,7 @@
 @import '../@theme/styles/themes';
 
 @include nb-install-component() {
-  ::ng-deep router-outlet + * {
+  ::ng-deep router-outlet+* {
     display: block;
     animation: fade 1s;
 
@@ -13,6 +13,188 @@
       to {
         opacity: 1;
       }
+    }
+  }
+}
+
+/*
+ * Sublinha a primeira letra dos itens que participam
+ * dos atalhos CPP e CPE.
+ */
+:host ::ng-deep nb-menu {
+
+  // C de Cadastros
+  >.menu-items>.menu-item:nth-child(2)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // P do submenu Pessoas
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:first-child>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // P de Pessoas e E de Estabelecimentos
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:first-child>.menu-items>.menu-item>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // E do submenu Endereços
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // E de Estados
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:first-child>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // P de CEPs
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>a>.menu-title {
+    position: relative;
+    display: inline-block;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 1.10em;
+      bottom: -2px;
+      width: 0.58em;
+      height: 2px;
+      background-color: currentColor;
+    }
+  }
+
+  // C de Cidades
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(3)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // D de Distritos
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(4)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // B de Bairros
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(5)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  //L de Logradouros
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(6)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // A de Países
+  >.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(2)>.menu-items>.menu-item:nth-child(7)>a>.menu-title {
+    position: relative;
+    display: inline-block;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0.68em;
+      bottom: -2px;
+      width: 0.55em;
+      height: 2px;
+      background-color: currentColor;
+    }
+  }
+
+  // A de Atividades
+  >.menu-items>.menu-item:nth-child(3)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // U de Unifica Pessoas
+  >.menu-items>.menu-item:nth-child(3)>.menu-items>.menu-item:nth-child(1)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // P de Pessoas
+  >.menu-items>.menu-item:nth-child(3)>.menu-items>.menu-item:nth-child(1)>.menu-items>.menu-item:nth-child(1)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // C de CPF ÚNICO
+  >.menu-items>.menu-item:nth-child(3)>.menu-items>.menu-item:nth-child(1)>.menu-items>.menu-item:nth-child(1)>.menu-items>.menu-item:nth-child(1)>a>.menu-title {
+    display: inline-block;
+
+    &::first-letter {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
     }
   }
 }

@@ -8,134 +8,141 @@ export const MENU_ITEMS: NbMenuItem[] = [
     link: '/pages/dashboard',
   },
 
-  /* {
-     title: 'AÇÕES',
-     group: true,
-   },*/
   {
     title: 'Cadastros',
     icon: 'layout-outline',
     children: [
-      {
-        title: 'Estados',
-        link: '/pages/estado/estado-iud',
-      },
-      {
-        title: 'Ceps',
-        link: '/pages/cep/cep-pesquisa',
-      },
-      {
-        title: 'Cidades',
-        link: '/pages/cidades/cidade-iud',
-      },
-      {
-        title: 'Distritos',
-        link: '/pages/distrito/distrito-iud',
-      },
-      {
-        title: 'Bairros',
-        link: '/pages/bairro/bairro-iud',
-      },
-      {
-        title: 'Logradouros',
-        link: '/pages/logradouro/logradouro-iud',
-      },
-      {
-        title: 'Países',
-        link: '/pages/paises/pais-iud',
-      },
+
       {
         title: 'Pessoas',
         icon: 'people-outline',
-        link: '/pages/pessoa/pessoa-pesquisa',
+        children: [
+          {
+            title: 'Pessoas',
+            icon: 'person-outline',
+            link: '/pages/pessoa/pessoa-pesquisa',
+          },
+          {
+            title: 'Estabelecimentos',
+            icon: 'briefcase-outline',
+            link: '/pages/estabelecimento/estabelecimento-pesquisa',
+          },
+          {
+            title: 'Tipos Pessoas',
+            icon: 'person-add-outline',
+            link: '/pages/tipo-pessoa/tipo-pessoa-iud',
+          },
+        ],
       },
+
       {
-        title: 'Estabelecimentos',
-        icon: 'briefcase-outline',
-        link: '/pages/estabelecimento/estabelecimento-pesquisa',
+        title: 'Endereços',
+        icon: 'pin-outline',
+        children: [
+          {
+            title: 'Estados',
+            icon: 'map-outline',
+            link: '/pages/estado/estado-iud',
+          },
+          {
+            title: 'CEPs',
+            icon: 'navigation-2-outline',
+            link: '/pages/cep/cep-pesquisa',
+          },
+          {
+            title: 'Cidades',
+            icon: 'home-outline',
+            link: '/pages/cidades/cidade-iud',
+          },
+          {
+            title: 'Distritos',
+            icon: 'compass-outline',
+            link: '/pages/distrito/distrito-iud',
+          },
+          {
+            title: 'Bairros',
+            icon: 'pin-outline',
+            link: '/pages/bairro/bairro-iud',
+          },
+          {
+            title: 'Logradouros',
+            icon: 'navigation-outline',
+            link: '/pages/logradouro/logradouro-iud',
+          },
+          {
+            title: 'Países',
+            icon: 'globe-2-outline',
+            link: '/pages/paises/pais-iud',
+          },
+          {
+            title: 'Tipos Logradouros',
+            icon: 'list-outline',
+            link: '/pages/tipo-logradouro/tipo-logradouro-iud',
+          },
+          {
+            title: 'Modalidades',
+            icon: 'layers-outline',
+            link: '/pages/modalidades/modalidade-pesquisa',
+          },
+        ],
       },
-      {
-        title: 'Tipos Logradouros',
-        link: '/pages/tipo-logradouro/tipo-logradouro-iud',
-      },
-      {
-        title: 'Tipos Pessoas',
-        link: '/pages/tipo-pessoa/tipo-pessoa-iud',
-      },
-      {
-        title: 'Modalidades',
-        link: '/pages/modalidades/modalidade-pesquisa',
-      },
+
     ],
   },
+
   {
     title: 'Atividades',
     icon: 'edit-2-outline',
     children: [
-      // =================================================================
-      // <<< NOVO SUB-MENU DE SEGURANÇA ADICIONADO AQUI
-      // =================================================================
+
       {
         title: 'Unifica Pessoas',
+        icon: 'shuffle-2-outline',
         children: [
 
-          // ===== PESSOAS =====
           {
             title: 'Pessoas',
             icon: 'people-outline',
             children: [
-              /*{
-                title: 'CPF NO NOME',
-                link: '/pages/unificacao/pessoas/cpf-no-nome',
-              },*/
               {
                 title: 'CPF ÚNICO',
+                icon: 'person-done-outline',
                 link: '/pages/unificacao/pessoas/pes-pessoa',
               },
               {
                 title: 'CPF DUPLICADO',
+                icon: 'people-outline',
                 link: '/pages/unificacao/pessoas/cpf-duplicado',
               },
-              /*{
-                title: 'CNPJ ÚNICO',
-                link: '/pages/unificacao/pessoas/cnpj-unico',
-              },*/
-              /*{
-                title: 'CNPJ DUPLICADO',
-                link: '/pages/unificacao/pessoas/cnpj-duplicado',
-              },*/
             ],
           },
 
-          // ===== RH =====
           {
             title: 'RH',
             icon: 'briefcase-outline',
             children: [
               {
                 title: 'Pessoas RH',
+                icon: 'person-outline',
                 link: '/pages/unificacao/rh',
               },
             ],
           },
 
-          // ===== SANEAMENTO =====
           {
             title: 'SANEAMENTO',
-            icon: 'briefcase-outline',
+            icon: 'checkmark-circle-2-outline',
             children: [
               {
                 title: 'CPF ÚNICO',
+                icon: 'person-done-outline',
                 link: '/pages/unificacao/saneamento',
               },
               {
                 title: 'CPF DUPLICADO',
+                icon: 'people-outline',
                 link: '/pages/unificacao/saneamento/sane-cpf-duplicado',
               },
-              /*{
-                title: 'CNPJ ÚNICO',
-                link: '/pages/unificacao/saneamento/sane-cnpj-unico',
-              },*/
             ],
           },
 
@@ -144,28 +151,35 @@ export const MENU_ITEMS: NbMenuItem[] = [
 
       {
         title: 'Form Inputs',
+        icon: 'edit-outline',
         link: '/pages/forms/inputs',
       },
+
     ],
   },
+
   {
     title: 'Consultas',
     icon: 'keypad-outline',
     children: [
       {
         title: 'Grid',
+        icon: 'grid-outline',
         link: '/pages/ui-features/grid',
       },
     ],
   },
+
   {
-    title: 'Relatorios',
+    title: 'Relatórios',
     icon: 'browser-outline',
     children: [
       {
         title: 'Dialog',
+        icon: 'message-square-outline',
         link: '/pages/modal-overlays/dialog',
       },
     ],
   },
+
 ];

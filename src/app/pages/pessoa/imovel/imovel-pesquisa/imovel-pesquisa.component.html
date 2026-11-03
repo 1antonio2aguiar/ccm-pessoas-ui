@@ -1,0 +1,219 @@
+
+<nb-card [nbSpinner]="carregando" nbSpinnerStatus="primary">
+
+  <nb-card-header>
+    Imóveis vinculados à pessoa
+  </nb-card-header>
+
+  <nb-card-body>
+
+    
+<!-- INDICADORES DOS IMÓVEIS -->
+<div class="row mb-4" *ngIf="!carregando && imoveis.length">
+
+  <!-- TOTAL DE IMÓVEIS -->
+  <div class="col-md-4 mb-2">
+    <nb-card class="indicador-card">
+      <nb-card-body>
+        <div class="indicador-titulo">Total de imóveis</div>
+        <div class="indicador-valor">
+          {{ quantidadeImoveis }}
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- IMÓVEIS COM DÉBITOS -->
+  <div class="col-md-4 mb-2">
+    <nb-card class="indicador-card">
+      <nb-card-body>
+        <div class="indicador-titulo">Imóveis com débitos</div>
+        <div class="indicador-valor">
+          {{ quantidadeComDebitos }}
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- TOTAL GERAL DOS DÉBITOS -->
+  <div class="col-md-4 mb-2">
+    <nb-card class="indicador-card">
+      <nb-card-body>
+        <div class="indicador-titulo">Total geral dos débitos</div>
+        <div class="indicador-valor">
+          {{ formatarMoeda(totalGeralDebitos) }}
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+</div>
+
+
+    <p *ngIf="!carregando && !imoveis.length"
+       class="text-muted">
+      Nenhum imóvel encontrado.
+    </p>
+
+    <div class="tabela-container" *ngIf="imoveis.length">
+
+      <table class="tabela-imoveis">
+
+        <thead>
+          <tr>
+            <th class="col-imovel">Imóvel</th>
+            <th class="col-endereco">Endereço</th>
+            <th class="col-total">Total dos débitos</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <ng-container *ngFor="let item of imoveis">
+
+            <!-- LINHA PRINCIPAL DO IMÓVEL -->
+            <tr class="linha-imovel"
+                [class.com-dividas]="possuiDividas(item)"
+                [class.expandida]="estaExpandido(item)">
+
+              <td class="col-imovel">
+
+                <div class="imovel-identificacao">
+
+                  <button
+                    *ngIf="possuiDividas(item)"
+                    nbButton
+                    ghost
+                    size="tiny"
+                    status="primary"
+                    type="button"
+                    class="botao-expandir"
+                    [attr.aria-expanded]="estaExpandido(item)"
+                    (click)="alternar(item)">
+
+                    <nb-icon
+                      [icon]="estaExpandido(item)
+                        ? 'chevron-down-outline'
+                        : 'chevron-right-outline'">
+                    </nb-icon>
+
+                  </button>
+
+                  <span *ngIf="!possuiDividas(item)"
+                        class="espaco-seta">
+                  </span>
+
+                  <strong>{{ item.imovel }}</strong>
+
+                </div>
+
+              </td>
+
+              <td class="col-endereco">
+
+                <div class="endereco-linha">
+                  {{ endereco(item) }}
+                </div>
+
+                <small *ngIf="item.cep" class="cep">
+                  CEP: {{ item.cep }}
+                </small>
+
+              </td>
+
+              <td class="col-total">
+
+                <strong [class.tem-debito]="possuiDividas(item)">
+                  {{ formatarMoeda(item.total) }}
+                </strong>
+
+              </td>
+
+            </tr>
+
+            <!-- EXPANSÃO: DÍVIDAS DO IMÓVEL -->
+            <tr class="linha-detalhes"
+                *ngIf="estaExpandido(item)">
+
+              <td colspan="3">
+
+                <div class="detalhes-container">
+
+                  <div class="detalhes-scroll">
+
+                    <table class="tabela-dividas">
+
+                      <thead>
+                        <tr>
+                          <th>Tipo de dívida</th>
+                          <th>Ano</th>
+                          <th>Valor</th>
+                          <th>Correção</th>
+                          <th>Multa</th>
+                          <th>Juros</th>
+                          <th>Situação</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+
+                        <tr *ngFor="let divida of item.dividas">
+
+                          <td class="tipo-divida">
+                            {{ divida.tipoDividaDescricao }}
+                          </td>
+
+                          <td>
+                            {{ divida.anoDivida }}
+                          </td>
+
+                          <td>
+                            {{ formatarMoeda(divida.valorDivida) }}
+                          </td>
+
+                          <td>
+                            {{ formatarMoeda(divida.correcao) }}
+                          </td>
+
+                          <td>
+                            {{ formatarMoeda(divida.multa) }}
+                          </td>
+
+                          <td>
+                            {{ formatarMoeda(divida.juros) }}
+                          </td>
+
+                          <td>
+                            {{ divida.sit || '-' }}
+                          </td>
+
+                          <td class="valor-total">
+                            {{ formatarMoeda(divida.total) }}
+                          </td>
+
+                        </tr>
+
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          </ng-container>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </nb-card-body>
+
+</nb-card>

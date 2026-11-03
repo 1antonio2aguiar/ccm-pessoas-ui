@@ -22,8 +22,12 @@ export class CidadeService extends BaseResourceService<Cidade> {
     let params = filtro.params;
 
     if (filtro.params) {
-      filtro.params.keys().forEach(key => {
-        params = params.set(key, filtro.params.get(key));
+      filtro.params.keys().forEach((key: string) => {
+        const valor = filtro.params.get(key);
+
+        if (valor !== null) {
+          params = params.set(key, valor);
+        }
       });
     }
 

@@ -15,7 +15,8 @@ import { DocumentoIudComponent } from './documento/documento-iud/documento-iud.c
 import { OrigemPesquisaComponent } from './origem/origem-pesquisa/origem-pesquisa.component';
 import { EstabelecimentoPesquisaComponent } from './estabelecimento/estabelecimento-pesquisa/estabelecimento-pesquisa.component';
 import { EstabelecimentoIudComponent } from './estabelecimento/estabelecimento-iud/estabelecimento-iud.component';
-
+import { ImovelPesquisaComponent } from './imovel/imovel-pesquisa/imovel-pesquisa.component';
+ 
 const routes: Routes = [{
   path: '',
   component: PessoaComponent,
@@ -41,6 +42,7 @@ const routes: Routes = [{
         { path: 'contatos', component: ContatoPesquisaComponent },
         { path: 'documentos', component: DocumentoPesquisaComponent },
         { path: 'origem', component: OrigemPesquisaComponent },
+        { path: 'imoveis', component: ImovelPesquisaComponent },
       ]
     },
 
@@ -55,6 +57,7 @@ const routes: Routes = [{
         { path: 'contatos', component: ContatoPesquisaComponent },
         { path: 'documentos', component: DocumentoPesquisaComponent },
         { path: 'origem', component: OrigemPesquisaComponent },
+        { path: 'imoveis', component: ImovelPesquisaComponent },
       ]
     },
 
@@ -86,4 +89,5 @@ export const pessoaRoutedComponents = [
   OrigemPesquisaComponent,
   EstabelecimentoPesquisaComponent,
   EstabelecimentoIudComponent,
+  ImovelPesquisaComponent,
 ];
