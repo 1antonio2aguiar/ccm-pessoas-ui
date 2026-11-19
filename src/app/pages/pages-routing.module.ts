@@ -151,6 +151,13 @@ const routes: Routes = [{
     },
 
     {
+      path: 'unificacao/enderecos/carga-final',
+      loadChildren: () =>
+        import('./unificacao/enderecos/carga-final/carga-final-enderecos.module')
+          .then(m => m.CargaFinalEnderecosModule),
+    },
+
+    {
       path: '',
       redirectTo: 'dashboard',
       pathMatch: 'full',

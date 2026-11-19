@@ -178,6 +178,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
             icon: 'layers-outline',
             link: '/pages/unificacao/enderecos/consolidacao',
           },
+          {
+            title: 'Carga final',
+            icon: 'checkmark-circle-2-outline',
+            link: '/pages/unificacao/enderecos/carga-final',
+          },
         ],
       },
 

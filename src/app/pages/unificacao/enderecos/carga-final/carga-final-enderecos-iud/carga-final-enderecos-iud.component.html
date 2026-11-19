@@ -1,0 +1,130 @@
+<nb-card>
+  <nb-card-header>
+    Carga Final de Endereços
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div class="ajuda">
+      Leva os endereços consolidados de <strong>DBO_UNI_PESSOAS</strong> para as tabelas que os
+      sistemas usam, em <strong>DBO_CC_ENDERECOS</strong> e <strong>DBO_CCM_PESSOAS</strong>
+      (mesmo ID nos dois), gravando o <strong>CODIGO_CCM</strong> de volta na consolidada.
+      Substitui as procedures <em>SP_CARGA_ENDERECOS</em> e <em>SP_CARGA_CEPS</em>.
+      <ul>
+        <li>Só carrega quem está <strong>sem CODIGO_CCM</strong>. Quem já tem código nunca muda.</li>
+        <li><strong>Nunca apaga</strong> nada, em nenhum dos três schemas.</li>
+        <li>Cada nível só carrega o que tem o nível de cima já carregado; o resto aparece como bloqueado.</li>
+        <li>Pode ser executada quantas vezes for preciso (só acrescenta).</li>
+      </ul>
+      Faça a consolidação antes. Logradouros e CEPs passam de 1 milhão de linhas: levam alguns minutos.
+    </div>
+
+    <div class="botoes">
+
+      <button
+        nbButton
+        status="basic"
+        type="button"
+        [disabled]="processando || carregandoAlgum"
+        (click)="atualizarNumeros()">
+        Atualizar números
+      </button>
+
+      <button
+        nbButton
+        status="success"
+        type="button"
+        [disabled]="processando || !linhas.length"
+        (click)="carregarTodos()">
+        Carregar tudo (na ordem)
+      </button>
+
+    </div>
+
+    <div *ngIf="processando" class="aviso">
+      <strong>Carregando {{ nivelProcessando }}...</strong>
+      O processamento é feito no servidor. Aguarde a conclusão.
+    </div>
+
+    <div *ngIf="mensagemErro && !processando" class="erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <table class="tabela-niveis">
+
+      <thead>
+        <tr>
+          <th>Ordem</th>
+          <th>Nível</th>
+          <th class="numero">Na consolidada</th>
+          <th class="numero">Com código CCM</th>
+          <th class="numero" title="Sem CODIGO_CCM e prontos para carregar">A carregar</th>
+          <th class="numero" title="Sem CODIGO_CCM, mas o nível de cima ainda não foi carregado">Bloqueados</th>
+          <th class="numero" title="Têm código, mas a linha não existe em DBO_CC_ENDERECOS (a carga completa)">
+            Faltando CC_ENDERECOS
+          </th>
+          <th class="numero" title="Têm código, mas a linha não existe em DBO_CCM_PESSOAS (a carga completa)">
+            Faltando CCM_PESSOAS
+          </th>
+          <th>Último resultado</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let linha of linhas; let i = index">
+
+          <td>{{ i + 1 }}</td>
+          <td><strong>{{ linha.nivel.descricao }}</strong></td>
+
+          <ng-container *ngIf="linha.resumo && !linha.carregando; else semNumeros">
+            <td class="numero">{{ linha.resumo.totalConsolidado | number }}</td>
+            <td class="numero">{{ linha.resumo.comCodigo | number }}</td>
+            <td class="numero" [class.destaque]="linha.resumo.pendentes > 0">
+              {{ linha.resumo.pendentes | number }}
+            </td>
+            <td class="numero" [class.alerta]="linha.resumo.bloqueados > 0">
+              {{ linha.resumo.bloqueados | number }}
+            </td>
+            <td class="numero" [class.alerta]="linha.resumo.faltandoCcEnderecos > 0">
+              {{ linha.resumo.faltandoCcEnderecos | number }}
+            </td>
+            <td class="numero" [class.alerta]="linha.resumo.faltandoCcmPessoas > 0">
+              {{ linha.resumo.faltandoCcmPessoas | number }}
+            </td>
+          </ng-container>
+
+          <ng-template #semNumeros>
+            <td colspan="6" class="info">
+              <span *ngIf="linha.carregando">Contando...</span>
+              <span *ngIf="!linha.carregando && linha.erro" class="texto-erro">{{ linha.erro }}</span>
+              <span *ngIf="!linha.carregando && !linha.erro">-</span>
+            </td>
+          </ng-template>
+
+          <td>
+            <span *ngIf="linha.resultado"
+              [class.texto-erro]="!linha.resultado.sucesso">
+              {{ linha.resultado.mensagem }}
+            </span>
+          </td>
+
+          <td class="acao">
+            <button
+              nbButton
+              size="small"
+              status="primary"
+              type="button"
+              [disabled]="processando"
+              (click)="carregar(linha)">
+              Carregar
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+
+  </nb-card-body>
+</nb-card>
