@@ -1,0 +1,194 @@
+<nb-card class="modal-bairro">
+
+  <nb-card-header>
+    Unificar bairro - {{ origemDescricao }}
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Bairro de origem -->
+    <div class="origem">
+
+      <h6>Bairro na origem ({{ origemDescricao }})</h6>
+
+      <div class="dados-origem">
+        <div><strong>Cidade:</strong> {{ bairro?.cidadeOrigem }} - {{ bairro?.nomeCidade || '-' }}</div>
+        <div><strong>Distrito:</strong> {{ bairro?.distritoOrigem }}</div>
+        <div><strong>Bairro:</strong> {{ bairro?.bairroOrigem }}</div>
+        <div class="largo"><strong>Nome:</strong> {{ bairro?.nome }}</div>
+        <div><strong>UF:</strong> {{ bairro?.uf || '-' }}</div>
+        <div class="largo">
+          <strong>Correios (cidade/distrito):</strong>
+          <ng-container *ngIf="bairro?.cidadeCorreios; else naoUnificado">
+            {{ bairro?.cidadeCorreios }} / {{ bairro?.distritoCorreios }}
+          </ng-container>
+          <ng-template #naoUnificado>distrito não unificado</ng-template>
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="distritoNaoUnificado" class="erro">
+      O distrito deste bairro ainda não foi unificado (ou está unificado com mais de um
+      distrito dos Correios). Unifique o distrito na tela
+      <strong>Unifica Endereços → Distritos</strong> e volte aqui.
+    </div>
+
+    <div *ngIf="mensagemErro" class="erro">
+      {{ mensagemErro }}
+    </div>
+
+    <ng-container *ngIf="!distritoNaoUnificado">
+
+      <!-- Candidatos automáticos -->
+      <h6 class="titulo-secao">Bairros com o mesmo nome no distrito</h6>
+
+      <div *ngIf="carregando" class="info">
+        Buscando bairros correspondentes...
+      </div>
+
+      <div *ngIf="!carregando && candidatosAutomaticos.length === 0" class="info">
+        Nenhum bairro com o mesmo nome neste distrito. Pesquise por outra grafia
+        (a pesquisa procura na cidade inteira), liste os bairros do distrito
+        ou crie o bairro novo.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: candidatosAutomaticos }">
+      </ng-container>
+
+      <!-- Pesquisa manual -->
+      <h6 class="titulo-secao">Outros bairros</h6>
+
+      <div class="pesquisa">
+
+        <input
+          nbInput
+          fullWidth
+          type="text"
+          placeholder="Parte do nome (mín. 3 letras) - pesquisa na cidade inteira"
+          [(ngModel)]="pesquisa"
+          (keyup.enter)="pesquisar()">
+
+        <button
+          nbButton
+          status="info"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="pesquisar()">
+          Pesquisar
+        </button>
+
+        <button
+          nbButton
+          status="basic"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="listarTodosDoDistrito()">
+          Listar todos do distrito
+        </button>
+
+      </div>
+
+      <div *ngIf="pesquisou && outrosBairros.length === 0" class="info">
+        Nenhum bairro encontrado.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: outrosBairros }">
+      </ng-container>
+
+    </ng-container>
+
+    <!-- Não vincular -->
+    <div *ngIf="exibirMotivo" class="motivo">
+      <label>Motivo para não vincular (opcional)</label>
+      <textarea
+        nbInput
+        fullWidth
+        rows="2"
+        maxlength="500"
+        [(ngModel)]="motivo">
+      </textarea>
+    </div>
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="fechar()">
+      Fechar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      (click)="confirmarNaoVincular()">
+      {{ exibirMotivo ? 'Confirmar não vincular' : 'Não vincular' }}
+    </button>
+
+    <button
+      nbButton
+      status="warning"
+      type="button"
+      [disabled]="!podeCriar"
+      title="Disponível somente quando o distrito está unificado e não existe bairro com o mesmo nome"
+      (click)="criar()">
+      Criar bairro novo
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>
+
+<!-- Tabela reutilizada pelos candidatos e pela pesquisa -->
+<ng-template #tabelaCandidatos let-lista="lista">
+
+  <table *ngIf="lista?.length" class="tabela-candidatos">
+
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Nome reduzido</th>
+        <th>Distrito Correios</th>
+        <th>Bairro Correios</th>
+        <th>Critério</th>
+        <th>Situação</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of lista" [class.linha-ocupada]="ocupado(c)">
+        <td>{{ c.nome }}</td>
+        <td>{{ c.nomeReduzido || '-' }}</td>
+        <td>{{ c.distritoCorreios }}</td>
+        <td>{{ c.bairroCorreios }}</td>
+        <td>{{ descricaoCriterio(c.criterio) }}</td>
+        <td>
+          <span *ngIf="!ocupado(c)">Livre</span>
+          <span *ngIf="ocupado(c)" title="Será registrado como código duplicado">
+            Já possui código desta origem
+          </span>
+        </td>
+        <td class="acao">
+          <button
+            nbButton
+            size="small"
+            status="primary"
+            type="button"
+            (click)="vincular(c)">
+            Vincular
+          </button>
+        </td>
+      </tr>
+    </tbody>
+
+  </table>
+
+</ng-template>

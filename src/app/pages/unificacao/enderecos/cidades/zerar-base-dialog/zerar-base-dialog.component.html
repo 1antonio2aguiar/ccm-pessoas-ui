@@ -1,0 +1,64 @@
+<nb-card class="modal-zerar">
+
+  <nb-card-header>
+    Recomeçar a unificação de cidades do zero
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <p class="aviso">
+      Esta operação apaga <strong>todas</strong> as linhas de
+      <strong>CIDADES_UNIFICADO</strong> e de <strong>CIDADES_UNIFICADO_CTRL</strong>
+      e gera novamente a base a partir das cidades dos Correios.
+    </p>
+
+    <p>
+      Todos os vínculos feitos com os sistemas de origem (PES, RH, SANE, Saúde, Escola)
+      serão perdidos e precisarão ser refeitos.
+    </p>
+
+    <div class="opcao">
+      <nb-checkbox [(ngModel)]="apagarFicticias">
+        Apagar também as cidades fictícias dos Correios (STATUS = 'N') que não estão em uso
+      </nb-checkbox>
+      <div class="ajuda">
+        Fictícias usadas em distritos, bairros, logradouros ou nos de-paras unificados
+        são mantidas e voltam para a base com o mesmo código.
+      </div>
+    </div>
+
+    <label class="rotulo">
+      Para confirmar, digite <strong>{{ textoConfirmacao }}</strong>:
+    </label>
+
+    <input
+      nbInput
+      fullWidth
+      type="text"
+      [(ngModel)]="confirmacao"
+      (keyup.enter)="confirmar()">
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="cancelar()">
+      Cancelar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      [disabled]="!confirmado"
+      (click)="confirmar()">
+      Recomeçar do zero
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>

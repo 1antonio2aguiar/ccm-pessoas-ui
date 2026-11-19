@@ -1,0 +1,288 @@
+<nb-card class="modal-logradouro">
+
+  <nb-card-header>
+    Unificar logradouro - {{ origemDescricao }}
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Logradouro de origem -->
+    <div class="origem">
+
+      <h6>Logradouro na origem ({{ origemDescricao }})</h6>
+
+      <div class="dados-origem">
+        <div><strong>Cidade:</strong> {{ logradouro?.cidadeOrigem }} - {{ logradouro?.nomeCidade || '-' }}</div>
+        <div><strong>Distrito:</strong> {{ logradouro?.distritoOrigem }}</div>
+        <div><strong>Logradouro:</strong> {{ logradouro?.logradouroOrigem }}</div>
+        <div class="largo"><strong>Nome:</strong> {{ logradouro?.tipo || '' }} {{ logradouro?.nome }}</div>
+        <div><strong>UF:</strong> {{ logradouro?.uf || '-' }}</div>
+        <div class="largo">
+          <strong>Correios (cidade/distrito):</strong>
+          <ng-container *ngIf="logradouro?.cidadeCorreios; else naoUnificado">
+            {{ logradouro?.cidadeCorreios }} / {{ logradouro?.distritoCorreios }}
+          </ng-container>
+          <ng-template #naoUnificado>distrito não unificado</ng-template>
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="distritoNaoUnificado" class="erro">
+      O distrito deste logradouro ainda não foi unificado (ou está unificado com mais de um
+      distrito dos Correios). Unifique o distrito na tela
+      <strong>Unifica Endereços → Distritos</strong> e volte aqui.
+    </div>
+
+    <div *ngIf="mensagemErro" class="erro">
+      {{ mensagemErro }}
+    </div>
+
+    <ng-container *ngIf="!distritoNaoUnificado">
+
+      <!-- Candidatos automáticos -->
+      <h6 class="titulo-secao">Logradouros com o mesmo nome no distrito</h6>
+
+      <div *ngIf="carregando" class="info">
+        Buscando logradouros correspondentes...
+      </div>
+
+      <div *ngIf="!carregando && candidatosAutomaticos.length === 0" class="info">
+        Nenhum logradouro com o mesmo nome neste distrito. Pesquise por outra grafia
+        (a pesquisa procura na cidade inteira), liste os logradouros do distrito
+        ou crie o logradouro novo.
+      </div>
+
+      <div *ngIf="!carregando && tipoDiferente" class="info">
+        Os Correios têm o mesmo nome com <strong>outro tipo</strong> (ex.: Rua x Avenida).
+        Se for o mesmo logradouro com o tipo cadastrado errado na origem, vincule.
+        Se for outro logradouro, crie o novo.
+      </div>
+
+      <div *ngIf="!carregando && logradouro?.situacao === 'FAIXAS'" class="info">
+        Os Correios dividem este logradouro em <strong>faixas de numeração</strong>.
+        A sugestão é o trecho principal (sem faixa, ou o de menor código).
+        As faixas continuam valendo pelos CEPs.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: candidatosAutomaticos }">
+      </ng-container>
+
+      <!-- Pesquisa manual -->
+      <h6 class="titulo-secao">Outros logradouros</h6>
+
+      <div class="pesquisa">
+
+        <input
+          nbInput
+          fullWidth
+          type="text"
+          placeholder="Parte do nome (mín. 3 letras) - pesquisa na cidade inteira"
+          [(ngModel)]="pesquisa"
+          (keyup.enter)="pesquisar()">
+
+        <button
+          nbButton
+          status="info"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="pesquisar()">
+          Pesquisar
+        </button>
+
+        <button
+          nbButton
+          status="basic"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="listarTodosDoDistrito()">
+          Listar todos do distrito
+        </button>
+
+      </div>
+
+      <div *ngIf="pesquisou && outrosLogradouros.length === 0" class="info">
+        Nenhum logradouro encontrado.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: outrosLogradouros }">
+      </ng-container>
+
+    </ng-container>
+
+    <!-- Criar logradouro novo: escolha do CEP -->
+    <div *ngIf="exibirCriacao" class="criacao">
+
+      <h6 class="titulo-secao">CEP do logradouro novo</h6>
+
+      <div class="info">
+        O logradouro novo recebe um código dos Correios (STATUS N) e precisa de um CEP
+        que <strong>já existe</strong> na tabela de CEPs da cidade. Pesquise pelo começo
+        do CEP ou pelo nome de um logradouro vizinho e escolha um da lista.
+      </div>
+
+      <div class="pesquisa">
+
+        <input
+          nbInput
+          fullWidth
+          type="text"
+          placeholder="Começo do CEP (ex.: 38010) ou nome de um logradouro vizinho"
+          [(ngModel)]="pesquisaCep"
+          (keyup.enter)="pesquisarCeps()">
+
+        <button
+          nbButton
+          status="info"
+          type="button"
+          [disabled]="buscandoCeps"
+          (click)="pesquisarCeps()">
+          Pesquisar CEP
+        </button>
+
+      </div>
+
+      <div *ngIf="buscandoCeps" class="info">Buscando CEPs...</div>
+
+      <div *ngIf="!buscandoCeps && pesquisouCep && ceps.length === 0" class="info">
+        Nenhum CEP encontrado nesta cidade.
+      </div>
+
+      <table *ngIf="ceps.length" class="tabela-candidatos">
+
+        <thead>
+          <tr>
+            <th>CEP</th>
+            <th>Logradouro do CEP</th>
+            <th>Bairro</th>
+            <th>Faixa</th>
+            <th>Distrito</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let c of ceps" [class.linha-selecionada]="cepSelecionado === c">
+            <td>{{ formatarCep(c.cep) }}</td>
+            <td>{{ c.nomeLogradouro || '-' }}</td>
+            <td>{{ c.nomeBairro || '-' }}</td>
+            <td>{{ faixaCep(c) }}</td>
+            <td>{{ c.distrito }}</td>
+            <td class="acao">
+              <button
+                nbButton
+                size="small"
+                [status]="cepSelecionado === c ? 'success' : 'basic'"
+                type="button"
+                (click)="selecionarCep(c)">
+                {{ cepSelecionado === c ? 'Escolhido' : 'Escolher' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- Não vincular -->
+    <div *ngIf="exibirMotivo" class="motivo">
+      <label>Motivo para não vincular (opcional)</label>
+      <textarea
+        nbInput
+        fullWidth
+        rows="2"
+        maxlength="500"
+        [(ngModel)]="motivo">
+      </textarea>
+    </div>
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="fechar()">
+      Fechar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      (click)="confirmarNaoVincular()">
+      {{ exibirMotivo ? 'Confirmar não vincular' : 'Não vincular' }}
+    </button>
+
+    <button
+      nbButton
+      status="warning"
+      type="button"
+      [disabled]="!podeCriar || (exibirCriacao && !cepSelecionado)"
+      title="Disponível somente quando o distrito está unificado e não existe logradouro com o mesmo nome e tipo"
+      (click)="criar()">
+      {{ exibirCriacao ? 'Confirmar criação com CEP ' + formatarCep(cepSelecionado?.cep) : 'Criar logradouro novo' }}
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>
+
+<!-- Tabela reutilizada pelos candidatos e pela pesquisa -->
+<ng-template #tabelaCandidatos let-lista="lista">
+
+  <table *ngIf="lista?.length" class="tabela-candidatos">
+
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Nome</th>
+        <th>Complemento</th>
+        <th>Bairro</th>
+        <th>Distrito Correios</th>
+        <th>Logradouro Correios</th>
+        <th>Critério</th>
+        <th>Situação</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of lista" [class.linha-ocupada]="ocupado(c)">
+        <td [class.tipo-diferente]="c.criterio === 'TIPO_DIFERENTE'">{{ c.tipo || '-' }}</td>
+        <td>{{ c.nome }}</td>
+        <td>
+          {{ c.complemento || '-' }}
+          <span *ngIf="c.faixa" class="etiqueta">faixa</span>
+        </td>
+        <td>{{ c.nomeBairro || '-' }}</td>
+        <td>{{ c.distritoCorreios }}</td>
+        <td>{{ c.logradouroCorreios }}</td>
+        <td>{{ descricaoCriterio(c.criterio) }}</td>
+        <td>
+          <span *ngIf="!ocupado(c)">Livre</span>
+          <span *ngIf="ocupado(c)" title="Será registrado como código duplicado">
+            Já possui código desta origem
+          </span>
+        </td>
+        <td class="acao">
+          <button
+            nbButton
+            size="small"
+            status="primary"
+            type="button"
+            (click)="vincular(c)">
+            Vincular
+          </button>
+        </td>
+      </tr>
+    </tbody>
+
+  </table>
+
+</ng-template>

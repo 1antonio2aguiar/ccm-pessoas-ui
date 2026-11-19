@@ -1,0 +1,259 @@
+<nb-card>
+  <nb-card-header>
+    Unificação de Bairros
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Base dos Correios -->
+    <div class="painel-base">
+
+      <div class="painel-base-titulo">
+        <strong>1. Base dos Correios</strong>
+        <span class="ajuda">
+          Uma linha em BAIRROS_UNIFICADO para cada bairro dos Correios.
+          Gere a base antes de unificar os sistemas de origem.
+          Cidades e distritos precisam estar unificados antes dos bairros.
+        </span>
+      </div>
+
+      <div class="painel-base-conteudo">
+
+        <div *ngIf="resumoBase" class="resumo">
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalCorreios }}</span>
+            <span class="rotulo">Bairros nos Correios</span>
+          </div>
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalCorreiosFicticios }}</span>
+            <span class="rotulo">Fictícios (STATUS N)</span>
+          </div>
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalUnificado }}</span>
+            <span class="rotulo">Na base unificada</span>
+          </div>
+
+          <div class="resumo-item"
+            [class.laranja]="resumoBase.totalFaltando > 0">
+            <span class="valor">{{ resumoBase.totalFaltando }}</span>
+            <span class="rotulo">Faltando na base</span>
+          </div>
+
+        </div>
+
+        <div class="botoes">
+
+          <button
+            nbButton
+            status="primary"
+            type="button"
+            [disabled]="bloqueado || !(resumoBase?.totalFaltando)"
+            (click)="gerarBase()">
+            Gerar base (acrescentar novos)
+          </button>
+
+          <button
+            *ngIf="resumoBase?.permiteZerar"
+            nbButton
+            status="danger"
+            type="button"
+            [disabled]="bloqueado"
+            (click)="recomecarDoZero()">
+            Recomeçar do zero
+          </button>
+
+        </div>
+
+      </div>
+
+      <div *ngIf="erroResumoBase" class="lote-erro mt-2">
+        <strong>Erro ao consultar a base:</strong> {{ erroResumoBase }}
+      </div>
+
+      <div *ngIf="processandoBase" class="mt-2">
+        Processando a base de bairros... aguarde.
+      </div>
+
+      <div *ngIf="mensagemBase && !processandoBase" class="mensagem-base">
+        {{ mensagemBase }}
+      </div>
+
+    </div>
+
+    <div *ngIf="baseVazia" class="lote-erro">
+      A base unificada de bairros está vazia. Clique em <strong>Gerar base</strong>
+      antes de unificar os sistemas de origem.
+    </div>
+
+    <div class="painel-base-titulo">
+      <strong>2. Unificação por sistema de origem</strong>
+    </div>
+
+    <!-- Origem e situação -->
+    <div class="barra-filtros">
+
+      <div class="campo">
+        <label>Sistema de origem</label>
+        <nb-select
+          [selected]="origemSelecionada"
+          [disabled]="bloqueado"
+          (selectedChange)="onOrigemChange($event)">
+          <nb-option *ngFor="let o of origens" [value]="o.codigo">
+            {{ o.descricao }}
+          </nb-option>
+        </nb-select>
+      </div>
+
+      <div class="campo">
+        <label>Situação</label>
+        <nb-select
+          [selected]="situacaoSelecionada"
+          [disabled]="bloqueado"
+          (selectedChange)="onSituacaoChange($event)">
+          <nb-option *ngFor="let s of situacoes" [value]="s.valor">
+            {{ s.descricao }}
+          </nb-option>
+        </nb-select>
+      </div>
+
+      <div class="botoes">
+
+        <button
+          nbButton
+          status="basic"
+          type="button"
+          [disabled]="isLoading || bloqueado"
+          (click)="atualizar()">
+          Atualizar
+        </button>
+
+        <button
+          nbButton
+          status="success"
+          type="button"
+          [disabled]="bloqueado || baseVazia || !(resumo?.totalUnicos)"
+          (click)="vincularUnicos()">
+          Vincular todos os únicos ({{ resumo?.totalUnicos || 0 }})
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- Resumo da origem -->
+    <div *ngIf="resumo" class="resumo">
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalOrigem }}</span>
+        <span class="rotulo">Bairros na origem</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalVinculados }}</span>
+        <span class="rotulo">Vinculados</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalDuplicadosRegistrados }}</span>
+        <span class="rotulo">Duplicados registrados</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalNaoVincular }}</span>
+        <span class="rotulo">Não vincular</span>
+      </div>
+
+      <div class="resumo-separador"></div>
+
+      <div class="resumo-item clicavel verde"
+        [class.ativo]="situacaoSelecionada === 'UNICA'"
+        (click)="onSituacaoChange('UNICA')">
+        <span class="valor">{{ resumo.totalUnicos }}</span>
+        <span class="rotulo">Únicos</span>
+      </div>
+
+      <div class="resumo-item clicavel laranja"
+        [class.ativo]="situacaoSelecionada === 'DUPLICADA'"
+        (click)="onSituacaoChange('DUPLICADA')">
+        <span class="valor">{{ resumo.totalDuplicados }}</span>
+        <span class="rotulo">Duplicados</span>
+      </div>
+
+      <div class="resumo-item clicavel"
+        [class.ativo]="situacaoSelecionada === 'AMBIGUA'"
+        (click)="onSituacaoChange('AMBIGUA')">
+        <span class="valor">{{ resumo.totalAmbiguos }}</span>
+        <span class="rotulo">Ambíguos</span>
+      </div>
+
+      <div class="resumo-item clicavel vermelho"
+        [class.ativo]="situacaoSelecionada === 'SEM_CORRESPONDENCIA'"
+        (click)="onSituacaoChange('SEM_CORRESPONDENCIA')">
+        <span class="valor">{{ resumo.totalSemCorrespondencia }}</span>
+        <span class="rotulo">Sem correspondência</span>
+      </div>
+
+      <div class="resumo-item clicavel cinza"
+        [class.ativo]="situacaoSelecionada === 'DISTRITO_NAO_UNIFICADO'"
+        (click)="onSituacaoChange('DISTRITO_NAO_UNIFICADO')">
+        <span class="valor">{{ resumo.totalDistritoNaoUnificado }}</span>
+        <span class="rotulo">Distrito não unificado</span>
+      </div>
+
+    </div>
+
+    <div *ngIf="carregandoResumo && !resumo" class="text-center my-3">
+      <p>Carregando resumo...</p>
+    </div>
+
+    <!-- Lote -->
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Vinculando os bairros únicos...</strong>
+        <div class="mt-2">
+          O processamento é feito no servidor, um bairro por vez.
+          Aguarde a conclusão.
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="resultadoLote && !processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Lote finalizado.</strong>
+        <div class="mt-2">
+          Analisados: {{ resultadoLote.totalAnalisados }}
+          | Vinculados: {{ resultadoLote.totalVinculados }}
+          | Duplicados: {{ resultadoLote.totalDuplicados }}
+          | Erros: {{ resultadoLote.totalErros }}
+        </div>
+      </div>
+
+      <ul *ngIf="resultadoLote.erros?.length" class="lote-erros">
+        <li *ngFor="let erro of resultadoLote.erros">{{ erro }}</li>
+      </ul>
+    </div>
+
+    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <div *ngIf="isLoading && !processandoLote" class="text-center my-3">
+      <p>Carregando bairros de {{ origemDescricao }}...</p>
+    </div>
+
+    <div class="legenda">
+      Exibindo até {{ filtro.tamanhoConsulta }} de {{ filtro.totalRegistros }} bairros pendentes.
+      Use os filtros da tabela para localizar um bairro específico.
+    </div>
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (edit)="onEditarLinha($event)">
+    </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>

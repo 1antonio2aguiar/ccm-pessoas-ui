@@ -1,0 +1,191 @@
+<nb-card class="modal-distrito">
+
+  <nb-card-header>
+    Unificar distrito - {{ origemDescricao }}
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Distrito de origem -->
+    <div class="origem">
+
+      <h6>Distrito na origem ({{ origemDescricao }})</h6>
+
+      <div class="dados-origem">
+        <div><strong>Cidade:</strong> {{ distrito?.cidadeOrigem }} - {{ distrito?.nomeCidade || '-' }}</div>
+        <div><strong>Distrito:</strong> {{ distrito?.distritoOrigem }}</div>
+        <div><strong>UF:</strong> {{ distrito?.uf || '-' }}</div>
+        <div class="largo"><strong>Nome:</strong> {{ distrito?.nome }}</div>
+        <div>
+          <strong>Cidade Correios:</strong>
+          {{ distrito?.cidadeCorreios || 'não unificada' }}
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="cidadeNaoUnificada" class="erro">
+      A cidade deste distrito ainda não foi unificada (ou está unificada com mais de uma
+      cidade dos Correios). Unifique a cidade na tela <strong>Unifica Endereços → Cidades</strong>
+      e volte aqui.
+    </div>
+
+    <div *ngIf="mensagemErro" class="erro">
+      {{ mensagemErro }}
+    </div>
+
+    <ng-container *ngIf="!cidadeNaoUnificada">
+
+      <!-- Candidatos automáticos -->
+      <h6 class="titulo-secao">Distritos com o mesmo nome na cidade</h6>
+
+      <div *ngIf="carregando" class="info">
+        Buscando distritos correspondentes...
+      </div>
+
+      <div *ngIf="!carregando && candidatosAutomaticos.length === 0" class="info">
+        Nenhum distrito com o mesmo nome nesta cidade. Pesquise por outra grafia,
+        liste os distritos da cidade ou crie o distrito novo.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: candidatosAutomaticos }">
+      </ng-container>
+
+      <!-- Pesquisa manual na mesma cidade -->
+      <h6 class="titulo-secao">Outros distritos da cidade</h6>
+
+      <div class="pesquisa">
+
+        <input
+          nbInput
+          fullWidth
+          type="text"
+          placeholder="Parte do nome (mín. 3 letras)"
+          [(ngModel)]="pesquisa"
+          (keyup.enter)="pesquisar()">
+
+        <button
+          nbButton
+          status="info"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="pesquisar()">
+          Pesquisar
+        </button>
+
+        <button
+          nbButton
+          status="basic"
+          type="button"
+          [disabled]="pesquisando"
+          (click)="listarTodosDaCidade()">
+          Listar todos
+        </button>
+
+      </div>
+
+      <div *ngIf="pesquisou && outrosDistritos.length === 0" class="info">
+        Nenhum distrito encontrado.
+      </div>
+
+      <ng-container
+        *ngTemplateOutlet="tabelaCandidatos; context: { lista: outrosDistritos }">
+      </ng-container>
+
+    </ng-container>
+
+    <!-- Não vincular -->
+    <div *ngIf="exibirMotivo" class="motivo">
+      <label>Motivo para não vincular (opcional)</label>
+      <textarea
+        nbInput
+        fullWidth
+        rows="2"
+        maxlength="500"
+        [(ngModel)]="motivo">
+      </textarea>
+    </div>
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="fechar()">
+      Fechar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      (click)="confirmarNaoVincular()">
+      {{ exibirMotivo ? 'Confirmar não vincular' : 'Não vincular' }}
+    </button>
+
+    <button
+      nbButton
+      status="warning"
+      type="button"
+      [disabled]="!podeCriar"
+      title="Disponível somente quando a cidade está unificada e não existe distrito com o mesmo nome"
+      (click)="criar()">
+      Criar distrito novo
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>
+
+<!-- Tabela reutilizada pelos candidatos e pela pesquisa -->
+<ng-template #tabelaCandidatos let-lista="lista">
+
+  <table *ngIf="lista?.length" class="tabela-candidatos">
+
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>UF</th>
+        <th>Cidade Correios</th>
+        <th>Distrito Correios</th>
+        <th>CEP</th>
+        <th>Critério</th>
+        <th>Situação</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of lista" [class.linha-ocupada]="ocupado(c)">
+        <td>{{ c.nome }}</td>
+        <td>{{ c.uf }}</td>
+        <td>{{ c.cidadeCorreios }}</td>
+        <td>{{ c.distritoCorreios }}</td>
+        <td>{{ formatarCep(c.cep) }}</td>
+        <td>{{ descricaoCriterio(c.criterio) }}</td>
+        <td>
+          <span *ngIf="!ocupado(c)">Livre</span>
+          <span *ngIf="ocupado(c)" title="Será registrado como código duplicado">
+            Já possui código desta origem
+          </span>
+        </td>
+        <td class="acao">
+          <button
+            nbButton
+            size="small"
+            status="primary"
+            type="button"
+            (click)="vincular(c)">
+            Vincular
+          </button>
+        </td>
+      </tr>
+    </tbody>
+
+  </table>
+
+</ng-template>

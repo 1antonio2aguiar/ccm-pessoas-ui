@@ -1,0 +1,79 @@
+.ajuda {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 0.5rem;
+  background: #f7f9fc;
+  color: #4a5568;
+}
+
+.ajuda ul {
+  margin: 0.5rem 0;
+}
+
+.botoes {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.aviso {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ffe08a;
+  border-radius: 0.5rem;
+  background: #fffbea;
+}
+
+.erro {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff2f2;
+  border: 1px solid #ffd6d6;
+  border-radius: 0.5rem;
+  color: #b42318;
+}
+
+.tabela-niveis {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-niveis th,
+.tabela-niveis td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #edf1f7;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabela-niveis th {
+  background: #f7f9fc;
+  font-weight: 600;
+}
+
+.tabela-niveis .numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-niveis .acao {
+  text-align: right;
+}
+
+.tabela-niveis .destaque {
+  color: #0063c4;
+  font-weight: 600;
+}
+
+.tabela-niveis .alerta {
+  color: #b86e00;
+}
+
+.info {
+  color: #8f9bb3;
+}
+
+.texto-erro {
+  color: #b42318;
+}
