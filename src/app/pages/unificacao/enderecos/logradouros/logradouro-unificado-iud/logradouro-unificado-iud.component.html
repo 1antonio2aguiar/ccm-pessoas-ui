@@ -1,0 +1,283 @@
+<nb-card>
+  <nb-card-header>
+    Unificação de Logradouros
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Base dos Correios -->
+    <div class="painel-base">
+
+      <div class="painel-base-titulo">
+        <strong>1. Base dos Correios</strong>
+        <span class="ajuda">
+          Uma linha em LOGRADOUROS_UNIFICADO para cada logradouro dos Correios
+          (cerca de 1,3 milhão: gerar do zero leva alguns minutos).
+          Cidades e distritos precisam estar unificados antes dos logradouros.
+        </span>
+      </div>
+
+      <div class="painel-base-conteudo">
+
+        <div *ngIf="resumoBase" class="resumo">
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalCorreios }}</span>
+            <span class="rotulo">Logradouros nos Correios</span>
+          </div>
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalCorreiosFicticios }}</span>
+            <span class="rotulo">Fictícios (STATUS N)</span>
+          </div>
+
+          <div class="resumo-item">
+            <span class="valor">{{ resumoBase.totalUnificado }}</span>
+            <span class="rotulo">Na base unificada</span>
+          </div>
+
+          <div class="resumo-item"
+            [class.laranja]="resumoBase.totalFaltando > 0">
+            <span class="valor">{{ resumoBase.totalFaltando }}</span>
+            <span class="rotulo">Faltando na base</span>
+          </div>
+
+          <div class="resumo-item"
+            [class.laranja]="resumoBase.totalSemChave > 0"
+            title="Logradouros sem a chave de comparação do nome (carga antiga ou abreviações alteradas)">
+            <span class="valor">{{ resumoBase.totalSemChave }}</span>
+            <span class="rotulo">Sem chave de comparação</span>
+          </div>
+
+        </div>
+
+        <div class="botoes">
+
+          <button
+            nbButton
+            status="primary"
+            type="button"
+            [disabled]="bloqueado || !(resumoBase?.totalFaltando || resumoBase?.totalSemChave)"
+            (click)="gerarBase()">
+            Completar base (novos + chaves)
+          </button>
+
+          <button
+            *ngIf="resumoBase?.permiteZerar"
+            nbButton
+            status="danger"
+            type="button"
+            [disabled]="bloqueado"
+            (click)="recomecarDoZero()">
+            Recomeçar do zero
+          </button>
+
+        </div>
+
+      </div>
+
+      <div *ngIf="erroResumoBase" class="lote-erro mt-2">
+        <strong>Erro ao consultar a base:</strong> {{ erroResumoBase }}
+      </div>
+
+      <div *ngIf="processandoBase" class="mt-2">
+        Processando a base de logradouros... pode levar alguns minutos, aguarde.
+      </div>
+
+      <div *ngIf="mensagemBase && !processandoBase" class="mensagem-base">
+        {{ mensagemBase }}
+      </div>
+
+    </div>
+
+    <div *ngIf="baseVazia" class="lote-erro">
+      A base unificada de logradouros está vazia. Clique em <strong>Completar base</strong>
+      antes de unificar os sistemas de origem.
+    </div>
+
+    <div class="painel-base-titulo">
+      <strong>2. Unificação por sistema de origem</strong>
+    </div>
+
+    <!-- Origem e situação -->
+    <div class="barra-filtros">
+
+      <div class="campo">
+        <label>Sistema de origem</label>
+        <nb-select
+          [selected]="origemSelecionada"
+          [disabled]="bloqueado"
+          (selectedChange)="onOrigemChange($event)">
+          <nb-option *ngFor="let o of origens" [value]="o.codigo">
+            {{ o.descricao }}
+          </nb-option>
+        </nb-select>
+      </div>
+
+      <div class="campo">
+        <label>Situação</label>
+        <nb-select
+          [selected]="situacaoSelecionada"
+          [disabled]="bloqueado"
+          (selectedChange)="onSituacaoChange($event)">
+          <nb-option *ngFor="let s of situacoes" [value]="s.valor">
+            {{ s.descricao }}
+          </nb-option>
+        </nb-select>
+      </div>
+
+      <div class="botoes">
+
+        <button
+          nbButton
+          status="basic"
+          type="button"
+          [disabled]="isLoading || bloqueado"
+          (click)="atualizar()">
+          Atualizar
+        </button>
+
+        <button
+          nbButton
+          status="success"
+          type="button"
+          [disabled]="bloqueado || baseVazia || !totalLote"
+          title="Únicos e avenidas divididas em faixas (vinculadas ao trecho principal)"
+          (click)="vincularUnicos()">
+          Vincular únicos e faixas ({{ totalLote }})
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- Resumo da origem -->
+    <div *ngIf="resumo" class="resumo">
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalOrigem }}</span>
+        <span class="rotulo">Logradouros na origem</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalVinculados }}</span>
+        <span class="rotulo">Vinculados</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalDuplicadosRegistrados }}</span>
+        <span class="rotulo">Duplicados registrados</span>
+      </div>
+
+      <div class="resumo-item">
+        <span class="valor">{{ resumo.totalNaoVincular }}</span>
+        <span class="rotulo">Não vincular</span>
+      </div>
+
+      <div class="resumo-separador"></div>
+
+      <div class="resumo-item clicavel verde"
+        [class.ativo]="situacaoSelecionada === 'UNICA'"
+        (click)="onSituacaoChange('UNICA')">
+        <span class="valor">{{ resumo.totalUnicos }}</span>
+        <span class="rotulo">Únicos</span>
+      </div>
+
+      <div class="resumo-item clicavel verde"
+        [class.ativo]="situacaoSelecionada === 'FAIXAS'"
+        title="Mesmo nome dividido em faixas de numeração pelos Correios: vincula ao trecho principal"
+        (click)="onSituacaoChange('FAIXAS')">
+        <span class="valor">{{ resumo.totalFaixas }}</span>
+        <span class="rotulo">Faixas</span>
+      </div>
+
+      <div class="resumo-item clicavel laranja"
+        [class.ativo]="situacaoSelecionada === 'DUPLICADA'"
+        (click)="onSituacaoChange('DUPLICADA')">
+        <span class="valor">{{ resumo.totalDuplicados }}</span>
+        <span class="rotulo">Duplicados</span>
+      </div>
+
+      <div class="resumo-item clicavel laranja"
+        [class.ativo]="situacaoSelecionada === 'TIPO_DIFERENTE'"
+        title="Mesmo nome, tipo diferente (ex.: Rua x Avenida). Fica fora do lote."
+        (click)="onSituacaoChange('TIPO_DIFERENTE')">
+        <span class="valor">{{ resumo.totalTipoDiferente }}</span>
+        <span class="rotulo">Tipo diferente</span>
+      </div>
+
+      <div class="resumo-item clicavel"
+        [class.ativo]="situacaoSelecionada === 'AMBIGUA'"
+        (click)="onSituacaoChange('AMBIGUA')">
+        <span class="valor">{{ resumo.totalAmbiguos }}</span>
+        <span class="rotulo">Ambíguos</span>
+      </div>
+
+      <div class="resumo-item clicavel vermelho"
+        [class.ativo]="situacaoSelecionada === 'SEM_CORRESPONDENCIA'"
+        (click)="onSituacaoChange('SEM_CORRESPONDENCIA')">
+        <span class="valor">{{ resumo.totalSemCorrespondencia }}</span>
+        <span class="rotulo">Sem correspondência</span>
+      </div>
+
+      <div class="resumo-item clicavel cinza"
+        [class.ativo]="situacaoSelecionada === 'DISTRITO_NAO_UNIFICADO'"
+        (click)="onSituacaoChange('DISTRITO_NAO_UNIFICADO')">
+        <span class="valor">{{ resumo.totalDistritoNaoUnificado }}</span>
+        <span class="rotulo">Distrito não unificado</span>
+      </div>
+
+    </div>
+
+    <div *ngIf="carregandoResumo && !resumo" class="text-center my-3">
+      <p>Carregando resumo...</p>
+    </div>
+
+    <!-- Lote -->
+    <div *ngIf="processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Vinculando os logradouros únicos e em faixas...</strong>
+        <div class="mt-2">
+          O processamento é feito no servidor, um logradouro por vez.
+          Aguarde a conclusão.
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="resultadoLote && !processandoLote" class="lote-progress-wrapper">
+      <div class="lote-progress-text">
+        <strong>Lote finalizado.</strong>
+        <div class="mt-2">
+          Analisados: {{ resultadoLote.totalAnalisados }}
+          | Vinculados: {{ resultadoLote.totalVinculados }}
+          | Duplicados: {{ resultadoLote.totalDuplicados }}
+          | Erros: {{ resultadoLote.totalErros }}
+        </div>
+      </div>
+
+      <ul *ngIf="resultadoLote.erros?.length" class="lote-erros">
+        <li *ngFor="let erro of resultadoLote.erros">{{ erro }}</li>
+      </ul>
+    </div>
+
+    <div *ngIf="mensagemErro && !processandoLote" class="lote-erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <div *ngIf="isLoading && !processandoLote" class="text-center my-3">
+      <p>Carregando logradouros de {{ origemDescricao }}...</p>
+    </div>
+
+    <div class="legenda">
+      Exibindo até {{ filtro.tamanhoConsulta }} de {{ filtro.totalRegistros }} logradouros pendentes.
+      Use os filtros da tabela para localizar um logradouro específico.
+    </div>
+
+    <ng2-smart-table
+      [settings]="settings"
+      [source]="source"
+      (edit)="onEditarLinha($event)">
+    </ng2-smart-table>
+
+  </nb-card-body>
+</nb-card>

@@ -1,0 +1,178 @@
+<nb-card class="modal-cidade">
+
+  <nb-card-header>
+    Unificar cidade - {{ origemDescricao }}
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <!-- Cidade de origem -->
+    <div class="origem">
+
+      <h6>Cidade na origem ({{ origemDescricao }})</h6>
+
+      <div class="dados-origem">
+        <div><strong>Código:</strong> {{ cidade?.cidadeOrigem }}</div>
+        <div><strong>Nome:</strong> {{ cidade?.nome }}</div>
+        <div><strong>UF:</strong> {{ cidade?.uf || '-' }}</div>
+        <div><strong>CEP:</strong> {{ formatarCep(cidade?.cep) }}</div>
+        <div><strong>DDD:</strong> {{ cidade?.ddd || '-' }}</div>
+        <div *ngIf="cidade?.codigoIbge"><strong>IBGE:</strong> {{ cidade?.codigoIbge }}</div>
+      </div>
+
+    </div>
+
+    <div *ngIf="mensagemErro" class="erro">
+      {{ mensagemErro }}
+    </div>
+
+    <!-- Candidatos automáticos -->
+    <h6 class="titulo-secao">Cidades correspondentes (nome + UF / IBGE)</h6>
+
+    <div *ngIf="carregando" class="info">
+      Buscando cidades correspondentes...
+    </div>
+
+    <div *ngIf="!carregando && candidatosAutomaticos.length === 0" class="info">
+      Nenhuma cidade correspondente encontrada. Pesquise pelo nome abaixo
+      ou crie a cidade nova.
+    </div>
+
+    <ng-container
+      *ngTemplateOutlet="tabelaCandidatos; context: { lista: candidatosAutomaticos }">
+    </ng-container>
+
+    <!-- Pesquisa manual -->
+    <h6 class="titulo-secao">Pesquisar outra cidade</h6>
+
+    <div class="pesquisa">
+
+      <input
+        nbInput
+        fullWidth
+        type="text"
+        placeholder="Parte do nome (mín. 3 letras)"
+        [(ngModel)]="pesquisa"
+        (keyup.enter)="pesquisar()">
+
+      <input
+        nbInput
+        class="campo-uf"
+        type="text"
+        maxlength="2"
+        placeholder="UF"
+        [(ngModel)]="ufPesquisa">
+
+      <button
+        nbButton
+        status="info"
+        type="button"
+        [disabled]="pesquisando"
+        (click)="pesquisar()">
+        Pesquisar
+      </button>
+
+    </div>
+
+    <div *ngIf="pesquisou && resultadoPesquisa.length === 0" class="info">
+      Nenhuma cidade encontrada na pesquisa.
+    </div>
+
+    <ng-container
+      *ngTemplateOutlet="tabelaCandidatos; context: { lista: resultadoPesquisa }">
+    </ng-container>
+
+    <!-- Não vincular -->
+    <div *ngIf="exibirMotivo" class="motivo">
+      <label>Motivo para não vincular (opcional)</label>
+      <textarea
+        nbInput
+        fullWidth
+        rows="2"
+        maxlength="500"
+        [(ngModel)]="motivo">
+      </textarea>
+    </div>
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="fechar()">
+      Fechar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      (click)="confirmarNaoVincular()">
+      {{ exibirMotivo ? 'Confirmar não vincular' : 'Não vincular' }}
+    </button>
+
+    <button
+      nbButton
+      status="warning"
+      type="button"
+      [disabled]="!podeCriar"
+      title="Disponível somente quando não existe cidade correspondente"
+      (click)="criar()">
+      Criar cidade nova
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>
+
+<!-- Tabela reutilizada pelos candidatos e pela pesquisa -->
+<ng-template #tabelaCandidatos let-lista="lista">
+
+  <table *ngIf="lista?.length" class="tabela-candidatos">
+
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>UF</th>
+        <th>Cód. Correios</th>
+        <th>IBGE</th>
+        <th>CEP</th>
+        <th>Critério</th>
+        <th>Situação</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of lista" [class.linha-ocupada]="ocupado(c)">
+        <td>{{ c.nome }}</td>
+        <td>{{ c.uf }}</td>
+        <td>{{ c.cidadeCorreios }}</td>
+        <td>{{ c.codigoIbge || '-' }}</td>
+        <td>{{ formatarCep(c.cep) }}</td>
+        <td>{{ descricaoCriterio(c.criterio) }}</td>
+        <td>
+          <span *ngIf="!ocupado(c)">Livre</span>
+          <span *ngIf="ocupado(c)" title="Será registrado como código duplicado">
+            Já possui o código {{ c.codigoOrigemAtual }}
+          </span>
+        </td>
+        <td class="acao">
+          <button
+            nbButton
+            size="small"
+            status="primary"
+            type="button"
+            (click)="vincular(c)">
+            Vincular
+          </button>
+        </td>
+      </tr>
+    </tbody>
+
+  </table>
+
+</ng-template>

@@ -1,0 +1,122 @@
+<nb-card>
+  <nb-card-header>
+    Consolidação de Endereços
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <div class="ajuda">
+      Copia os endereços unificados para as tabelas consolidadas de
+      <strong>DBO_UNI_PESSOAS</strong> (CIDADES, DISTRITOS, BAIRROS, LOGRADOUROS e CEPS),
+      no lugar das procedures <em>*_UNIFICA</em>.
+      <ul>
+        <li>Insere o que falta, pela chave dos Correios.</li>
+        <li>Nas linhas que já existem, só preenche colunas vazias.</li>
+        <li><strong>Nunca apaga</strong> e <strong>nunca altera o CODIGO_CCM</strong>.</li>
+        <li>Pode ser executada quantas vezes for preciso (só acrescenta).</li>
+      </ul>
+      Faça a unificação de cada nível antes de consolidá-lo.
+      Logradouros e CEPs passam de 1 milhão de linhas: levam alguns minutos.
+    </div>
+
+    <div class="botoes">
+
+      <button
+        nbButton
+        status="basic"
+        type="button"
+        [disabled]="processando || carregandoAlgum"
+        (click)="atualizarNumeros()">
+        Atualizar números
+      </button>
+
+      <button
+        nbButton
+        status="success"
+        type="button"
+        [disabled]="processando || !linhas.length"
+        (click)="consolidarTodos()">
+        Consolidar tudo (na ordem)
+      </button>
+
+    </div>
+
+    <div *ngIf="processando" class="aviso">
+      <strong>Consolidando {{ nivelProcessando }}...</strong>
+      O processamento é feito no servidor. Aguarde a conclusão.
+    </div>
+
+    <div *ngIf="mensagemErro && !processando" class="erro">
+      <strong>Erro:</strong> {{ mensagemErro }}
+    </div>
+
+    <table class="tabela-niveis">
+
+      <thead>
+        <tr>
+          <th>Ordem</th>
+          <th>Nível</th>
+          <th>Tabela consolidada</th>
+          <th class="numero">No unificado</th>
+          <th class="numero">Na consolidada</th>
+          <th class="numero">A inserir</th>
+          <th class="numero" title="Linhas de cargas antigas sem correspondente no unificado. Nunca são apagadas.">
+            Só na consolidada
+          </th>
+          <th>Último resultado</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let linha of linhas; let i = index">
+
+          <td>{{ i + 1 }}</td>
+          <td><strong>{{ linha.nivel.descricao }}</strong></td>
+          <td>{{ linha.nivel.tabela }}</td>
+
+          <ng-container *ngIf="linha.resumo && !linha.carregando; else semNumeros">
+            <td class="numero">{{ linha.resumo.totalUnificado | number }}</td>
+            <td class="numero">{{ linha.resumo.totalConsolidado | number }}</td>
+            <td class="numero" [class.destaque]="linha.resumo.totalFaltando > 0">
+              {{ linha.resumo.totalFaltando | number }}
+            </td>
+            <td class="numero" [class.alerta]="linha.resumo.totalSoConsolidado > 0">
+              {{ linha.resumo.totalSoConsolidado | number }}
+            </td>
+          </ng-container>
+
+          <ng-template #semNumeros>
+            <td colspan="4" class="info">
+              <span *ngIf="linha.carregando">Contando...</span>
+              <span *ngIf="!linha.carregando && linha.erro" class="texto-erro">{{ linha.erro }}</span>
+              <span *ngIf="!linha.carregando && !linha.erro">-</span>
+            </td>
+          </ng-template>
+
+          <td>
+            <span *ngIf="linha.resultado"
+              [class.texto-erro]="!linha.resultado.sucesso">
+              {{ linha.resultado.mensagem }}
+            </span>
+          </td>
+
+          <td class="acao">
+            <button
+              nbButton
+              size="small"
+              status="primary"
+              type="button"
+              [disabled]="processando"
+              (click)="consolidar(linha)">
+              Consolidar
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+
+  </nb-card-body>
+</nb-card>

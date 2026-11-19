@@ -150,6 +150,38 @@ export const MENU_ITEMS: NbMenuItem[] = [
       },
 
       {
+        title: 'Unifica Endereços',
+        icon: 'pin-outline',
+        children: [
+          {
+            title: 'Cidades',
+            icon: 'home-outline',
+            link: '/pages/unificacao/enderecos/cidades',
+          },
+          {
+            title: 'Distritos',
+            icon: 'map-outline',
+            link: '/pages/unificacao/enderecos/distritos',
+          },
+          {
+            title: 'Bairros',
+            icon: 'grid-outline',
+            link: '/pages/unificacao/enderecos/bairros',
+          },
+          {
+            title: 'Logradouros',
+            icon: 'navigation-2-outline',
+            link: '/pages/unificacao/enderecos/logradouros',
+          },
+          {
+            title: 'Consolidação',
+            icon: 'layers-outline',
+            link: '/pages/unificacao/enderecos/consolidacao',
+          },
+        ],
+      },
+
+      {
         title: 'Form Inputs',
         icon: 'edit-outline',
         link: '/pages/forms/inputs',

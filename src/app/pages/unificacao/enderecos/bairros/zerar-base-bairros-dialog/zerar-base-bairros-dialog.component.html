@@ -1,0 +1,62 @@
+<nb-card class="modal-zerar">
+
+  <nb-card-header>
+    Recomeçar a unificação de bairros do zero
+  </nb-card-header>
+
+  <nb-card-body>
+
+    <p class="aviso">
+      Esta operação apaga <strong>todas</strong> as linhas de
+      <strong>BAIRROS_UNIFICADO</strong> e de <strong>BAIRROS_UNIFICADO_CTRL</strong>
+      e gera novamente a base a partir dos bairros dos Correios.
+    </p>
+
+    <p>
+      Todos os vínculos de bairros feitos com os sistemas de origem serão perdidos
+      e precisarão ser refeitos. A migração de pessoas usa esta tabela para achar o
+      bairro: enquanto os vínculos não forem refeitos, o bairro das pessoas migradas
+      não será encontrado.
+    </p>
+
+    <p>
+      Os bairros dos Correios (inclusive os criados pela tela, STATUS = 'N')
+      <strong>não</strong> são apagados e voltam para a base com o mesmo código.
+      As unificações de cidades e distritos não são afetadas.
+    </p>
+
+    <label class="rotulo">
+      Para confirmar, digite <strong>{{ textoConfirmacao }}</strong>:
+    </label>
+
+    <input
+      nbInput
+      fullWidth
+      type="text"
+      [(ngModel)]="confirmacao"
+      (keyup.enter)="confirmar()">
+
+  </nb-card-body>
+
+  <nb-card-footer>
+
+    <button
+      nbButton
+      status="basic"
+      type="button"
+      (click)="cancelar()">
+      Cancelar
+    </button>
+
+    <button
+      nbButton
+      status="danger"
+      type="button"
+      [disabled]="!confirmado"
+      (click)="confirmar()">
+      Recomeçar do zero
+    </button>
+
+  </nb-card-footer>
+
+</nb-card>

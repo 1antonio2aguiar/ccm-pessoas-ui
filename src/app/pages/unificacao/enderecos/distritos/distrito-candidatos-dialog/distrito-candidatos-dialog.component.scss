@@ -1,0 +1,110 @@
+.modal-distrito {
+  width: 980px;
+  max-width: 95vw;
+  max-height: 90vh;
+}
+
+nb-card-body {
+  overflow-y: auto;
+}
+
+.origem {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 0.5rem;
+  background: #f7f9fc;
+}
+
+.origem h6 {
+  margin-bottom: 0.75rem;
+}
+
+.dados-origem {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem 1rem;
+}
+
+.titulo-secao {
+  margin: 1.25rem 0 0.75rem;
+}
+
+.info {
+  margin-bottom: 0.75rem;
+  color: #8f9bb3;
+}
+
+.erro {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff2f2;
+  border: 1px solid #ffd6d6;
+  border-radius: 0.5rem;
+  color: #b42318;
+}
+
+.pesquisa {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pesquisa .campo-uf {
+  width: 80px;
+}
+
+.motivo {
+  margin-top: 1.25rem;
+}
+
+.motivo label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.tabela-candidatos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+}
+
+.tabela-candidatos th,
+.tabela-candidatos td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #edf1f7;
+  text-align: left;
+}
+
+.tabela-candidatos th {
+  background: #f7f9fc;
+  font-weight: 600;
+}
+
+.tabela-candidatos td.acao {
+  text-align: right;
+}
+
+.tabela-candidatos tr.linha-ocupada td {
+  background-color: #fff3cd;
+}
+
+nb-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 650px) {
+  .dados-origem {
+    grid-template-columns: 1fr;
+  }
+
+  .pesquisa {
+    flex-direction: column;
+  }
+}
+
+.dados-origem .largo {
+  grid-column: span 2;
+}

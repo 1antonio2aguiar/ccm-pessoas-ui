@@ -116,6 +116,41 @@ const routes: Routes = [{
     },
 
     {
+      path: 'unificacao/enderecos/cidades',
+      loadChildren: () =>
+        import('./unificacao/enderecos/cidades/cidade-unificado.module')
+          .then(m => m.CidadeUnificadoModule),
+    },
+
+    {
+      path: 'unificacao/enderecos/distritos',
+      loadChildren: () =>
+        import('./unificacao/enderecos/distritos/distrito-unificado.module')
+          .then(m => m.DistritoUnificadoModule),
+    },
+
+    {
+      path: 'unificacao/enderecos/bairros',
+      loadChildren: () =>
+        import('./unificacao/enderecos/bairros/bairro-unificado.module')
+          .then(m => m.BairroUnificadoModule),
+    },
+
+    {
+      path: 'unificacao/enderecos/logradouros',
+      loadChildren: () =>
+        import('./unificacao/enderecos/logradouros/logradouro-unificado.module')
+          .then(m => m.LogradouroUnificadoModule),
+    },
+
+    {
+      path: 'unificacao/enderecos/consolidacao',
+      loadChildren: () =>
+        import('./unificacao/enderecos/consolidacao/consolidacao-enderecos.module')
+          .then(m => m.ConsolidacaoEnderecosModule),
+    },
+
+    {
       path: '',
       redirectTo: 'dashboard',
       pathMatch: 'full',
